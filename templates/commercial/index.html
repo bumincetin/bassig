@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, bar, empty, select, data_required %}
+{% block title %}{{ t("Payment Milestones") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Contractual payment milestones") }}</h1>
+    <div class="sub">{{ note }}</div>
+  </div>
+  <form class="page-actions" method="get" data-autosubmit>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm">
+    <a class="btn btn-sm btn-primary" href="{{ url_for('commercial.export') }}">{{ t("Export CSV") }}</a>
+  </form>
+</div>
+
+{% if summary.contract_price is none %}
+  {{ data_required(t('the Contract Price from the signed EPC Contract. Enter it in Project Setup &rarr; Project identity; milestone amounts cannot be calculated without it.')) }}
+{% endif %}
+{% if not summary.count %}
+  {{ data_required(t('the Schedule 10 payment milestone schedule. Import it from Data Import &rarr; Payment Milestones, or add milestones below.')) }}
+{% elif not summary.schedule_complete %}
+  <div class="alert alert-warning py-2">
+    {{ t("The registered milestone percentages total {total}, not 100%. Check the schedule against Schedule 10 before relying on these amounts.",
+          total="<strong>" ~ (summary.total_pct | pc(2)) ~ "</strong>") | safe }}
+  </div>
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Contract Price'),
+         summary.contract_price | money(summary.currency) if summary.contract_price else 'DATA REQUIRED',
+         'signed EPC Contract', '' if summary.contract_price else 'bad') }}
+  {{ kpi(t('Milestones'), summary.count, summary.total_pct | pc(1) ~ ' of the price') }}
+  {{ kpi(t('Earned to date'), summary.earned_amount | money(summary.currency) if summary.earned_amount is not none else '-',
+         summary.earned_pct | pc(1) ~ ' of the price', 'good') }}
+  {{ kpi(t('Paid to date'), summary.paid_amount | money(summary.currency) if summary.paid_amount is not none else '-',
+         summary.paid_pct | pc(1) ~ ' of the price', 'info') }}
+  {{ kpi(t('Earned not yet paid'),
+         summary.outstanding_amount | money(summary.currency) if summary.outstanding_amount is not none else '-',
+         '', 'warn' if (summary.outstanding_amount or 0) > 0 else '') }}
+  {{ kpi(t('Overdue milestones'), summary.overdue | length, 'past forecast date, not achieved',
+         'bad' if summary.overdue else 'good') }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Commercial position against physical progress") }}</h2></div>
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <div class="stat-line"><span>{{ t("Value earned (milestones)") }}</span>
+          <strong>{{ summary.earned_pct | pc(1) }}</strong></div>
+        <div class="stat-line"><span>{{ t("Physical progress (weighted)") }}</span>
+          <strong>{{ summary.physical_pct | pc(1) if summary.physical_pct is not none else 'DATA REQUIRED' }}</strong></div>
+        <div class="stat-line"><span>{{ t("Difference") }}</span>
+          <strong class="{{ variance_class(-(summary.commercial_vs_physical or 0)) }}">
+            {{ summary.commercial_vs_physical | signed ~ ' pp' if summary.commercial_vs_physical is not none else '-' }}
+          </strong></div>
+      </div>
+      <div class="col-12 col-md-8">
+        <p class="text-tiny text-muted mb-0">
+          {{ t("A positive difference means milestone value has been earned ahead of measured physical progress. That is normal for delivery-based milestones such as modules and inverters, and is shown so the position is visible rather than assumed. It is a comparison of two recorded figures, not an assessment of entitlement.") }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if exposure %}
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ t("Delay liquidated damages exposure") }}</h2>
+    {% if exposure.exposure %}<span class="badge bg-danger">AT RISK</span>{% endif %}
+  </div>
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="stat-line"><span>{{ t("Scheduled Provisional Acceptance (baseline)") }}</span>
+          <strong>{{ exposure.scheduled_pac | d }}</strong></div>
+        <div class="stat-line"><span>{{ t("Forecast Provisional Acceptance (working plan)") }}</span>
+          <strong>{{ exposure.forecast_pac | d }}</strong></div>
+        <div class="stat-line"><span>{{ t("Slip") }}</span>
+          <strong class="{{ 'text-danger' if (exposure.slip_days or 0) > 0 else 'text-success' }}">
+            {{ exposure.slip_days if exposure.slip_days is not none else '-' }} {{ t("days") }}</strong></div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="stat-line"><span>{{ t("Contractual rate per day") }}</span>
+          <strong>{{ exposure.daily_rate | money(exposure.currency) }}</strong></div>
+        <div class="stat-line"><span>{{ t("Cap") }}</span>
+          <strong>{{ exposure.cap | money(exposure.currency) if exposure.cap else '-' }}
+            {% if exposure.cap_days %}({{ exposure.cap_days | num(0) }} {{ t("days") }}){% endif %}</strong></div>
+        <div class="stat-line"><span>{{ t("Exposure at the current forecast") }}</span>
+          <strong class="text-danger">
+            {{ exposure.exposure | money(exposure.currency) if exposure.exposure else 'none' }}
+            {% if exposure.capped %} ({{ t("capped") }}){% endif %}</strong></div>
+      </div>
+    </div>
+    {% if exposure.termination_risk %}
+      <div class="alert alert-danger py-2 mt-2 mb-0 text-tiny">
+        {{ t("The forecast slip of {slip} days exceeds the {limit}-day threshold stated in the Contract.",
+              slip=exposure.slip_days, limit=exposure.termination_days) }}
+      </div>
+    {% endif %}
+    <p class="source-note mt-2 mb-0">
+      {{ t("This is the contractual arithmetic only, applied to the registered baseline and working programme. It takes no view on entitlement to an extension of time and is not a legal assessment.") }}
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Milestone schedule") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>#</th><th>{{ t("Code") }}</th><th>{{ t("Description") }}</th><th class="num">%</th>
+        <th class="num">{{ t("Amount") }}</th><th>{{ t("Gate") }}</th><th>{{ t("Planned") }}</th><th>{{ t("Forecast") }}</th>
+        <th>{{ t("Achieved") }}</th><th>{{ t("Certified") }}</th><th>{{ t("Invoiced") }}</th><th>{{ t("Paid") }}</th>
+        <th>{{ t("Status") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for view in summary.views %}
+        {% set row = view.milestone %}
+        <tr class="{{ 'row-critical' if view.overdue }}">
+          <td class="num">{{ row.sequence }}</td>
+          <td class="mono">{{ row.milestone_code or '-' }}</td>
+          <td class="mw-260">{{ row.description }}
+            {% if row.comments %}<div class="text-tiny text-muted">{{ row.comments }}</div>{% endif %}</td>
+          <td class="num">{{ row.percentage | num(2) }}</td>
+          <td class="num">{{ view.amount | money(summary.currency) if view.amount is not none else '-' }}</td>
+          <td>{{ row.gate_code or '-' }}</td>
+          <td class="nowrap">{{ row.planned_date | d }}</td>
+          <td class="nowrap">{{ row.forecast_date | d }}</td>
+          <td class="nowrap">{{ row.achieved_date | d }}</td>
+          <td class="nowrap">{{ row.certified_date | d }}</td>
+          <td class="nowrap">{{ row.invoiced_date | d }}</td>
+          <td class="nowrap">{{ row.paid_date | d }}</td>
+          <td>{{ status_badge(view.derived_status, 'sm') }}</td>
+          <td>
+            <details class="inline-form"><summary>{{ t("Edit") }}</summary>
+              <form method="post" action="{{ url_for('commercial.update', milestone_id=row.id) }}" class="mt-1">
+                <input name="description" value="{{ row.description }}" class="form-control form-control-sm mb-1">
+                <input name="milestone_code" value="{{ row.milestone_code or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Code') }}">
+                <input name="sequence" value="{{ row.sequence or 0 }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Sequence') }}">
+                <input name="percentage" value="{{ row.percentage or 0 }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Percentage') }}">
+                <input name="wbs_code" value="{{ row.wbs_code or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('WBS') }}">
+                <select name="gate_code" class="form-select form-select-sm mb-1">
+                  <option value="">{{ t("No gate") }}</option>
+                  {% for code, name in gates %}
+                    <option value="{{ code }}" {{ 'selected' if row.gate_code == code }}>{{ t("Gate") }} {{ code }} - {{ name }}</option>
+                  {% endfor %}
+                </select>
+                <input name="package_code" value="{{ row.package_code or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Package') }}">
+                <label class="form-label">{{ t("Planned") }}</label>
+                <input type="date" name="planned_date" value="{{ row.planned_date | iso }}" class="form-control form-control-sm mb-1">
+                <label class="form-label">{{ t("Forecast") }}</label>
+                <input type="date" name="forecast_date" value="{{ row.forecast_date | iso }}" class="form-control form-control-sm mb-1">
+                <label class="form-label">{{ t("Achieved") }}</label>
+                <input type="date" name="achieved_date" value="{{ row.achieved_date | iso }}" class="form-control form-control-sm mb-1">
+                <label class="form-label">{{ t("Certified") }}</label>
+                <input type="date" name="certified_date" value="{{ row.certified_date | iso }}" class="form-control form-control-sm mb-1">
+                <label class="form-label">{{ t("Invoiced") }}</label>
+                <input type="date" name="invoiced_date" value="{{ row.invoiced_date | iso }}" class="form-control form-control-sm mb-1">
+                <label class="form-label">{{ t("Paid") }}</label>
+                <input type="date" name="paid_date" value="{{ row.paid_date | iso }}" class="form-control form-control-sm mb-1">
+                {{ select('status', statuses, row.status, none, 'form-select form-select-sm mb-1') }}
+                <input name="evidence_reference" value="{{ row.evidence_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Evidence') }}">
+                <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ row.comments or '' }}</textarea>
+                <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
+              </form>
+              <form method="post" action="{{ url_for('commercial.update', milestone_id=row.id) }}"
+                    class="mt-1" data-confirm="{{ t('Remove this payment milestone?') }}">
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="14">{{ empty(t('No payment milestone registered.')) }}</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if summary.views %}
+      <tfoot><tr class="lvl-1">
+        <td colspan="3"><strong>{{ t("Total") }}</strong></td>
+        <td class="num"><strong>{{ summary.total_pct | num(2) }}</strong></td>
+        <td class="num"><strong>{{ summary.contract_price | money(summary.currency) if summary.contract_price else '-' }}</strong></td>
+        <td colspan="9"></td>
+      </tr></tfoot>
+      {% endif %}
+    </table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Add a payment milestone") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('commercial.create') }}" class="form-grid">
+      <div><label class="form-label">{{ t("Sequence") }}</label>
+        <input name="sequence" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Code") }}</label>
+        <input name="milestone_code" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Description") }}</label>
+        <input name="description" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Percentage of Contract Price") }}</label>
+        <input name="percentage" inputmode="decimal" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Acceptance gate") }}</label>
+        <select name="gate_code" class="form-select form-select-sm">
+          <option value="">{{ t("No gate") }}</option>
+          {% for code, name in gates %}<option value="{{ code }}">{{ t("Gate") }} {{ code }} - {{ name }}</option>{% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("Package") }}</label>
+        <input name="package_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Planned date") }}</label>
+        <input type="date" name="planned_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Forecast date") }}</label>
+        <input type="date" name="forecast_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', statuses, 'NOT STARTED') }}</div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+        <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Add milestone") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

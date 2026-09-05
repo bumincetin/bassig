@@ -1,0 +1,10 @@
+# HTTPS in front of the Docker container (Option B in deploy/HOSTING.md).
+# Replace the hostname, point its DNS record at this server, install Caddy
+# (https://caddyserver.com) and copy this file to /etc/caddy/Caddyfile.
+# Caddy obtains and renews the certificate by itself.
+bassignana.example.com {
+    reverse_proxy 127.0.0.1:8080
+    request_body {
+        max_size 64MB
+    }
+}

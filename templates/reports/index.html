@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import empty %}
+{% block title %}{{ t("Reports") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Reports") }}</h1>
+    <div class="sub">{{ t("Printer-friendly reports generated deterministically from recorded data") }}</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Daily site report") }}</h2></div>
+      <div class="panel-body">
+        <form method="get" action="{{ url_for('reports.daily') }}" class="d-flex gap-2 align-items-end mb-3">
+          <div><label class="form-label">{{ t("Date") }}</label>
+            <input type="date" name="date" value="{{ today | iso }}" class="form-control form-control-lg"></div>
+          <button class="btn btn-primary">{{ t("Open report") }}</button>
+        </form>
+        <h3 class="text-tiny text-uppercase fw-bold text-muted">{{ t("Recent daily reports") }}</h3>
+        {% for report in recent %}
+          <div class="stat-line">
+            <span>{{ report.report_date | d }} &middot; {{ report.report_number or 'no number' }}</span>
+            <a class="btn btn-sm btn-outline-secondary py-0"
+               href="{{ url_for('reports.daily', date=report.report_date|iso) }}">{{ t("Open") }}</a>
+          </div>
+        {% else %}{{ empty(t('No daily report has been filed yet.')) }}{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Weekly project-control report") }}</h2></div>
+      <div class="panel-body">
+        <form method="get" action="{{ url_for('reports.weekly') }}" class="d-flex gap-2 align-items-end mb-3">
+          <div><label class="form-label">{{ t("Any date in the week") }}</label>
+            <input type="date" name="week" value="{{ week_start | iso }}" class="form-control form-control-lg"></div>
+          <button class="btn btn-primary">{{ t("Open report") }}</button>
+        </form>
+        <h3 class="text-tiny text-uppercase fw-bold text-muted">{{ t("Recent weeks") }}</h3>
+        {% for start, end in weeks %}
+          <div class="stat-line">
+            <span>{{ start | d }} &ndash; {{ end | d }}</span>
+            <a class="btn btn-sm btn-outline-secondary py-0"
+               href="{{ url_for('reports.weekly', week=start|iso) }}">{{ t("Open") }}</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("How these reports are produced") }}</h2></div>
+  <div class="panel-body text-tiny">
+    <p class="mb-1">{{ t("Every summary line is a counted fact: number of active workfronts, daily achievement, activities below target, open critical blockers, late procurement items, overdue NCR and punch items, the largest cause of lost hours, and the next milestones.") }}</p>
+    <p class="mb-1">{{ t("There is no generated prose and no interpretation. If a figure cannot be calculated, the report says so rather than substituting an estimate.") }}</p>
+    <p class="mb-0">{{ t("Use {action} on the report page. The print stylesheet removes navigation and charts and formats the sheet for A4.",
+                          action="<strong>" ~ t("Print / Save as PDF") ~ "</strong>") | safe }}</p>
+  </div>
+</div>
+{% endblock %}

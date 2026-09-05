@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, data_required %}
+{% block title %}{{ t("ITP requirements") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Inspection &amp; test plan requirements") }}</h1>
+    <div class="sub">{{ t("Hold, witness and review points with their required evidence and acceptance criteria") }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('quality.index') }}">{{ t("Quality records") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('quality.export_requirements') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if not rows %}
+  {{ data_required(t('the approved Bassignana QA/QC Plan, ITPs, checklists and hold / witness points. Schedule 17 in the source pack is a generic template and must not be used as the approved project plan.')) }}
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Registered requirements'), rows | length) }}
+  {{ kpi(t('Hold points'), hold_points | length, 'work cannot proceed without release', 'warn' if hold_points else '') }}
+  {{ kpi(t('Witness points'), witness_points | length) }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Requirements") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Work package") }}</th><th>{{ t("ITP reference") }}</th><th>{{ t("Inspection type") }}</th>
+        <th>{{ t("Point") }}</th><th>{{ t("Required evidence") }}</th><th>{{ t("Acceptance criterion") }}</th><th>{{ t("Specification") }}</th>
+        <th>{{ t("Source") }}</th><th>{{ t("Active") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="{{ 'text-muted' if not row.active }}">
+          <td class="mono">{{ row.wbs_code or '-' }}</td>
+          <td class="text-tiny">{{ row.work_package or '-' }}</td>
+          <td class="mono">{{ row.itp_reference }}</td>
+          <td>{{ row.inspection_type or '-' }}</td>
+          <td>
+            <span class="badge {{ 'bg-danger' if row.point_type == 'HOLD' else ('bg-warning text-dark' if row.point_type == 'WITNESS' else 'bg-secondary') }} badge-sm">
+              {{ row.point_type }}</span></td>
+          <td class="mw-260 text-tiny">{{ row.required_evidence or '-' }}</td>
+          <td class="mw-260 text-tiny">{{ row.acceptance_criterion or '-' }}</td>
+          <td class="text-tiny">{{ row.applicable_specification or '-' }}</td>
+          <td class="text-tiny">{{ row.source_document.label if row.source_document else 'not linked' }}</td>
+          <td>{{ 'Yes' if row.active else 'No' }}</td>
+          <td class="nowrap">
+            <form method="post" action="{{ url_for('quality.update_requirement', requirement_id=row.id) }}" class="d-inline">
+              <input type="hidden" name="action" value="raise">
+              <button class="btn btn-sm btn-outline-primary py-0" title="{{ t('Raise an ITP point record against this requirement') }}">{{ t("Raise") }}</button>
+            </form>
+            <form method="post" action="{{ url_for('quality.update_requirement', requirement_id=row.id) }}" class="d-inline">
+              <input type="hidden" name="action" value="toggle">
+              <button class="btn btn-sm btn-outline-secondary py-0">{{ 'Off' if row.active else 'On' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('quality.update_requirement', requirement_id=row.id) }}"
+                  class="d-inline" data-confirm="{{ t('Remove this ITP requirement?') }}">
+              <input type="hidden" name="action" value="delete">
+              <button class="btn btn-sm btn-outline-danger py-0">&times;</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="11">{{ empty(t('No inspection requirement registered.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register a requirement") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div><label class="form-label">{{ t("ITP / checklist reference") }}</label>
+        <input name="itp_reference" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Work package") }}</label>
+        <input name="work_package" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Inspection type") }}</label>{{ select('inspection_type', C.INSPECTION_TYPES, none, 'Select') }}</div>
+      <div><label class="form-label">{{ t("Point type") }}</label>{{ select('point_type', C.INSPECTION_POINT_TYPES, 'REVIEW') }}</div>
+      <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, none, 'Not set') }}</div>
+      <div class="full"><label class="form-label">{{ t("Required evidence") }}</label>
+        <textarea name="required_evidence" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><label class="form-label">{{ t("Acceptance criterion") }}</label>
+        <textarea name="acceptance_criterion" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><label class="form-label">{{ t("Applicable specification") }}</label>
+        <input name="applicable_specification" class="form-control form-control-sm"
+               placeholder="{{ t('e.g. CEI EN 62446-1, IEC 60904-1') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+        </select></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Register requirement") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

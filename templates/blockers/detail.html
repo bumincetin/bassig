@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ blocker.blocker_number }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ blocker.blocker_number }}</h1>
+    <div class="sub">{{ blocker.category }} &middot; {{ blocker.entry_date | d }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('blockers.index') }}">{{ t("Back") }}</a>
+    <form method="post" action="{{ url_for('blockers.delete', blocker_id=blocker.id) }}"
+          data-confirm="{{ t('Delete {number}?', number=blocker.blocker_number) }}">
+      <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button></form>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Status'), derived, '', 'bad' if derived in ['OPEN', 'OVERDUE'] else 'good') }}
+  {{ kpi(t('Lost hours used'), blocker.effective_lost_hours | num(1),
+         'actual' if blocker.actual_lost_hours is not none else 'estimated') }}
+  {{ kpi(t('Lost man-hours'), blocker.lost_man_hours | num(1)) }}
+  {{ kpi(t('Workers affected'), blocker.workers_affected) }}
+  {{ kpi(t('Equipment affected'), blocker.equipment_affected) }}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Blocker") }}</h2></div>
+      <div class="panel-body">
+        <form method="post" class="form-grid" enctype="multipart/form-data">
+          <div><label class="form-label">{{ t("Date") }}</label>
+            <input type="date" name="entry_date" value="{{ blocker.entry_date | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.BLOCKER_CATEGORIES, blocker.category) }}</div>
+          <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.ACTION_STATUS, blocker.status, none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("WBS") }}</label>
+            <input name="wbs_code" value="{{ blocker.wbs_code or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas, blocker.area_id) }}</div>
+          <div class="full"><label class="form-label">{{ t("Activity affected") }}</label>
+            <input name="activity" value="{{ blocker.activity or '' }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Description") }}</label>
+            <textarea name="description" rows="3" class="form-control form-control-sm">{{ blocker.description or '' }}</textarea></div>
+          <div><label class="form-label">{{ t("Start") }}</label>
+            <input type="datetime-local" name="start_datetime"
+                   value="{{ blocker.start_datetime.strftime('%Y-%m-%dT%H:%M') if blocker.start_datetime else '' }}"
+                   class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("End") }}</label>
+            <input type="datetime-local" name="end_datetime"
+                   value="{{ blocker.end_datetime.strftime('%Y-%m-%dT%H:%M') if blocker.end_datetime else '' }}"
+                   class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Estimated lost hours") }}</label>
+            <input name="estimated_lost_hours" value="{{ blocker.estimated_lost_hours or 0 }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Actual lost hours") }}</label>
+            <input name="actual_lost_hours" value="{{ blocker.actual_lost_hours if blocker.actual_lost_hours is not none else '' }}"
+                   class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Workers affected") }}</label>
+            <input name="workers_affected" value="{{ blocker.workers_affected or 0 }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Equipment affected") }}</label>
+            <input name="equipment_affected" value="{{ blocker.equipment_affected or 0 }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Responsible party") }}</label>
+            <input name="responsible_party" value="{{ blocker.responsible_party or '' }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Action") }}</label>
+            <textarea name="action" rows="2" class="form-control form-control-sm">{{ blocker.action or '' }}</textarea></div>
+          <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ blocker.comments or '' }}</textarea></div>
+          <div class="full"><label class="form-label">{{ t("Add photographs") }}</label>
+            <input type="file" name="photos" multiple accept="image/*" capture="environment" class="form-control form-control-lg"></div>
+          <div class="full"><button class="btn btn-primary">{{ t("Save blocker") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Linked records") }}</h2></div>
+      <div class="panel-body">
+        <div class="stat-line"><span>{{ t("Daily report") }}</span>
+          <strong>{% if blocker.report %}
+            <a href="{{ url_for('daily.detail', report_id=blocker.report.id) }}">{{ blocker.report.report_number or blocker.report.report_date }}</a>
+          {% else %}{{ t("not linked") }}{% endif %}</strong></div>
+        <div class="stat-line"><span>{{ t("Created") }}</span><strong>{{ blocker.created_at | d }}</strong></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Photographs") }}</h2></div>
+      <div class="panel-body">
+        {% if blocker.photos %}
+          <div class="photo-grid">
+            {% for photo in blocker.photos %}
+              <figure><img src="{{ url_for('static', filename='uploads/' ~ photo.stored_path) }}"
+                           alt="{{ photo.caption or photo.filename }}" loading="lazy">
+                <figcaption>{{ photo.taken_date | d }}</figcaption></figure>
+            {% endfor %}
+          </div>
+        {% else %}{{ empty(t('No photograph attached.')) }}{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

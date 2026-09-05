@@ -1,0 +1,18 @@
+{
+ "Access password": "Password di accesso",
+ "Achievement: not calculable (no planned quantity)": "Raggiungimento: non calcolabile (nessuna quantità pianificata)",
+ "Achievement: {value}%": "Raggiungimento: {value}%",
+ "Ask the project manager for the password.": "Chiedi la password al project manager.",
+ "File type '{suffix}' is not accepted for document registration.": "Il tipo di file '{suffix}' non è accettato per la registrazione dei documenti.",
+ "Remembered on this device for 30 days.": "Memorizzato su questo dispositivo per 30 giorni.",
+ "Sign in": "Accedi",
+ "Sign out": "Esci",
+ "Signed out.": "Disconnessione effettuata.",
+ "The live database file could not be located.": "Il file del database attivo non è stato trovato.",
+ "The password is not correct.": "La password non è corretta.",
+ "This installation is protected by a shared password. Enter it to open the site control system.": "Questa installazione è protetta da una password condivisa. Inseriscila per aprire il sistema di controllo di cantiere.",
+ "Too many failed attempts. Try again in {minutes} minute(s).": "Troppi tentativi non riusciti. Riprova tra {minutes} minuto/i.",
+ "Unsupported import file type '{suffix}'. Use .csv or .xlsx.": "Tipo di file di importazione '{suffix}' non supportato. Usa .csv o .xlsx.",
+ "Uploaded import file is no longer available. Please upload it again.": "Il file di importazione caricato non è più disponibile. Caricalo di nuovo.",
+ "openpyxl is required to read .xlsx import files": "Per leggere i file di importazione .xlsx è necessario openpyxl"
+}

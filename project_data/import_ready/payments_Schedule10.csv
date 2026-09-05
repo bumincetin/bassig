@@ -1,0 +1,10 @@
+sequence,milestone_code,description,percentage,wbs_code,gate_code,package_code,planned_date,forecast_date,status,comments,source
+1,PM-01,Contract Signature (Advance Payment after Advance Payment Bond),15.0,1.1.1.1,,,,,NOT STARTED,Advance payment released against the Advance Payment Bond.,Schedule 10 - Payment
+2,PM-02,Completion 100% of Site preparation works,10.0,1.2.2,,,,,NOT STARTED,Site preparation under WBS 1.2.2 Early Construction Works.,Schedule 10 - Payment
+3,PM-03,Delivery of Substructure,10.0,1.1.4.1,,PKG-10,,,NOT STARTED,Mounting structures delivered. Delivery is not acceptance.,Schedule 10 - Payment
+4,PM-04,Delivery Modules and Inverters,30.0,1.1.4.2,,PKG-01,,,NOT STARTED,Largest single milestone. Covers PKG-01 PV Modules and PKG-02 Inverters.,Schedule 10 - Payment
+5,PM-05,Completion assembly works Substructure and Modules,10.0,1.3.2,,,,,NOT STARTED,Structures and modules installed.,Schedule 10 - Payment
+6,PM-06,Delivery Transformer Stations,5.0,1.1.4.4,,PKG-04,,,NOT STARTED,Transformer stations delivered to site.,Schedule 10 - Payment
+7,PM-07,Completion of whole electrical works,10.0,1.3.3,,,,,NOT STARTED,All PV electrical works complete.,Schedule 10 - Payment
+8,PM-08,Pre Provisional Acceptance,5.0,1.6.2,B,,,,NOT STARTED,Interim acceptance in the absence of the grid required tests (Contract definition of Pre Provisional Acceptance).,Schedule 10 - Payment
+9,PM-09,"Provisional Acceptance, Warranty Bond and closure of all punch list items",5.0,1.6.4.2,C,,,,NOT STARTED,"Pre Provisional Acceptance plus grid connection, Warranty Bond lodged, all punch list items closed and Client acceptance.",Schedule 10 - Payment

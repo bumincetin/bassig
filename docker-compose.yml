@@ -1,0 +1,27 @@
+# BASSIGNANA EPC CONTROL on any machine with Docker (a company server, an
+# always-free cloud VM, or the office PC).
+#
+#   cp .env.example .env        # then set BASSIGNANA_ACCESS_PASSWORD
+#   docker compose up -d --build
+#
+# The named volume `bassignana-data` keeps the database, photographs, backups
+# and source documents across rebuilds and restarts. Back it up with the
+# Backup page in the application, or copy the volume with your usual tools.
+services:
+  bassignana:
+    build: .
+    image: bassignana-epc-control
+    container_name: bassignana
+    restart: unless-stopped
+    ports:
+      - "${BASSIGNANA_PUBLISHED_PORT:-8080}:8080"
+    environment:
+      BASSIGNANA_ACCESS_PASSWORD: "${BASSIGNANA_ACCESS_PASSWORD:?Set BASSIGNANA_ACCESS_PASSWORD in .env}"
+      BASSIGNANA_HTTPS: "${BASSIGNANA_HTTPS:-0}"
+      BASSIGNANA_SQLITE_JOURNAL_MODE: "${BASSIGNANA_SQLITE_JOURNAL_MODE:-WAL}"
+      BASSIGNANA_THREADS: "${BASSIGNANA_THREADS:-8}"
+    volumes:
+      - bassignana-data:/data
+
+volumes:
+  bassignana-data:

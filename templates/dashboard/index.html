@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, pct_kpi, status_badge, bar, variance, empty %}
+{% block title %}{{ t("Dashboard") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Dashboard") }}</h1>
+    <div class="sub">
+      {{ t("Position as at") }} {{ as_of | d }} &middot;
+      {{ t("Baseline:") }} {{ BASELINE_VERSION.label if BASELINE_VERSION else t(C.DATA_REQUIRED) }} &middot;
+      {{ t("Working plan:") }} {{ CURRENT_VERSION.label if CURRENT_VERSION else t(C.DATA_REQUIRED) }}
+    </div>
+  </div>
+  <form class="page-actions" method="get" data-autosubmit>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('reports.daily', date=as_of|iso) }}">{{ t("Daily report") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('reports.weekly') }}">{{ t("Weekly report") }}</a>
+  </form>
+</div>
+
+{% if reconciliation %}
+  <div class="alert alert-warning py-2 no-print">
+    <strong>SOURCE RECONCILIATION REQUIRED</strong>
+    <ul class="mb-0 mt-1 text-tiny">
+      {% for item in reconciliation %}<li>{{ item.message }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+{% if schedule_warnings %}
+  <div class="alert alert-warning py-2 no-print text-tiny mb-3">
+    {% for warning in schedule_warnings %}<div>{{ warning }}</div>{% endfor %}
+  </div>
+{% endif %}
+
+<!-- ===================== PROGRESS POSITION ===================== -->
+<div class="kpi-grid">
+  {{ pct_kpi(t('Contractual planned'), contractual_planned_pct, 'Schedule 03 baseline dates', 'info') }}
+  {{ pct_kpi(t('Current plan'), current_planned_pct, 'Governing working programme', 'info') }}
+  {{ pct_kpi(t('Actual'), actual_pct, rollup.basis.basis | title ~ ' weighting', 'good') }}
+  {{ kpi(t('vs contractual'),
+         (variance_vs_contractual | signed ~ ' pp') if variance_vs_contractual is not none else 'DATA REQUIRED',
+         'Actual minus contractual planned',
+         'good' if (variance_vs_contractual is not none and variance_vs_contractual >= 0) else 'bad') }}
+  {{ kpi(t('vs current plan'),
+         (variance_vs_current | signed ~ ' pp') if variance_vs_current is not none else 'DATA REQUIRED',
+         'Actual minus current planned',
+         'good' if (variance_vs_current is not none and variance_vs_current >= 0) else 'bad') }}
+  {{ pct_kpi(t('Acceptance readiness'), acceptance.percent,
+             acceptance.satisfied ~ ' of ' ~ acceptance.considered ~ ' gate items accepted', 'info') }}
+</div>
+
+{% if rollup.basis.warning %}
+  <div class="alert alert-warning py-2 text-tiny">{{ rollup.basis.warning }}</div>
+{% endif %}
+
+<!-- ===================== TODAY ON SITE ===================== -->
+<div class="kpi-grid">
+  {{ kpi(t("Today's planned qty"), today.planned | qty, today.entries ~ ' progress line(s)') }}
+  {{ kpi(t("Today's actual qty"), today.actual | qty) }}
+  {{ kpi(t("Today's achievement"),
+         today.achievement | pc if today.achievement is not none else 'n/a',
+         'actual / planned',
+         'good' if (today.achievement is not none and today.achievement >= 100)
+         else ('warn' if today.achievement is not none else '')) }}
+  {{ kpi(t('Workforce today'), workforce.total, workforce.man_hours | num(0) ~ ' man-hours') }}
+  {{ kpi(t('Active equipment'), equipment.active,
+         (equipment.utilisation | pc ~ ' utilisation') if equipment.utilisation is not none else 'no plant hours logged') }}
+  {{ kpi(t('Lost hours today'), lost_hours_today | num(1), 'from blockers', 'bad' if lost_hours_today else '') }}
+</div>
+
+<!-- ===================== OPEN ITEMS ===================== -->
+<div class="kpi-grid">
+  {{ kpi(t('Open blockers'), open_blocker_count, blockers.lost_hours | num(0) ~ ' h lost to date', 'bad' if open_blocker_count else 'good') }}
+  {{ kpi(t('Open issues'), issues.open, issues.overdue ~ ' overdue', 'warn' if issues.open else 'good') }}
+  {{ kpi(t('Open NCRs'), quality.open_ncr, quality.overdue_ncr ~ ' overdue', 'bad' if quality.open_ncr else 'good') }}
+  {{ kpi(t('Open punch items'), quality.open_punch, quality.overdue_punch ~ ' overdue', 'warn' if quality.open_punch else 'good') }}
+  {{ kpi(t('Overdue actions'), overdue_actions, 'issues + NCR + punch + RFI + permits', 'bad' if overdue_actions else 'good') }}
+  {{ kpi(t('Open RFIs'), rfi.open, rfi.overdue ~ ' overdue', 'warn' if rfi.open else 'good') }}
+  {{ kpi(t('Quality / inspection holds'), quality.hold_points, 'open ITP points', 'warn' if quality.hold_points else 'good') }}
+  {{ kpi(t('Procurement warnings'), procurement.warning_count,
+         procurement.late_count ~ ' late package(s)', 'bad' if procurement.late_count else 'warn' if procurement.warning_count else 'good') }}
+  {{ kpi(t('Critical activities'), critical | length, at_risk | length ~ ' at risk', 'bad' if critical else 'good') }}
+  {{ kpi(t('Overdue activities'), overdue | length, 'past planned finish, incomplete', 'bad' if overdue else 'good') }}
+  {{ kpi(t('Overdue milestones'), overdue_milestones | length, 'classified CRITICAL', 'bad' if overdue_milestones else 'good') }}
+  {{ kpi(t('Permits outstanding'), permits.open, permits.overdue ~ ' past required-by date', 'warn' if permits.open else 'good') }}
+</div>
+
+<!-- ===================== CHARTS ===================== -->
+<div class="chart-grid no-print">
+  <div class="panel"><div class="panel-head"><h2>{{ t("Contractual baseline vs current plan vs actual") }}</h2></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="chartCurve"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Progress by work package") }}</h2></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="chartPackages"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Progress by workfront / area") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartAreas"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Daily productivity (30 days)") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartProductivity"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Workforce trend (30 days)") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartWorkforce"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Equipment utilisation (30 days)") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartEquipment"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Lost hours by blocker cause") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartLost"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Open issues by category") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartIssues"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Procurement stage distribution") }}</h2></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="chartProcurement"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Quality findings by status") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartQuality"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Upcoming milestone status") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartMilestones"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Acceptance gate readiness") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartAcceptance"></canvas></div></div></div>
+</div>
+
+<!-- ===================== CRITICAL / NEXT ===================== -->
+<div class="row g-3">
+  <div class="col-12 col-xl-7">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>{{ t("Critical schedule activities") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.index', classification='CRITICAL') }}">{{ t("Open schedule") }}</a>
+      </div>
+      <div class="panel-body tight">
+        {% if critical %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Plan finish") }}</th><th class="num">{{ t("Actual %") }}</th><th class="num">{{ t("Variance") }}</th><th>{{ t("Why") }}</th></tr></thead>
+            <tbody>
+              {% for row in critical[:15] %}
+              <tr class="row-critical">
+                <td class="mono">{{ row.wbs_code }}</td>
+                <td>{{ row.name }}</td>
+                <td class="nowrap">{{ row.plan_finish | d }}</td>
+                <td class="num">{{ row.actual_pct | pc }}</td>
+                <td class="num">{{ variance(row.variance) }}</td>
+                <td class="text-tiny">{{ 'Overdue milestone' if row.overdue_milestone else 'Variance below threshold' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}{{ empty(t('No activity is currently classified CRITICAL.')) }}{% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Critical workfronts") }}</h2></div>
+      <div class="panel-body tight">
+        {% if critical_workfronts %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Work package") }}</th><th class="num">{{ t("Activities") }}</th><th class="num">{{ t("Critical") }}</th><th class="num">{{ t("Average variance") }}</th></tr></thead>
+            <tbody>
+              {% for row in critical_workfronts %}
+              <tr>
+                <td>{{ row.work_package }}</td>
+                <td class="num">{{ row.count }}</td>
+                <td class="num">{{ row.critical }}</td>
+                <td class="num">{{ variance(row.average_variance) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}{{ empty(t('No incomplete activity carries a measurable variance yet.')) }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-5">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Upcoming milestones") }}</h2></div>
+      <div class="panel-body tight">
+        {% if milestones %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Milestone") }}</th><th>{{ t("Date") }}</th><th>{{ t("Status") }}</th></tr></thead>
+            <tbody>
+              {% for row in milestones %}
+              <tr class="milestone">
+                <td>{{ row.name }}</td>
+                <td class="nowrap">{{ (row.plan_finish or row.plan_start) | d }}</td>
+                <td>{{ status_badge(row.classification, 'sm') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}{{ empty(t('No incomplete milestone is registered.')) }}{% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>{{ t("Procurement warnings") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.index') }}">{{ t("Open") }}</a>
+      </div>
+      <div class="panel-body">
+        {% if procurement.warning_count %}
+          {% for package in procurement.late_packages %}
+            <div class="stat-line"><span>{{ package.package_code }} {{ package.package_name }}</span>{{ status_badge('LATE', 'sm') }}</div>
+          {% endfor %}
+          {% for package in procurement.at_risk_packages %}
+            <div class="stat-line"><span>{{ package.package_code }} {{ package.package_name }}</span>{{ status_badge('AT RISK', 'sm') }}</div>
+          {% endfor %}
+          {% for view in procurement.shortages[:8] %}
+            <div class="stat-line"><span>{{ view.material.item }}</span>{{ status_badge(view.stock_status, 'sm') }}</div>
+          {% endfor %}
+          {% for material in procurement.unapproved_vendors[:5] %}
+            <div class="stat-line"><span>{{ material.item }} &mdash; {{ t("vendor not on the approved list") }}</span><span class="badge bg-warning text-dark badge-sm">VENDOR</span></div>
+          {% endfor %}
+          {% for package in procurement.fat_issues[:5] %}
+            <div class="stat-line"><span>{{ package.package_code }} FAT {{ package.fat_status }}</span><span class="badge bg-warning text-dark badge-sm">FAT</span></div>
+          {% endfor %}
+        {% else %}{{ empty(t('No procurement warning is open.')) }}{% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>{{ t("Acceptance readiness") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('acceptance.index') }}">{{ t("Open") }}</a>
+      </div>
+      <div class="panel-body">
+        {% for view in acceptance.gates %}
+          <div class="stat-line">
+            <span>{{ t("Gate") }} {{ view.gate.gate_code }} &mdash; {{ view.gate.name }}</span>
+            <strong>
+              {% if view.readiness_pct is none %}<span class="data-required">DATA REQUIRED</span>
+              {% else %}{{ view.readiness_pct | pc(0) }} &nbsp;{{ status_badge(view.derived_state, 'sm') }}{% endif %}
+            </strong>
+          </div>
+        {% endfor %}
+        <p class="source-note mt-2 mb-0">{{ t("Formal acceptance is always a Client decision recorded by a person.") }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+fetch('{{ url_for("dashboard.charts") }}?as_of={{ as_of | iso }}')
+  .then(function (r) { return r.json(); })
+  .then(function (d) {
+    BAS.line('chartCurve', d.progress_curve.labels, [
+      { label: 'Contractual baseline', data: d.progress_curve.contractual, borderColor: BAS.palette.navy, borderDash: [6, 3] },
+      { label: 'Current plan', data: d.progress_curve.current_plan, borderColor: BAS.palette.blue },
+      { label: 'Actual', data: d.progress_curve.actual, borderColor: BAS.palette.amber, borderWidth: 3 }
+    ], { scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: '% complete' } } } });
+
+    BAS.hbar('chartPackages', d.by_work_package.labels, d.by_work_package.values, BAS.palette.navy,
+             { scales: { x: { beginAtZero: true, max: 100 } } });
+
+    BAS.bar('chartAreas', d.by_area.labels, [
+      { label: 'Planned qty', data: d.by_area.planned, backgroundColor: BAS.palette.grey },
+      { label: 'Actual qty', data: d.by_area.actual, backgroundColor: BAS.palette.navy }
+    ]);
+
+    BAS.bar('chartProductivity', d.productivity.labels, [
+      { label: 'Planned', data: d.productivity.planned, backgroundColor: BAS.palette.grey },
+      { label: 'Actual', data: d.productivity.actual, backgroundColor: BAS.palette.amber }
+    ]);
+
+    BAS.line('chartWorkforce', d.workforce.labels,
+             [{ label: 'Workers on site', data: d.workforce.values, borderColor: BAS.palette.green }]);
+
+    BAS.line('chartEquipment', d.equipment.labels,
+             [{ label: 'Utilisation %', data: d.equipment.values, borderColor: BAS.palette.teal }],
+             { scales: { y: { beginAtZero: true, max: 100 } } });
+
+    BAS.hbar('chartLost', d.lost_hours.labels, d.lost_hours.values, BAS.palette.red);
+    BAS.doughnut('chartIssues', d.issues.labels, d.issues.values);
+    BAS.hbar('chartProcurement', d.procurement.labels, d.procurement.values, BAS.palette.blue);
+    BAS.doughnut('chartQuality', d.quality.labels, d.quality.values);
+    BAS.hbar('chartMilestones', d.milestones.labels, d.milestones.values, BAS.palette.amber,
+             { scales: { x: { beginAtZero: true, max: 100 } } });
+    BAS.hbar('chartAcceptance', d.acceptance.labels, d.acceptance.values, BAS.palette.green,
+             { scales: { x: { beginAtZero: true, max: 100 } } });
+  });
+</script>
+{% endblock %}

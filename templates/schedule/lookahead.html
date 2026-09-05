@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, variance, empty %}
+{% block title %}{{ t("Lookahead") }}{% endblock %}
+
+{% macro rows_table(rows, caption, show_start=true) %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ caption }}</h2><span class="badge bg-secondary">{{ rows | length }}</span></div>
+  <div class="panel-body tight">
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Work package") }}</th>
+          {% if show_start %}<th>{{ t("Start") }}</th>{% endif %}<th>{{ t("Finish") }}</th>
+          <th class="num">{{ t("Actual %") }}</th><th class="num">{{ t("Variance") }}</th><th>{{ t("Status") }}</th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="{{ 'row-critical' if row.classification == 'CRITICAL' }}{{ 'row-atrisk' if row.classification == 'AT RISK' }}">
+            <td class="mono">{{ row.wbs_code }}</td>
+            <td>{{ row.name }}{% if row.is_milestone %} <span class="badge bg-dark badge-sm">MS</span>{% endif %}</td>
+            <td class="text-tiny">{{ row.work_package or '-' }}</td>
+            {% if show_start %}<td class="nowrap">{{ row.plan_start | d }}</td>{% endif %}
+            <td class="nowrap">{{ row.plan_finish | d }}</td>
+            <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
+            <td class="num">{{ variance(row.variance) }}</td>
+            <td>{{ status_badge(row.classification, 'sm') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty(t('Nothing in this window.')) }}{% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Lookahead &amp; critical path pressure") }}</h1>
+    <div class="sub">{{ t("Windows measured from {date} against the governing working programme", date=as_of | d) }}</div>
+  </div>
+  <form class="page-actions" method="get" data-autosubmit>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.index') }}">{{ t("Full schedule") }}</a>
+  </form>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(short_weeks ~ '-week lookahead', short | length) }}
+  {{ kpi(long_weeks ~ '-week lookahead', long | length) }}
+  {{ kpi(t('Overdue'), overdue | length, 'past planned finish', 'bad' if overdue else 'good') }}
+  {{ kpi(t('Starting in') ~ window ~ ' days', starting | length) }}
+  {{ kpi(t('Finishing in') ~ window ~ ' days', finishing | length) }}
+  {{ kpi(t('Late start'), late_start | length, '', 'warn' if late_start else 'good') }}
+  {{ kpi(t('Critical'), critical | length, '', 'bad' if critical else 'good') }}
+  {{ kpi(t('Overdue milestones'), overdue_milestones | length, '', 'bad' if overdue_milestones else 'good') }}
+</div>
+
+{{ rows_table(overdue, 'Overdue activities') }}
+{{ rows_table(late_start, 'Late-start activities') }}
+{{ rows_table(starting, 'Starting within ' ~ window ~ ' days') }}
+{{ rows_table(finishing, 'Finishing within ' ~ window ~ ' days') }}
+{{ rows_table(short, short_weeks ~ '-week lookahead') }}
+{{ rows_table(long, long_weeks ~ '-week lookahead') }}
+{{ rows_table(milestones, 'Upcoming milestones', show_start=false) }}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Critical workfronts") }}</h2></div>
+  <div class="panel-body tight">
+    {% if workfronts %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Work package") }}</th><th class="num">{{ t("Incomplete activities") }}</th>
+          <th class="num">{{ t("Critical") }}</th><th class="num">{{ t("Average variance") }}</th></tr></thead>
+        <tbody>
+          {% for row in workfronts %}
+          <tr><td>{{ row.work_package }}</td><td class="num">{{ row.count }}</td>
+            <td class="num">{{ row.critical }}</td><td class="num">{{ variance(row.average_variance) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty(t('No workfront carries a measurable variance yet.')) }}{% endif %}
+  </div>
+</div>
+{% endblock %}

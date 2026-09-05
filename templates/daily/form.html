@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import select %}
+{% block title %}{{ t("New daily report") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("New daily site report") }}</h1>
+    <div class="sub">{{ t("One report per date. Progress lines, plant, workforce and observations are added next.") }}</div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.index') }}">{{ t("Cancel") }}</a>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Report header") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div>
+        <label class="form-label">{{ t("Date") }}</label>
+        <input type="date" name="report_date" value="{{ default_date | iso }}" required
+               max="{{ (max_date or default_date) | iso }}"
+               class="form-control form-control-lg">
+        <div class="form-hint">{{ t("Past days can be entered. Future days cannot.") }}</div>
+      </div>
+      <div>
+        <label class="form-label">{{ t("Report number") }}</label>
+        <input name="report_number" value="{{ next_number }}" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Shift") }}</label>
+        {{ select('shift', C.SHIFTS, 'DAY', classes='form-select form-select-lg') }}
+      </div>
+      <div>
+        <label class="form-label">{{ t("Weather (AM)") }}</label>
+        {{ select('weather', C.WEATHER, none, 'Select', 'form-select form-select-lg') }}
+      </div>
+      <div>
+        <label class="form-label">{{ t("Weather (PM)") }}</label>
+        {{ select('weather_pm', C.WEATHER, none, 'Select', 'form-select form-select-lg') }}
+      </div>
+      <div>
+        <label class="form-label">{{ t("Temp min (&deg;C)") }}</label>
+        <input name="temperature_min_c" inputmode="decimal" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Temp max (&deg;C)") }}</label>
+        <input name="temperature_max_c" inputmode="decimal" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Work start") }}</label>
+        <input name="work_start_time" placeholder="07:30" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Work end") }}</label>
+        <input name="work_end_time" placeholder="17:00" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Max wind (m/s)") }}{% if wind_threshold %} &mdash; {{ t("EOT above {value}", value=wind_threshold | num(0)) }}{% endif %}</label>
+        <input name="max_wind_ms" inputmode="decimal" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Max rainfall (mm/h)") }}{% if rain_threshold %} &mdash; {{ t("EOT above {value}", value=rain_threshold | num(0)) }}{% endif %}</label>
+        <input name="max_rain_mm_h" inputmode="decimal" class="form-control form-control-lg">
+      </div>
+      <div class="full">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" name="adverse_weather_claimed"
+                 value="1" id="adverseNew">
+          <label class="form-check-label" for="adverseNew">
+            {{ t("Adverse weather claimed for an extension of time") }}
+          </label>
+        </div>
+        <div class="text-tiny text-muted">
+          {{ t("The Contract allows an extension of time only for wind or rainfall above the thresholds registered in Project Setup, measured by calibrated site instrumentation. Record the measurement even on a normal day so the record is complete.") }}
+        </div>
+      </div>
+      <div>
+        <label class="form-label">{{ t("Prepared by") }}</label>
+        <input name="prepared_by" class="form-control form-control-lg">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Main contractor") }}</label>
+        <select name="contractor_id" class="form-select form-select-lg">
+          <option value="">{{ t("Not recorded") }}</option>
+          {% for contractor in contractors %}
+            <option value="{{ contractor.id }}">{{ contractor.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="full">
+        <label class="form-label">{{ t("Subcontractors on site") }}</label>
+        <input name="subcontractors" class="form-control form-control-lg"
+               placeholder="{{ t('Comma separated') }}">
+      </div>
+      <div class="full">
+        <label class="form-label">{{ t("General comments") }}</label>
+        <textarea name="general_comments" rows="3" class="form-control"></textarea>
+      </div>
+      <div class="full">
+        <label class="form-label">{{ t("Work planned for the next working day") }}</label>
+        <textarea name="upcoming_work" rows="2" class="form-control"></textarea>
+      </div>
+      <div class="full">
+        <button class="btn btn-primary btn-lg">{{ t("Create report") }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

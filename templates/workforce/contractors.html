@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import empty, select %}
+{% block title %}{{ t("Contractors") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Contractors &amp; subcontractors") }}</h1>
+    <div class="sub">{{ t("Parties recorded against workforce, plant and daily reports") }}</div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('workforce.index') }}">{{ t("Back") }}</a>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} registered", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("Name") }}</th><th>{{ t("Short") }}</th><th>{{ t("Role") }}</th><th>{{ t("Discipline") }}</th><th>{{ t("Contact") }}</th>
+        <th>{{ t("Active") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="{{ 'text-muted' if not row.active }}">
+          <td><strong>{{ row.name }}</strong></td>
+          <td>{{ row.short_name or '-' }}</td>
+          <td>{{ row.role }}</td>
+          <td>{{ row.discipline or '-' }}</td>
+          <td class="text-tiny">{{ row.contact or '-' }}</td>
+          <td>{{ 'Yes' if row.active else 'No' }}</td>
+          <td class="nowrap">
+            <form method="post" action="{{ url_for('workforce.update_contractor', contractor_id=row.id) }}" class="d-inline">
+              <input type="hidden" name="action" value="toggle">
+              <button class="btn btn-sm btn-outline-secondary py-0">{{ 'Deactivate' if row.active else 'Activate' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('workforce.update_contractor', contractor_id=row.id) }}"
+                  class="d-inline" data-confirm="{{ t('Remove {name}?', name=row.name) }}">
+              <input type="hidden" name="action" value="delete">
+              <button class="btn btn-sm btn-outline-danger py-0">&times;</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="7">{{ empty(t('No contractor registered yet.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register a contractor") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div class="full"><label class="form-label">{{ t("Name") }}</label>
+        <input name="name" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Short name") }}</label>
+        <input name="short_name" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Role") }}</label>
+        {{ select('role', ['EPC CONTRACTOR', 'SUBCONTRACTOR', 'CLIENT', 'CONSULTANT', 'DSO', 'SUPPLIER', 'OTHER'], 'SUBCONTRACTOR') }}</div>
+      <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, none, 'Not set') }}</div>
+      <div><label class="form-label">{{ t("Contact") }}</label>
+        <input name="contact" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Notes") }}</label>
+        <textarea name="notes" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Register") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

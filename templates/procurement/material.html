@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% set material = view.material %}
+{% block title %}{{ material.item }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ material.item }}</h1>
+    <div class="sub">
+      {{ material.package.package_code if material.package else '' }}
+      {{ material.package.package_name if material.package else '' }} &middot;
+      {{ material.manufacturer or 'manufacturer not recorded' }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{{ url_for('procurement.package', package_id=material.package_id) }}">{{ t("Back to package") }}</a>
+    <form method="post" action="{{ url_for('procurement.delete_material', material_id=material.id) }}"
+          data-confirm="{{ t('Delete this material line, its deliveries and its stock movements?') }}">
+      <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button></form>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Required'), material.total_required | qty(material.unit or '')) }}
+  {{ kpi(t('Ordered'), material.ordered | qty, view.ordered_pct | pc(0) if view.ordered_pct is not none else '') }}
+  {{ kpi(t('Delivered'), material.delivered | qty, view.delivered_pct | pc(0) if view.delivered_pct is not none else '', 'info') }}
+  {{ kpi(t('Accepted'), material.accepted | qty, view.accepted_pct | pc(0) if view.accepted_pct is not none else '', 'good') }}
+  {{ kpi(t('Installed'), material.installed | qty, view.installed_pct | pc(0) if view.installed_pct is not none else '', 'good') }}
+  {{ kpi(t('Available stock'), view.available | qty, view.stock_status,
+         'bad' if view.stock_status == 'SHORTAGE' else ('warn' if view.stock_status == 'LOW STOCK' else 'good')) }}
+</div>
+
+<div class="alert alert-secondary py-2 text-tiny">
+  {{ t("Delivered means physically received. Accepted means inspected and accepted. Installed means fixed in the works. The application keeps these apart and never promotes one into another.") }}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-5">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Material data") }}</h2></div>
+      <div class="panel-body">
+        <form method="post" class="form-grid">
+          <div class="full"><label class="form-label">{{ t("Item") }}</label>
+            <input name="item" value="{{ material.item }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Manufacturer") }}</label>
+            <input name="manufacturer" value="{{ material.manufacturer or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Vendor") }}</label>
+            <input name="vendor" value="{{ material.vendor or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Approved vendor") }}</label>
+            <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="approved_vendor"
+                   value="1" {{ 'checked' if material.approved_vendor }}></div></div>
+          <div><label class="form-label">{{ t("Unit") }}</label>
+            <input name="unit" value="{{ material.unit or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Contract qty") }}</label>
+            <input name="contract_quantity" value="{{ material.contract_quantity or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Required") }}</label>
+            <input name="total_required" value="{{ material.total_required or 0 }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Ordered") }}</label>
+            <input name="ordered" value="{{ material.ordered or 0 }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Manufactured") }}</label>
+            <input name="manufactured" value="{{ material.manufactured or 0 }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Installed") }}</label>
+            <input name="installed" value="{{ material.installed or 0 }}" class="form-control form-control-lg"></div>
+          <div class="full text-tiny text-muted">
+            {{ t("Delivered and accepted are recalculated from the delivery records below and cannot be typed here.") }}
+          </div>
+          <div><label class="form-label">{{ t("PO reference") }}</label>
+            <input name="po_reference" value="{{ material.po_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("FAT required") }}</label>
+            <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="fat_required"
+                   value="1" {{ 'checked' if material.fat_required }}></div></div>
+          <div><label class="form-label">{{ t("FAT status") }}</label>{{ select('fat_status', C.FAT_STATUS, material.fat_status) }}</div>
+          <div><label class="form-label">{{ t("FAT date") }}</label>
+            <input type="date" name="fat_date" value="{{ material.fat_date | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Planned delivery") }}</label>
+            <input type="date" name="planned_delivery" value="{{ material.planned_delivery | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Forecast delivery") }}</label>
+            <input type="date" name="forecast_delivery" value="{{ material.forecast_delivery | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Delivery note ref.") }}</label>
+            <input name="delivery_note_reference" value="{{ material.delivery_note_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Material certificate") }}</label>
+            <input name="material_certificate_reference" value="{{ material.material_certificate_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Allocated area") }}</label>{{ area_select('allocated_area_id', areas, material.allocated_area_id) }}</div>
+          <div><label class="form-label">{{ t("Low-stock threshold %") }}</label>
+            <input name="low_stock_threshold_pct" value="{{ material.low_stock_threshold_pct or '' }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ material.comments or '' }}</textarea></div>
+          <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save material") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-7">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Deliveries") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.deliveries') }}">{{ t("Record a delivery") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Delivery note") }}</th><th class="num">{{ t("Delivered") }}</th>
+            <th class="num">{{ t("Accepted") }}</th><th class="num">{{ t("Rejected") }}</th><th>{{ t("Status") }}</th><th>{{ t("Certificate") }}</th></tr></thead>
+          <tbody>
+            {% for row in deliveries %}
+            <tr><td class="nowrap">{{ row.delivery_date | d }}</td>
+              <td class="mono">{{ row.delivery_note_reference or '-' }}</td>
+              <td class="num">{{ row.quantity | qty }}</td>
+              <td class="num">{{ row.accepted_quantity | qty }}</td>
+              <td class="num">{{ row.rejected_quantity | qty }}</td>
+              <td>{{ status_badge(row.status, 'sm') }}</td>
+              <td class="text-tiny">{{ row.certificate_reference or '-' }}</td></tr>
+            {% else %}<tr><td colspan="7">{{ empty(t('No delivery recorded.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Warehouse movements") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Type") }}</th><th class="num">{{ t("Quantity") }}</th><th>{{ t("Area") }}</th>
+            <th>{{ t("Reference") }}</th><th></th></tr></thead>
+          <tbody>
+            {% for row in transactions %}
+            <tr><td class="nowrap">{{ row.transaction_date | d }}</td>
+              <td>{{ row.transaction_type }}</td>
+              <td class="num">{{ row.quantity | qty }}</td>
+              <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+              <td class="text-tiny">{{ row.reference or '-' }}</td>
+              <td><form method="post" action="{{ url_for('procurement.delete_transaction', txn_id=row.id) }}">
+                <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td></tr>
+            {% else %}<tr><td colspan="6">{{ empty(t('No stock movement recorded.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+        <div class="p-3 border-top">
+          <form method="post" action="{{ url_for('procurement.add_transaction', material_id=material.id) }}"
+                class="form-grid">
+            <div><label class="form-label">{{ t("Date") }}</label>
+              <input type="date" name="transaction_date" value="{{ TODAY | iso }}" class="form-control form-control-sm"></div>
+            <div><label class="form-label">{{ t("Type") }}</label>{{ select('transaction_type', C.MATERIAL_TXN_TYPES, 'ISSUE TO WORKFRONT') }}</div>
+            <div><label class="form-label">{{ t("Quantity") }}</label>
+              <input name="quantity" inputmode="decimal" class="form-control form-control-lg" required></div>
+            <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+            <div><label class="form-label">{{ t("Reference") }}</label>
+              <input name="reference" class="form-control form-control-sm"></div>
+            <div class="full"><button class="btn btn-primary btn-sm">{{ t("Record movement") }}</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

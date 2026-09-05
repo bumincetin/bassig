@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, bar, empty %}
+{% block title %}{{ t("Testing &amp; Acceptance") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Testing &amp; contractual acceptance") }}</h1>
+    <div class="sub">{{ note }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('acceptance.documents') }}">{{ t("Document register") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('acceptance.export') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Overall acceptance readiness'),
+         overall.percent | pc(1) if overall.percent is not none else 'DATA REQUIRED',
+         overall.satisfied ~ ' of ' ~ overall.considered ~ ' items accepted',
+         'good' if (overall.percent or 0) >= 100 else 'info') }}
+  {% for view in overall.gates %}
+    {{ kpi(t('Gate') ~ view.gate.gate_code,
+           view.readiness_pct | pc(0) if view.readiness_pct is not none else 'DATA REQUIRED',
+           view.gate.name,
+           'good' if (view.readiness_pct or 0) >= 100 else ('warn' if view.readiness_pct else 'bad')) }}
+  {% endfor %}
+</div>
+
+<div class="gate-strip mb-3">
+  {% for view in overall.gates %}
+  <div class="panel mb-0">
+    <div class="panel-head">
+      <h2>{{ t("Gate") }} {{ view.gate.gate_code }}</h2>
+      {{ status_badge(view.gate.status, 'sm') }}
+    </div>
+    <div class="panel-body">
+      <div class="fw-bold mb-1">{{ view.gate.name }}</div>
+      <div class="source-note mb-2">{{ view.gate.contract_reference }}</div>
+      {{ bar(view.readiness_pct, 'good' if (view.readiness_pct or 0) >= 100 else '') }}
+      <div class="stat-line"><span>{{ t("Readiness") }}</span>
+        <strong>{{ view.readiness_pct | pc(0) if view.readiness_pct is not none else 'DATA REQUIRED' }}</strong></div>
+      <div class="stat-line"><span>{{ t("Items accepted") }}</span><strong>{{ view.satisfied }} / {{ view.considered }}</strong></div>
+      <div class="stat-line"><span>{{ t("Open items") }}</span><strong>{{ view.open_items | length }}</strong></div>
+      <div class="stat-line"><span>{{ t("Rejected items") }}</span>
+        <strong class="{{ 'text-danger' if view.rejected_items }}">{{ view.rejected_items | length }}</strong></div>
+      <div class="stat-line"><span>{{ t("Missing mandatory documents") }}</span>
+        <strong class="{{ 'text-danger' if view.documents.missing_count }}">{{ view.documents.missing_count }}</strong></div>
+      <div class="stat-line"><span>{{ t("Derived state") }}</span>{{ status_badge(view.derived_state, 'sm') }}</div>
+      <a class="btn btn-sm btn-primary mt-2 w-100"
+         href="{{ url_for('acceptance.gate', gate_code=view.gate.gate_code) }}">{{ t("Open gate") }} {{ view.gate.gate_code }}</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="alert alert-secondary py-2 text-tiny">
+  {{ t("Readiness counts only items recorded as ACCEPTED. Items marked NOT APPLICABLE are excluded from the denominator. Reaching 100% readiness means the prerequisites are recorded as met - it does not issue a certificate and does not constitute acceptance.") }}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Punch List") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('issues.index') }}">{{ t("Register") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Title") }}</th><th>{{ t("Gate") }}</th><th>{{ t("Target") }}</th><th>{{ t("Status") }}</th></tr></thead>
+          <tbody>
+            {% for row in punch %}
+            <tr><td class="mono"><a href="{{ url_for('quality.detail', record_id=row.id) }}">{{ row.record_number }}</a></td>
+              <td class="mw-260">{{ row.title or '-' }}</td>
+              <td>{{ row.gate_code or '-' }}</td>
+              <td class="nowrap">{{ row.target_closure_date | d }}</td>
+              <td>{{ status_badge(row.status, 'sm') }}</td></tr>
+            {% else %}<tr><td colspan="5">{{ empty(t('No punch list item registered.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Test records") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('quality.index', type='TEST RECORD') }}">{{ t("Quality register") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Date") }}</th><th>{{ t("Title") }}</th><th>{{ t("Result") }}</th><th>{{ t("Status") }}</th></tr></thead>
+          <tbody>
+            {% for row in tests %}
+            <tr><td class="mono"><a href="{{ url_for('quality.detail', record_id=row.id) }}">{{ row.record_number }}</a></td>
+              <td class="nowrap">{{ row.record_date | d }}</td>
+              <td class="mw-260">{{ row.title or '-' }}</td>
+              <td>{% if row.inspection_result %}{{ status_badge(row.inspection_result, 'sm') }}{% else %}-{% endif %}</td>
+              <td>{{ status_badge(row.status, 'sm') }}</td></tr>
+            {% else %}<tr><td colspan="5">{{ empty(t('No test record registered. Raise test records from the Quality module as tests are completed.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

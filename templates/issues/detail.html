@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, select, area_select %}
+{% block title %}{{ issue.issue_number }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ issue.issue_number }} &mdash; {{ issue.title }}</h1>
+    <div class="sub">{{ t("Raised {date} by {person}", date=issue.date_raised | d, person=issue.raised_by or t('not recorded')) }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('issues.index') }}">{{ t("Back") }}</a>
+    <form method="post" action="{{ url_for('issues.delete', issue_id=issue.id) }}"
+          data-confirm="{{ t('Delete {number}?', number=issue.issue_number) }}">
+      <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button></form>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Status'), derived, 'recorded: ' ~ issue.status,
+         'bad' if derived == 'OVERDUE' else ('good' if derived == 'CLOSED' else 'warn')) }}
+  {{ kpi(t('Priority'), issue.priority) }}
+  {{ kpi(t('Target date'), issue.target_date | d) }}
+  {{ kpi(t('Closed'), issue.closed_date | d) }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Action") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div class="full"><label class="form-label">{{ t("Title") }}</label>
+        <input name="title" value="{{ issue.title }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Description") }}</label>
+        <textarea name="description" rows="3" class="form-control form-control-sm">{{ issue.description or '' }}</textarea></div>
+      <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.ISSUE_CATEGORIES, issue.category) }}</div>
+      <div><label class="form-label">{{ t("Priority") }}</label>{{ select('priority', C.PRIORITIES, issue.priority) }}</div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.ACTION_STATUS, issue.status, none, 'form-select form-select-lg') }}</div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" value="{{ issue.wbs_code or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas, issue.area_id) }}</div>
+      <div><label class="form-label">{{ t("Responsible") }}</label>
+        <input name="responsible_party" value="{{ issue.responsible_party or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Target date") }}</label>
+        <input type="date" name="target_date" value="{{ issue.target_date | iso }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Closed date") }}</label>
+        <input type="date" name="closed_date" value="{{ issue.closed_date | iso }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Action taken") }}</label>
+        <textarea name="action" rows="3" class="form-control form-control-sm">{{ issue.action or '' }}</textarea></div>
+      <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+        <textarea name="comments" rows="2" class="form-control form-control-sm">{{ issue.comments or '' }}</textarea></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Save action") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

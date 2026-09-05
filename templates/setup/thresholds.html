@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}{{ t("Thresholds") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Control thresholds") }}</h1>
+    <div class="sub">
+      {{ t("Every classification rule in the application reads these values. Changing one recalculates the dashboards, registers and reports immediately.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('setup.index') }}">{{ t("Back to setup") }}</a>
+    <form method="post" action="{{ url_for('setup.reset_thresholds') }}"
+          data-confirm="{{ t('Reset every threshold to its default value?') }}">
+      <button class="btn btn-sm btn-outline-warning">{{ t("Reset to defaults") }}</button>
+    </form>
+  </div>
+</div>
+
+<form method="post">
+  {% for category, rows in grouped.items() %}
+  <div class="panel">
+    <div class="panel-head"><h2>{{ category }}</h2></div>
+    <div class="panel-body">
+      <div class="form-grid">
+        {% for row in rows %}
+        <div class="full">
+          <label class="form-label">{{ row.key.replace('_', ' ') | title }}</label>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <input name="{{ row.key }}" value="{{ row.value or '' }}"
+                   class="form-control form-control-lg" style="max-width:220px">
+            <span class="text-tiny text-muted">
+              {{ t("default") }} {{ defaults[row.key][0] if row.key in defaults else '-' }} &middot; {{ row.value_type }}
+            </span>
+          </div>
+          <div class="text-tiny text-muted mt-1">{{ row.description }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <button class="btn btn-primary btn-lg">{{ t("Save all thresholds") }}</button>
+</form>
+
+<div class="panel mt-3">
+  <div class="panel-head"><h2>{{ t("How the schedule classification works") }}</h2></div>
+  <div class="panel-body text-tiny">
+    <p class="mb-1">{{ t("Variance is actual percentage minus planned percentage, in percentage points.") }}</p>
+    <ul class="mb-1">
+      <li>{{ t("variance") }} &ge; <code>variance_at_risk_pp</code> &rarr; <strong>{{ t("ON TRACK") }}</strong></li>
+      <li><code>variance_critical_pp</code> &le; {{ t("variance") }} &lt; <code>variance_at_risk_pp</code> &rarr; <strong>{{ t("AT RISK") }}</strong></li>
+      <li>{{ t("variance") }} &lt; <code>variance_critical_pp</code> &rarr; <strong>{{ t("CRITICAL") }}</strong></li>
+    </ul>
+    <p class="mb-0">{{ t("An incomplete milestone whose planned finish has passed is classified {status} regardless of its variance.",
+                           status="<strong>" ~ t("CRITICAL") ~ "</strong>") | safe }}</p>
+  </div>
+</div>
+{% endblock %}

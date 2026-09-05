@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import empty, data_required %}
+{% block title %}{{ t("Areas / Workfronts") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Areas &amp; workfronts") }}</h1>
+    <div class="sub">
+      {{ t("Workfront codes must come from the approved IFC / general layout. The application never invents area codes and ships with none.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('dataio.index') }}">{{ t("Import areas") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('setup.export_areas') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if needs_area_data %}
+  {{ data_required(t('the project area / workfront coding register derived from the approved IFC or general layout. The earthmoving layout in the source pack carries section lines and cut/fill volumes but no workfront coding, so no area can be created from it automatically.')) }}
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} workfront(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("Code") }}</th><th>{{ t("Name") }}</th><th>{{ t("Parent") }}</th><th>{{ t("Drawing reference") }}</th>
+        <th>{{ t("IFC rev.") }}</th><th>{{ t("Source document") }}</th><th>{{ t("Active") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="{{ 'text-muted' if not row.active }}">
+          <td class="mono"><strong>{{ row.area_code }}</strong></td>
+          <td>{{ row.area_name }}
+            {% if row.description %}<div class="text-tiny text-muted">{{ row.description }}</div>{% endif %}</td>
+          <td class="mono">{{ row.parent.area_code if row.parent else '-' }}</td>
+          <td class="text-tiny">{{ row.drawing_reference or '-' }}</td>
+          <td class="mono">{{ row.ifc_revision or '-' }}</td>
+          <td class="text-tiny">{{ row.source_document.label if row.source_document else 'not linked' }}</td>
+          <td>{{ 'Yes' if row.active else 'No' }}</td>
+          <td>
+            <details class="inline-form"><summary>{{ t("Edit") }}</summary>
+              <form method="post" action="{{ url_for('setup.update_area', area_id=row.id) }}" class="mt-1">
+                <input name="area_name" value="{{ row.area_name }}" class="form-control form-control-sm mb-1">
+                <textarea name="description" rows="2" class="form-control form-control-sm mb-1">{{ row.description or '' }}</textarea>
+                <select name="parent_area_id" class="form-select form-select-sm mb-1">
+                  <option value="">{{ t("No parent") }}</option>
+                  {% for other in rows if other.id != row.id %}
+                    <option value="{{ other.id }}" {{ 'selected' if row.parent_area_id == other.id }}>{{ other.area_code }}</option>
+                  {% endfor %}
+                </select>
+                <input name="drawing_reference" value="{{ row.drawing_reference or '' }}"
+                       class="form-control form-control-sm mb-1" placeholder="{{ t('Drawing reference') }}">
+                <input name="ifc_revision" value="{{ row.ifc_revision or '' }}"
+                       class="form-control form-control-sm mb-1" placeholder="{{ t('IFC revision') }}">
+                <select name="source_document_id" class="form-select form-select-sm mb-1">
+                  <option value="">{{ t("Not linked") }}</option>
+                  {% for doc in documents %}
+                    <option value="{{ doc.id }}" {{ 'selected' if row.source_document_id == doc.id }}>{{ doc.label }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
+              </form>
+              <div class="d-flex gap-1 mt-1">
+                <form method="post" action="{{ url_for('setup.update_area', area_id=row.id) }}">
+                  <input type="hidden" name="action" value="toggle">
+                  <button class="btn btn-sm btn-outline-secondary">{{ 'Deactivate' if row.active else 'Activate' }}</button>
+                </form>
+                <form method="post" action="{{ url_for('setup.update_area', area_id=row.id) }}"
+                      data-confirm="{{ t('Delete workfront {code}? Records allocated to it will show no area.', code=row.area_code) }}">
+                  <input type="hidden" name="action" value="delete">
+                  <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button>
+                </form>
+              </div>
+            </details>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="8">{{ empty(t('No workfront defined.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Create a workfront") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div><label class="form-label">{{ t("Area code") }}</label>
+        <input name="area_code" class="form-control form-control-lg" required
+               placeholder="{{ t('use the code from the approved layout') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Area name") }}</label>
+        <input name="area_name" class="form-control form-control-lg" required></div>
+      <div class="full"><label class="form-label">{{ t("Description") }}</label>
+        <textarea name="description" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div><label class="form-label">{{ t("Parent area") }}</label>
+        <select name="parent_area_id" class="form-select form-select-sm">
+          <option value="">{{ t("No parent") }}</option>
+          {% for row in rows %}<option value="{{ row.id }}">{{ row.label }}</option>{% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("Drawing reference") }}</label>
+        <input name="drawing_reference" class="form-control form-control-sm"
+               placeholder="e.g. 26C009-2C020"></div>
+      <div><label class="form-label">{{ t("IFC revision") }}</label>
+        <input name="ifc_revision" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked (the workfront will show no provenance)") }}</option>
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Notes") }}</label>
+        <textarea name="notes" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><button class="btn btn-primary btn-lg">{{ t("Create workfront") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

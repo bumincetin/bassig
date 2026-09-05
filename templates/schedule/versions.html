@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import status_badge, empty, select %}
+{% block title %}{{ t("Schedule versions") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Schedule versions") }}</h1>
+    <div class="sub">
+      {{ t("A contractual baseline is never overwritten. An updated programme is always a new version.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.index') }}">{{ t("Back to schedule") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('dataio.index') }}">{{ t("Import activities") }}</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Registered programmes") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Name") }}</th><th>{{ t("Type") }}</th><th>{{ t("Rev") }}</th><th>{{ t("Issued") }}</th><th>{{ t("Effective") }}</th>
+          <th class="num">{{ t("Activities") }}</th><th>{{ t("Flags") }}</th><th>{{ t("Source document") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for version in versions %}
+          <tr>
+            <td>{{ version.name }}</td>
+            <td>{{ status_badge(version.schedule_type, 'sm') }}</td>
+            <td class="mono">{{ version.revision or '-' }}</td>
+            <td class="nowrap">{{ version.issue_date | d }}</td>
+            <td class="nowrap">{{ version.effective_date | d }}</td>
+            <td class="num">{{ activity_counts.get(version.id, 0) }}</td>
+            <td>
+              {% if version.is_contractual_baseline %}<span class="badge bg-dark badge-sm">BASELINE</span>{% endif %}
+              {% if version.is_current_working %}<span class="badge bg-primary badge-sm">WORKING</span>{% endif %}
+              {% if version.locked %}<span class="badge bg-secondary badge-sm">LOCKED</span>{% endif %}
+            </td>
+            <td class="text-tiny">{{ version.source_document.label if version.source_document else 'not recorded' }}</td>
+            <td>{{ status_badge(version.status, 'sm') }}</td>
+            <td class="nowrap">
+              <div class="d-flex gap-1 flex-wrap">
+                {% if version.locked %}
+                  {% if version.is_contractual_baseline %}
+                    <details class="inline-form"><summary>{{ t("Unlock") }}</summary>
+                      <form method="post" action="{{ url_for('schedule.update_version', version_id=version.id) }}" class="mt-1">
+                        <input type="hidden" name="action" value="unlock">
+                        <p class="text-tiny text-danger mb-1">
+                          {{ t("This is the contractual baseline. Unlocking allows its contractual dates to be changed. Type {phrase} to confirm. The action is recorded on the version.",
+                                 phrase="<strong>UNLOCK BASELINE</strong>") | safe }}
+                        </p>
+                        <input name="confirm" class="form-control form-control-sm mb-1"
+                               placeholder="{{ t('UNLOCK BASELINE') }}" autocomplete="off">
+                        <button class="btn btn-sm btn-outline-danger">{{ t("Unlock baseline") }}</button>
+                      </form>
+                    </details>
+                  {% else %}
+                    <form method="post" action="{{ url_for('schedule.update_version', version_id=version.id) }}">
+                      <input type="hidden" name="action" value="unlock">
+                      <button class="btn btn-sm btn-outline-warning py-0">{{ t("Unlock") }}</button>
+                    </form>
+                  {% endif %}
+                {% else %}
+                  <form method="post" action="{{ url_for('schedule.update_version', version_id=version.id) }}">
+                    <input type="hidden" name="action" value="lock">
+                    <button class="btn btn-sm btn-outline-secondary py-0">{{ t("Lock") }}</button>
+                  </form>
+                {% endif %}
+                {% if not version.is_current_working and not version.is_contractual_baseline %}
+                  <form method="post" action="{{ url_for('schedule.update_version', version_id=version.id) }}">
+                    <input type="hidden" name="action" value="set_current">
+                    <button class="btn btn-sm btn-outline-primary py-0">{{ t("Set current") }}</button>
+                  </form>
+                {% endif %}
+                {% if not version.is_contractual_baseline %}
+                  <form method="post" action="{{ url_for('schedule.delete_version', version_id=version.id) }}"
+                        data-confirm="{{ t('Delete {label} and all {count} of its activities? This cannot be undone.', label=version.label, count=activity_counts.get(version.id, 0)) }}">
+                    <button class="btn btn-sm btn-outline-danger py-0">{{ t("Delete") }}</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="10">{{ empty(t('No schedule version registered yet. Create the contractual baseline first.')) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register a new programme version") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div>
+        <label class="form-label">{{ t("Name") }}</label>
+        <input name="name" class="form-control form-control-sm" required
+               placeholder="{{ t('e.g. Schedule 03 - Project Timeline') }}">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Revision") }}</label>
+        <input name="revision" class="form-control form-control-sm" placeholder="e.g. 27.07.2026">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Type") }}</label>
+        {{ select('schedule_type', C.SCHEDULE_TYPES, 'CURRENT WORKING') }}
+      </div>
+      <div>
+        <label class="form-label">{{ t("Issue date") }}</label>
+        <input type="date" name="issue_date" class="form-control form-control-sm">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Effective date") }}</label>
+        <input type="date" name="effective_date" class="form-control form-control-sm">
+      </div>
+      <div>
+        <label class="form-label">{{ t("Status") }}</label>
+        {{ select('status', C.SCHEDULE_STATUS, 'ACTIVE') }}
+      </div>
+      <div class="full">
+        <label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked to a registered source document") }}</option>
+          {% for doc in documents %}
+            <option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="full">
+        <label class="form-label">{{ t("Notes") }}</label>
+        <textarea name="notes" rows="2" class="form-control form-control-sm"></textarea>
+      </div>
+      <div class="full">
+        <button class="btn btn-primary btn-sm">{{ t("Create version") }}</button>
+        <span class="source-note ms-2">
+          {{ t("Choosing CONTRACTUAL BASELINE locks the version and clears the baseline flag from any other programme.") }}
+        </span>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

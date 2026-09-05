@@ -1,0 +1,27 @@
+# ---- Live data: never committed -------------------------------------------
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.db-journal
+data/imports/
+data/logs/
+data/secret_key
+backups/*.db
+static/uploads/*
+!static/uploads/.gitkeep
+project_data/source_documents/*
+!project_data/source_documents/.gitkeep
+
+# ---- Contract documents: confidential, kept outside the repository ---------
+BASSIGNANA_EPC_SOFTWARE_SOURCE_PACK_v1.0/
+
+# ---- Local environment / secrets ------------------------------------------
+.env
+*.local
+
+# ---- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/

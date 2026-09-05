@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select %}
+{% block title %}{{ row.wbs_code }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ row.wbs_code }} &mdash; {{ row.activity_name }}</h1>
+    <div class="sub">
+      {{ version.label }} [{{ version.schedule_type }}] &middot;
+      {{ row.work_package or 'no work package' }} &middot; {{ row.discipline or 'no discipline' }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.index') }}">{{ t("Back to schedule") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Actual %'), actual_pct | pc if actual_pct is not none else 'DATA REQUIRED',
+         'basis: ' ~ actual_basis, 'good' if actual_pct else '') }}
+  {{ kpi(t('Completed quantity'), completed_quantity | qty(row.unit or ''), 'from daily records') }}
+  {{ kpi(t('Total required'), row.total_required_quantity | qty(row.unit or '') if row.total_required_quantity else 'DATA REQUIRED') }}
+  {{ kpi(t('Progress method'), row.progress_method or 'MANUAL') }}
+  {{ kpi(t('Weight'), row.progress_weight | num(2) if row.progress_weight else '-', row.weight_basis) }}
+  {{ kpi(t('Milestone'), 'Yes' if row.is_milestone else 'No') }}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Activity data") }}</h2></div>
+      <div class="panel-body">
+        {% if version.is_contractual_baseline %}
+          <div class="alert alert-secondary py-2 text-tiny">
+            {{ t("This activity belongs to the contractual baseline. Contractual dates are read-only. Record execution against the current working programme.") }}
+          </div>
+        {% endif %}
+        <form method="post" class="form-grid">
+          <div class="full">
+            <label class="form-label">{{ t("Activity name") }}</label>
+            <input name="activity_name" value="{{ row.activity_name }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Work package") }}</label>
+            <input name="work_package" value="{{ row.work_package or '' }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Discipline") }}</label>
+            {{ select('discipline', C.DISCIPLINES, row.discipline, 'Not set') }}
+          </div>
+          <div>
+            <label class="form-label">{{ t("Responsible party") }}</label>
+            <input name="responsible_party" value="{{ row.responsible_party or '' }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Current planned start") }}</label>
+            <input type="date" name="plan_start" value="{{ row.plan_start | iso }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Current planned finish") }}</label>
+            <input type="date" name="plan_finish" value="{{ row.plan_finish | iso }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Actual start") }}</label>
+            <input type="date" name="actual_start" value="{{ row.actual_start | iso }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Actual finish") }}</label>
+            <input type="date" name="actual_finish" value="{{ row.actual_finish | iso }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Status") }}</label>
+            {{ select('status', C.ACTIVITY_STATUS, row.status) }}
+          </div>
+          <div>
+            <label class="form-label">{{ t("Milestone") }}</label>
+            <div class="form-check mt-1">
+              <input type="checkbox" class="form-check-input" name="is_milestone" value="1"
+                     {{ 'checked' if row.is_milestone }}>
+              <span class="text-tiny">{{ t("Contractual milestone") }}</span>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">{{ t("Progress method") }}</label>
+            {{ select('progress_method', C.PROGRESS_METHODS, row.progress_method) }}
+          </div>
+          <div>
+            <label class="form-label">{{ t("Unit") }}</label>
+            <input name="unit" value="{{ row.unit or '' }}" class="form-control form-control-sm">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Total required quantity") }}</label>
+            <input name="total_required_quantity" value="{{ row.total_required_quantity or '' }}"
+                   class="form-control form-control-sm" inputmode="decimal">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Approved progress weight") }}</label>
+            <input name="progress_weight" value="{{ row.progress_weight or '' }}"
+                   class="form-control form-control-sm" inputmode="decimal">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Reported completion %") }}{{ ' (' ~ t('manual') ~ ')' if row.manual_pct }}</label>
+            <input name="reported_completion_pct" value="{{ row.reported_completion_pct or 0 }}"
+                   class="form-control form-control-sm" inputmode="decimal">
+          </div>
+          <div>
+            <label class="form-label">{{ t("Baseline link (WBS)") }}</label>
+            <select name="baseline_link_wbs" class="form-select form-select-sm">
+              <option value="">{{ t("Automatic") }} ({{ match_kind }})</option>
+              {% for code in baseline_codes %}
+                <option value="{{ code }}" {{ 'selected' if row.baseline_link_wbs == code }}>{{ code }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="full">
+            <label class="form-label">{{ t("Notes / source") }}</label>
+            <textarea name="notes" rows="2" class="form-control form-control-sm">{{ row.notes or '' }}</textarea>
+          </div>
+          <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save activity") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Contractual baseline counterpart") }}</h2></div>
+      <div class="panel-body">
+        {% if version.is_contractual_baseline %}
+          <div class="stat-line"><span>{{ t("Baseline start") }}</span><strong>{{ row.baseline_start | d }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline finish") }}</span><strong>{{ row.baseline_finish | d }}</strong></div>
+          <p class="source-note mt-2 mb-0">{{ t("This row is itself part of the contractual baseline.") }}</p>
+        {% elif matched %}
+          <div class="stat-line"><span>{{ t("Matched by") }}</span><strong>{{ match_kind }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline WBS") }}</span><strong class="font-monospace">{{ matched.wbs_code }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline activity") }}</span><strong>{{ matched.activity_name }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline start") }}</span><strong>{{ (matched.baseline_start or matched.plan_start) | d }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline finish") }}</span><strong>{{ (matched.baseline_finish or matched.plan_finish) | d }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline duration") }}</span><strong>{{ matched.duration_days | num(0) }} {{ t("days") }}</strong></div>
+        {% else %}
+          <div class="alert alert-warning py-2 mb-0 text-tiny">
+            {{ t("No contractual counterpart was found for this activity. Set a baseline link above if it corresponds to a renumbered baseline activity, or record it as scope introduced after the contractual programme.") }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Recent daily records") }}</h2></div>
+      <div class="panel-body tight">
+        {% if daily_rows %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Area") }}</th><th class="num">{{ t("Planned") }}</th><th class="num">{{ t("Actual") }}</th>
+              <th class="num">{{ t("Ach. %") }}</th><th class="num">{{ t("Workers") }}</th></tr></thead>
+            <tbody>
+              {% for entry in daily_rows %}
+              <tr>
+                <td class="nowrap">{{ entry.entry_date | d }}</td>
+                <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
+                <td class="num">{{ entry.planned_quantity | qty }}</td>
+                <td class="num">{{ entry.actual_quantity | qty }}</td>
+                <td class="num">{{ entry.achievement_pct | pc(0) if entry.achievement_pct is not none else '-' }}</td>
+                <td class="num">{{ entry.workers }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}{{ empty(t('No daily progress has been recorded against this WBS code.')) }}{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

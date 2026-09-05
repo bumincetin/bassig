@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ t("Workforce &amp; Plant") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Workforce &amp; plant") }}</h1>
+    <div class="sub">{{ date_from | d }} {{ t("to") }} {{ date_to | d }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('workforce.contractors') }}">{{ t("Contractors") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('workforce.export_workforce', **{'from': date_from|iso, 'to': date_to|iso}) }}">{{ t("Workforce CSV") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('workforce.export_equipment', **{'from': date_from|iso, 'to': date_to|iso}) }}">{{ t("Equipment CSV") }}</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="kpi-grid">
+  {{ kpi(t('Workforce entries'), workforce | length) }}
+  {{ kpi(t('Total workers logged'), total_workers, 'sum across all days') }}
+  {{ kpi(t('Man-hours'), total_man_hours | num(0)) }}
+  {{ kpi(t('Plant working hours'), equipment_totals.working | num(0)) }}
+  {{ kpi(t('Plant lost hours'), equipment_totals.lost | num(0), 'idle + breakdown',
+         'bad' if equipment_totals.lost else 'good') }}
+  {{ kpi(t('Equipment utilisation'),
+         equipment_totals.utilisation | pc(1) if equipment_totals.utilisation is not none else 'n/a',
+         '', 'good' if (equipment_totals.utilisation or 0) >= 70 else 'warn') }}
+</div>
+
+<div class="chart-grid no-print">
+  <div class="panel"><div class="panel-head"><h2>{{ t("Workforce trend") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartTrend"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Equipment utilisation trend") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartUtil"></canvas></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Workforce by discipline") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Discipline") }}</th><th class="num">{{ t("Workers (sum)") }}</th><th class="num">{{ t("Man-hours") }}</th><th class="num">{{ t("Days") }}</th></tr></thead>
+          <tbody>
+            {% for name, row in by_discipline.items() %}
+            <tr><td>{{ name }}</td><td class="num">{{ row.workers }}</td>
+              <td class="num">{{ row.man_hours | num(0) }}</td><td class="num">{{ row.days }}</td></tr>
+            {% else %}<tr><td colspan="4">{{ empty(t('No workforce recorded in this period.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Workforce by contractor") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Contractor") }}</th><th class="num">{{ t("Workers (sum)") }}</th><th class="num">{{ t("Man-hours") }}</th><th class="num">{{ t("Days") }}</th></tr></thead>
+          <tbody>
+            {% for name, row in by_contractor.items() %}
+            <tr><td>{{ name }}</td><td class="num">{{ row.workers }}</td>
+              <td class="num">{{ row.man_hours | num(0) }}</td><td class="num">{{ row.days }}</td></tr>
+            {% else %}<tr><td colspan="4">{{ empty(t('No workforce recorded in this period.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Equipment utilisation by type") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("Equipment") }}</th><th class="num">{{ t("Units") }}</th><th class="num">{{ t("Working h") }}</th>
+        <th class="num">{{ t("Idle h") }}</th><th class="num">{{ t("Breakdown h") }}</th><th class="num">{{ t("Utilisation") }}</th></tr></thead>
+      <tbody>
+        {% for name, row in by_equipment.items() %}
+        <tr><td>{{ name }}</td><td class="num">{{ row.units }}</td>
+          <td class="num">{{ row.working | num(1) }}</td><td class="num">{{ row.idle | num(1) }}</td>
+          <td class="num">{{ row.breakdown | num(1) }}</td>
+          <td class="num">{{ row.utilisation | pc(0) if row.utilisation is not none else '-' }}</td></tr>
+        {% else %}<tr><td colspan="6">{{ empty(t('No plant recorded in this period.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Record workforce") }}</h2></div>
+      <div class="panel-body">
+        <form method="post" action="{{ url_for('workforce.add_workforce') }}" class="form-grid">
+          <div><label class="form-label">{{ t("Date") }}</label>
+            <input type="date" name="entry_date" value="{{ TODAY | iso }}" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Contractor") }}</label>
+            <select name="contractor_id" class="form-select form-select-lg">
+              <option value="">{{ t("Other (type below)") }}</option>
+              {% for contractor in contractors %}<option value="{{ contractor.id }}">{{ contractor.name }}</option>{% endfor %}
+            </select></div>
+          <div><label class="form-label">{{ t("Other contractor") }}</label>
+            <input name="contractor_name" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, 'Civil', none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Work package") }}</label>
+            <input name="work_package" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+          <div><label class="form-label">{{ t("Workers") }}</label>
+            <input name="workers" inputmode="numeric" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Hours") }}</label>
+            <input name="hours" inputmode="decimal" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Overtime") }}</label>
+            <input name="overtime_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+            <input name="comments" class="form-control form-control-sm"></div>
+          <div class="full"><button class="btn btn-primary">{{ t("Record workforce") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Record plant / equipment") }}</h2></div>
+      <div class="panel-body">
+        <form method="post" action="{{ url_for('workforce.add_equipment') }}" class="form-grid">
+          <div><label class="form-label">{{ t("Date") }}</label>
+            <input type="date" name="entry_date" value="{{ TODAY | iso }}" class="form-control form-control-lg"></div>
+          <div class="full"><label class="form-label">{{ t("Equipment type") }}</label>
+            <input name="equipment_type" class="form-control form-control-lg" required></div>
+          <div><label class="form-label">{{ t("Owner") }}</label>
+            <input name="owner" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Contractor") }}</label>
+            <select name="contractor_id" class="form-select form-select-sm">
+              <option value="">{{ t("Not recorded") }}</option>
+              {% for contractor in contractors %}<option value="{{ contractor.id }}">{{ contractor.name }}</option>{% endfor %}
+            </select></div>
+          <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+          <div><label class="form-label">{{ t("Quantity") }}</label>
+            <input name="quantity" value="1" inputmode="numeric" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.EQUIPMENT_STATUS, 'WORKING', none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Working h") }}</label>
+            <input name="working_hours" inputmode="decimal" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Idle h") }}</label>
+            <input name="idle_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Breakdown h") }}</label>
+            <input name="breakdown_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Reason") }}</label>
+            <input name="reason" class="form-control form-control-sm"></div>
+          <div class="full"><button class="btn btn-primary">{{ t("Record plant") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Workforce entries") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap sticky"><table class="data">
+          <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Contractor") }}</th><th>{{ t("Discipline") }}</th><th class="num">{{ t("Workers") }}</th>
+            <th class="num">{{ t("Hours") }}</th><th class="num">{{ t("MH") }}</th><th></th></tr></thead>
+          <tbody>
+            {% for row in workforce %}
+            <tr><td class="nowrap">{{ row.entry_date | d }}</td>
+              <td>{{ row.contractor.name if row.contractor else (row.contractor_name or '-') }}</td>
+              <td>{{ row.discipline }}</td><td class="num">{{ row.workers }}</td>
+              <td class="num">{{ row.hours | num(1) }}</td><td class="num">{{ row.man_hours | num(1) }}</td>
+              <td><form method="post" action="{{ url_for('workforce.delete_workforce', entry_id=row.id) }}">
+                <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td></tr>
+            {% else %}<tr><td colspan="7">{{ empty(t('Nothing recorded.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Plant entries") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap sticky"><table class="data">
+          <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Equipment") }}</th><th>{{ t("Status") }}</th><th class="num">{{ t("Work") }}</th>
+            <th class="num">{{ t("Idle") }}</th><th class="num">{{ t("B/down") }}</th><th></th></tr></thead>
+          <tbody>
+            {% for row in equipment %}
+            <tr><td class="nowrap">{{ row.entry_date | d }}</td><td>{{ row.equipment_type }}</td>
+              <td>{{ status_badge(row.status, 'sm') }}</td>
+              <td class="num">{{ row.working_hours | num(1) }}</td>
+              <td class="num">{{ row.idle_hours | num(1) }}</td>
+              <td class="num">{{ row.breakdown_hours | num(1) }}</td>
+              <td><form method="post" action="{{ url_for('workforce.delete_equipment', entry_id=row.id) }}">
+                <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td></tr>
+            {% else %}<tr><td colspan="7">{{ empty(t('Nothing recorded.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+BAS.line('chartTrend',
+  {{ trend | map(attribute='date') | map('string') | list | tojson }},
+  [{ label: 'Workers on site', data: {{ trend | map(attribute='workers') | list | tojson }},
+     borderColor: BAS.palette.green }]);
+BAS.line('chartUtil',
+  {{ utilisation_trend | map(attribute='date') | map('string') | list | tojson }},
+  [{ label: 'Utilisation %', data: {{ utilisation_trend | map(attribute='utilisation') | list | tojson }},
+     borderColor: BAS.palette.teal }],
+  { scales: { y: { beginAtZero: true, max: 100 } } });
+</script>
+{% endblock %}

@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import status_badge, empty %}
+{% block title %}{{ t("Daily site report") }} {{ report_date | d }}{% endblock %}
+
+{% block content %}
+<div class="page-head no-print">
+  <div>
+    <h1>{{ t("Daily site report") }}</h1>
+    <div class="sub">{{ report_date | d }}</div>
+  </div>
+  <form class="page-actions" method="get" data-autosubmit>
+    <input type="date" name="date" value="{{ report_date | iso }}" class="form-control form-control-sm">
+    {% if report %}
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.detail', report_id=report.id) }}">{{ t("Edit diary") }}</a>
+    {% endif %}
+    <button type="button" class="btn btn-sm btn-primary" data-print>{{ t("Print / Save as PDF") }}</button>
+  </form>
+</div>
+
+<div class="report-sheet">
+
+  <div class="report-title">
+    <h1>{{ t("BASSIGNANA SOLAR 2") }}</h1>
+    <h2>{{ t("DAILY SITE REPORT") }}</h2>
+    <div class="meta">
+      {{ project.plant_name if project and project.plant_name else '' }}
+      {% if project and project.comune %} &middot; {{ project.comune }} ({{ project.provincia }}), {{ project.regione }}{% endif %}
+      {% if project and project.nominal_dc_kwp %} &middot; {{ project.nominal_dc_kwp | num(2) }} kWp{% endif %}
+    </div>
+  </div>
+
+  {% if not report %}
+    <div class="alert alert-danger py-2">
+      <strong>{{ t(C.DATA_REQUIRED) }}:</strong>
+      {{ t("no daily site diary has been filed for {date}. Any figures below come only from records dated on that day.", date=report_date | d) }}
+    </div>
+  {% endif %}
+
+  <!-- HEADER -->
+  <div class="report-section">
+    <h3>{{ t("Report details") }}</h3>
+    <div class="report-meta-grid">
+      <div><span>{{ t("Date") }}</span><br><strong>{{ report_date | d }}</strong></div>
+      <div><span>{{ t("Report number") }}</span><br><strong>{{ report.report_number if report else '-' }}</strong></div>
+      <div><span>{{ t("Shift") }}</span><br><strong>{{ report.shift if report else '-' }}</strong></div>
+      <div><span>{{ t("Weather AM / PM") }}</span><br><strong>{{ (report.weather or '-') if report else '-' }} / {{ (report.weather_pm or '-') if report else '-' }}</strong></div>
+      <div><span>{{ t("Temperature") }}</span><br><strong>
+        {% if report and (report.temperature_min_c is not none or report.temperature_max_c is not none) %}
+          {{ report.temperature_min_c | num(0) }} {{ t("to") }} {{ report.temperature_max_c | num(0) }} &deg;C
+        {% else %}-{% endif %}</strong></div>
+      <div><span>{{ t("Working hours") }}</span><br><strong>{{ ((report.work_start_time or '-') ~ ' - ' ~ (report.work_end_time or '-')) if report else '-' }}</strong></div>
+      <div><span>{{ t("Prepared by") }}</span><br><strong>{{ report.prepared_by if report and report.prepared_by else '-' }}</strong></div>
+      <div><span>{{ t("EPC contractor") }}</span><br><strong>{{ project.epc_contractor if project and project.epc_contractor else '-' }}</strong></div>
+      <div><span>{{ t("Client") }}</span><br><strong>{{ project.client if project and project.client else '-' }}</strong></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="report-section">
+    <h3>{{ t("Summary") }}</h3>
+    <ul class="summary-list">
+      {% for line in summary %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+  </div>
+
+  <!-- CONTRACTORS + WORKFORCE -->
+  <div class="report-section">
+    <h3>{{ t("Contractors present and workforce") }}</h3>
+    {% if by_contractor %}
+      <table class="data">
+        <thead><tr><th>{{ t("Contractor") }}</th><th class="num">{{ t("Workers") }}</th></tr></thead>
+        <tbody>
+          {% for name, workers in by_contractor.items() %}
+            <tr><td>{{ name }}</td><td class="num">{{ workers }}</td></tr>
+          {% endfor %}
+          <tr><td><strong>{{ t("Total") }}</strong></td><td class="num"><strong>{{ total_workers }}</strong></td></tr>
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No contractor workforce recorded on this date.')) }}{% endif %}
+
+    {% if by_discipline %}
+      <table class="data mt-2">
+        <thead><tr><th>{{ t("Discipline") }}</th><th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Hours") }}</th><th class="num">{{ t("Man-hours") }}</th></tr></thead>
+        <tbody>
+          {% for name, row in by_discipline.items() %}
+            <tr><td>{{ name }}</td><td class="num">{{ row.workers }}</td>
+              <td class="num">{{ row.hours | num(1) }}</td><td class="num">{{ row.man_hours | num(1) }}</td></tr>
+          {% endfor %}
+          <tr><td><strong>{{ t("Total") }}</strong></td><td class="num"><strong>{{ total_workers }}</strong></td>
+            <td></td><td class="num"><strong>{{ total_man_hours | num(1) }}</strong></td></tr>
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <!-- EQUIPMENT -->
+  <div class="report-section">
+    <h3>{{ t("Plant and equipment") }}</h3>
+    {% if equipment_rows %}
+      <table class="data">
+        <thead><tr><th>{{ t("Equipment") }}</th><th>{{ t("Owner") }}</th><th>{{ t("Status") }}</th><th class="num">{{ t("Qty") }}</th>
+          <th class="num">{{ t("Working h") }}</th><th class="num">{{ t("Idle h") }}</th><th class="num">{{ t("Breakdown h") }}</th>
+          <th class="num">{{ t("Util. %") }}</th><th>{{ t("Reason") }}</th></tr></thead>
+        <tbody>
+          {% for row in equipment_rows %}
+          <tr><td>{{ row.equipment_type }}</td>
+            <td>{{ row.owner or (row.contractor.name if row.contractor else '-') }}</td>
+            <td>{{ row.status }}</td><td class="num">{{ row.quantity }}</td>
+            <td class="num">{{ row.working_hours | num(1) }}</td>
+            <td class="num">{{ row.idle_hours | num(1) }}</td>
+            <td class="num">{{ row.breakdown_hours | num(1) }}</td>
+            <td class="num">{{ row.utilisation_pct | pc(0) if row.utilisation_pct is not none else '-' }}</td>
+            <td>{{ row.reason or '-' }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No plant recorded on this date.')) }}{% endif %}
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="report-section">
+    <h3>{{ t("Work performed &mdash; planned versus actual") }}</h3>
+    {% if progress_rows %}
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Workfront") }}</th><th>{{ t("Unit") }}</th>
+          <th class="num">{{ t("Planned") }}</th><th class="num">{{ t("Actual") }}</th><th class="num">{{ t("Ach. %") }}</th>
+          <th class="num">{{ t("Cumulative") }}</th><th class="num">{{ t("Required") }}</th><th class="num">{{ t("Compl. %") }}</th>
+          <th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Qty/wd") }}</th></tr></thead>
+        <tbody>
+          {% for row in progress_rows %}
+          <tr>
+            <td class="mono">{{ row.wbs_code }}</td>
+            <td>{{ row.activity_name or '-' }}</td>
+            <td>{{ row.area.area_code if row.area else '-' }}</td>
+            <td>{{ row.unit or '-' }}</td>
+            <td class="num">{{ row.planned_quantity | qty }}</td>
+            <td class="num">{{ row.actual_quantity | qty }}</td>
+            <td class="num">{{ row.achievement_pct | pc(0) if row.achievement_pct is not none else 'n/a' }}</td>
+            <td class="num">{{ row.cumulative_after | qty }}</td>
+            <td class="num">{{ row.total_required_quantity | qty if row.total_required_quantity else '-' }}</td>
+            <td class="num">{{ row.completion_pct | pc(0) if row.completion_pct is not none else '-' }}</td>
+            <td class="num">{{ row.workers }}</td>
+            <td class="num">{{ row.quantity_per_worker_day | num(2) if row.quantity_per_worker_day is not none else '-' }}</td>
+          </tr>
+          {% endfor %}
+          <tr><td colspan="4"><strong>{{ t("Total") }}</strong></td>
+            <td class="num"><strong>{{ planned_quantity | qty }}</strong></td>
+            <td class="num"><strong>{{ actual_quantity | qty }}</strong></td>
+            <td class="num"><strong>{{ achievement | pc(0) if achievement is not none else 'n/a' }}</strong></td>
+            <td colspan="5"></td></tr>
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No progress line recorded on this date.')) }}{% endif %}
+  </div>
+
+  <!-- WORKFRONT SUMMARY -->
+  {% if by_area %}
+  <div class="report-section">
+    <h3>{{ t("Production by workfront") }}</h3>
+    <table class="data">
+      <thead><tr><th>{{ t("Workfront") }}</th><th class="num">{{ t("Planned") }}</th><th class="num">{{ t("Actual") }}</th><th class="num">{{ t("Lines") }}</th></tr></thead>
+      <tbody>
+        {% for name, row in by_area.items() %}
+          <tr><td>{{ name }}</td><td class="num">{{ row.planned | qty }}</td>
+            <td class="num">{{ row.actual | qty }}</td><td class="num">{{ row.entries }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- CUMULATIVE PROGRESS -->
+  <div class="report-section">
+    <h3>{{ t("Cumulative project progress") }}</h3>
+    <div class="report-meta-grid">
+      <div><span>{{ t("Contractual planned") }}</span><br><strong>{{ contractual_planned_pct | pc(1) if contractual_planned_pct is not none else 'DATA REQUIRED' }}</strong></div>
+      <div><span>{{ t("Current plan") }}</span><br><strong>{{ rollup.overall_planned | pc(1) if rollup.overall_planned is not none else 'DATA REQUIRED' }}</strong></div>
+      <div><span>{{ t("Actual") }}</span><br><strong>{{ cumulative_actual_pct | pc(1) if cumulative_actual_pct is not none else 'DATA REQUIRED' }}</strong></div>
+      <div><span>{{ t("Variance vs current plan") }}</span><br><strong>{{ rollup.variance | signed ~ ' pp' if rollup.variance is not none else '-' }}</strong></div>
+      <div><span>{{ t("Weighting basis") }}</span><br><strong>{{ rollup.basis.basis }}</strong></div>
+    </div>
+    {% if rollup.basis.warning %}<p class="source-note mt-1">{{ rollup.basis.warning }}</p>{% endif %}
+  </div>
+
+  <!-- DELIVERIES + SHORTAGES -->
+  <div class="report-section">
+    <h3>{{ t("Deliveries and material status") }}</h3>
+    {% if delivery_rows %}
+      <table class="data">
+        <thead><tr><th>{{ t("Package") }}</th><th>{{ t("Material") }}</th><th>{{ t("Delivery note") }}</th><th class="num">{{ t("Delivered") }}</th>
+          <th class="num">{{ t("Accepted") }}</th><th>{{ t("Status") }}</th></tr></thead>
+        <tbody>
+          {% for row in delivery_rows %}
+          <tr><td>{{ row.package.package_code if row.package else '-' }}</td>
+            <td>{{ row.material.item if row.material else '-' }}</td>
+            <td>{{ row.delivery_note_reference or '-' }}</td>
+            <td class="num">{{ row.quantity | qty }}</td>
+            <td class="num">{{ row.accepted_quantity | qty }}</td>
+            <td>{{ row.status }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No delivery recorded on this date.')) }}{% endif %}
+
+    <p class="mt-2 mb-1"><strong>{{ t("Material shortages:") }}</strong>
+      {% if shortages %}
+        <ul class="summary-list">
+          {% for view in shortages %}
+            <li>{{ view.material.item }} &mdash; {{ t("available") }} {{ view.available | qty }},
+              {{ t("remaining requirement") }} {{ view.remaining_requirement | qty }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}{{ t("none recorded.") }}{% endif %}
+    </p>
+    <p class="mb-0"><strong>{{ t("Late procurement packages:") }}</strong>
+      {% if procurement.late_packages %}
+        {{ procurement.late_packages | map(attribute='package_code') | join(', ') }}
+      {% else %}{{ t("none.") }}{% endif %}
+    </p>
+  </div>
+
+  <!-- INSPECTIONS / QUALITY -->
+  <div class="report-section">
+    <h3>{{ t("Inspections, NCRs and Punch List") }}</h3>
+    {% if inspection_rows %}
+      <table class="data">
+        <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Type") }}</th><th>{{ t("WBS") }}</th><th>{{ t("Title") }}</th><th>{{ t("Result") }}</th><th>{{ t("Status") }}</th></tr></thead>
+        <tbody>
+          {% for row in inspection_rows %}
+          <tr><td class="mono">{{ row.record_number }}</td><td>{{ row.record_type }}</td>
+            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.title or '-' }}</td>
+            <td>{{ row.inspection_result or '-' }}</td><td>{{ row.status }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No quality record raised on this date.')) }}{% endif %}
+    <p class="mt-2 mb-0">
+      {{ t("Open quality records project-wide:") }} <strong>{{ open_quality | length }}</strong> &middot;
+      {{ t("overdue:") }} <strong>{{ overdue_quality | length }}</strong>
+      {% if overdue_quality %}
+        ({{ overdue_quality[:8] | map(attribute='record_number') | join(', ') }}{{ ', ...' if overdue_quality | length > 8 }})
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- BLOCKERS -->
+  <div class="report-section">
+    <h3>{{ t("Blockers and lost hours") }}</h3>
+    {% if blocker_rows %}
+      <table class="data">
+        <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Category") }}</th><th>{{ t("WBS") }}</th><th>{{ t("Description") }}</th>
+          <th class="num">{{ t("Lost h") }}</th><th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Lost MH") }}</th><th>{{ t("Status") }}</th></tr></thead>
+        <tbody>
+          {% for row in blocker_rows %}
+          <tr><td class="mono">{{ row.blocker_number }}</td><td>{{ row.category }}</td>
+            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.description or '-' }}</td>
+            <td class="num">{{ row.effective_lost_hours | num(1) }}</td>
+            <td class="num">{{ row.workers_affected }}</td>
+            <td class="num">{{ row.lost_man_hours | num(1) }}</td>
+            <td>{{ row.status }}</td></tr>
+          {% endfor %}
+          <tr><td colspan="4"><strong>{{ t("Total lost hours") }}</strong></td>
+            <td class="num"><strong>{{ lost_hours | num(1) }}</strong></td><td colspan="3"></td></tr>
+        </tbody>
+      </table>
+      <p class="mt-1 mb-0"><strong>{{ t("By cause:") }}</strong>
+        {% for cause, hours in lost_by_cause.items() %}{{ cause }} {{ hours | num(1) }} h{{ '; ' if not loop.last }}{% endfor %}</p>
+    {% else %}{{ empty(t('No blocker recorded on this date.')) }}{% endif %}
+    <p class="mt-2 mb-0">{{ t("Plant lost hours (idle + breakdown) on this date:") }}
+      <strong>{{ equipment_lost_hours | num(1) }} h</strong></p>
+  </div>
+
+  <!-- RFI -->
+  <div class="report-section">
+    <h3>{{ t("RFI status") }}</h3>
+    <div class="report-meta-grid">
+      <div><span>{{ t("Total") }}</span><br><strong>{{ rfis.total }}</strong></div>
+      <div><span>{{ t("Open") }}</span><br><strong>{{ rfis.open }}</strong></div>
+      <div><span>{{ t("Overdue") }}</span><br><strong>{{ rfis.overdue }}</strong></div>
+      <div><span>{{ t("Answered") }}</span><br><strong>{{ rfis.answered }}</strong></div>
+      <div><span>{{ t("With schedule impact") }}</span><br><strong>{{ rfis.schedule_impact }}</strong></div>
+    </div>
+  </div>
+
+  <!-- OBSERVATIONS -->
+  <div class="report-section">
+    <h3>{{ t("Significant site observations") }}</h3>
+    {% if observation_rows %}
+      <table class="data">
+        <thead><tr><th>{{ t("Category") }}</th><th>{{ t("Severity") }}</th><th>{{ t("Workfront") }}</th><th>{{ t("Observation") }}</th>
+          <th>{{ t("Action required") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th></tr></thead>
+        <tbody>
+          {% for row in observation_rows %}
+          <tr><td>{{ row.category }}</td><td>{{ row.severity }}</td>
+            <td>{{ row.area.area_code if row.area else '-' }}</td>
+            <td>{{ row.observation }}</td><td>{{ row.action_required or '-' }}</td>
+            <td>{{ row.responsible_party or '-' }}</td><td>{{ row.target_date | d }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No observation recorded on this date.')) }}{% endif %}
+  </div>
+
+  <!-- CRITICAL ACTIONS -->
+  <div class="report-section">
+    <h3>{{ t("Critical actions and schedule pressure") }}</h3>
+    {% if critical_activities %}
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Plan finish") }}</th><th class="num">{{ t("Actual %") }}</th>
+          <th class="num">{{ t("Variance") }}</th><th>{{ t("Reason") }}</th></tr></thead>
+        <tbody>
+          {% for row in critical_activities %}
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
+            <td>{{ row.plan_finish | d }}</td>
+            <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
+            <td class="num">{{ row.variance | signed if row.variance is not none else '-' }}</td>
+            <td>{{ 'Overdue milestone' if row.overdue_milestone else 'Variance below threshold' }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No activity is classified CRITICAL.')) }}{% endif %}
+  </div>
+
+  <!-- UPCOMING -->
+  <div class="report-section">
+    <h3>{{ t("Upcoming work") }}</h3>
+    {% if report and report.upcoming_work %}
+      <p>{{ report.upcoming_work }}</p>
+    {% endif %}
+    {% if lookahead %}
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Start") }}</th><th>{{ t("Finish") }}</th><th>{{ t("Status") }}</th></tr></thead>
+        <tbody>
+          {% for row in lookahead %}
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
+            <td>{{ row.plan_start | d }}</td><td>{{ row.plan_finish | d }}</td>
+            <td>{{ row.classification }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}{{ empty(t('No activity is scheduled in the coming week.')) }}{% endif %}
+
+    {% if milestones %}
+      <p class="mt-2 mb-0"><strong>{{ t("Next milestones:") }}</strong>
+        {% for row in milestones %}{{ row.name }} ({{ (row.plan_finish or row.plan_start) | d }}){{ '; ' if not loop.last }}{% endfor %}</p>
+    {% endif %}
+  </div>
+
+  <!-- GENERAL COMMENTS -->
+  {% if report and report.general_comments %}
+  <div class="report-section">
+    <h3>{{ t("General comments") }}</h3>
+    <p>{{ report.general_comments }}</p>
+  </div>
+  {% endif %}
+
+  <!-- PHOTOS -->
+  {% if photos %}
+  <div class="report-section page-break">
+    <h3>{{ t("Photographs") }} ({{ photos | length }})</h3>
+    <div class="photo-grid">
+      {% for photo in photos %}
+        <figure>
+          <img src="{{ url_for('static', filename='uploads/' ~ photo.stored_path) }}"
+               alt="{{ photo.caption or photo.filename }}">
+          <figcaption>{{ photo.caption or photo.filename }}</figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="report-section">
+    <h3>{{ t("Signatures") }}</h3>
+    <table class="data">
+      <thead><tr><th>{{ t("Prepared by (Contractor)") }}</th><th>{{ t("Reviewed by (Site Manager)") }}</th><th>{{ t("Client representative") }}</th></tr></thead>
+      <tbody><tr>
+        <td style="height:60px">{{ report.prepared_by if report and report.prepared_by else '' }}</td>
+        <td></td><td></td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <p class="source-note mt-3">
+    {{ t("Generated by BASSIGNANA EPC CONTROL on {date} from recorded site data. All summary figures are counted facts; no figure is estimated or inferred.", date=TODAY | d) }}
+  </p>
+</div>
+{% endblock %}

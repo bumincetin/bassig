@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import status_badge, empty, select, area_select %}
+{% block title %}{{ t("Deliveries") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Deliveries") }}</h1>
+    <div class="sub">
+      {{ t("Recording a delivery does not accept it. Acceptance is recorded separately after inspection.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.index') }}">{{ t("Packages") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('procurement.export_deliveries', **{'from': date_from|iso, 'to': date_to|iso}) }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Record a delivery") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div class="full"><label class="form-label">{{ t("Material line") }}</label>
+        <select name="material_id" class="form-select form-select-lg" required>
+          <option value="">{{ t("Select the material") }}</option>
+          {% for material in materials %}
+            <option value="{{ material.id }}">
+              {{ material.package.package_code if material.package else '' }} &mdash; {{ material.item }}
+            </option>
+          {% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("Delivery date") }}</label>
+        <input type="date" name="delivery_date" value="{{ TODAY | iso }}" class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Delivery note (DDT)") }}</label>
+        <input name="delivery_note_reference" class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Quantity delivered") }}</label>
+        <input name="quantity" inputmode="decimal" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Unit") }}</label>
+        <input name="unit" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.DELIVERY_STATUS, 'DELIVERED', none, 'form-select form-select-lg') }}</div>
+      <div><label class="form-label">{{ t("Quantity accepted") }}</label>
+        <input name="accepted_quantity" inputmode="decimal" class="form-control form-control-lg"
+               placeholder="{{ t('0 until inspected') }}"></div>
+      <div><label class="form-label">{{ t("Quantity rejected") }}</label>
+        <input name="rejected_quantity" inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Inspection date") }}</label>
+        <input type="date" name="inspection_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Inspected by") }}</label>
+        <input name="inspected_by" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Certificate reference") }}</label>
+        <input name="certificate_reference" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Received at area") }}</label>{{ area_select('area_id', areas) }}</div>
+      <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+        <input name="comments" class="form-control form-control-sm"></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Record delivery") }}</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} delivery record(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Package") }}</th><th>{{ t("Material") }}</th><th>{{ t("Delivery note") }}</th>
+        <th class="num">{{ t("Delivered") }}</th><th class="num">{{ t("Accepted") }}</th><th class="num">{{ t("Rejected") }}</th>
+        <th>{{ t("Status") }}</th><th>{{ t("Inspected") }}</th><th>{{ t("Certificate") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="nowrap">{{ row.delivery_date | d }}</td>
+          <td class="mono">{{ row.package.package_code if row.package else '-' }}</td>
+          <td>{{ row.material.item if row.material else '-' }}</td>
+          <td class="mono">{{ row.delivery_note_reference or '-' }}</td>
+          <td class="num">{{ row.quantity | qty }}</td>
+          <td class="num">{{ row.accepted_quantity | qty }}</td>
+          <td class="num">{{ row.rejected_quantity | qty }}</td>
+          <td>{{ status_badge(row.status, 'sm') }}</td>
+          <td class="nowrap text-tiny">{{ row.inspection_date | d }}<br>{{ row.inspected_by or '' }}</td>
+          <td class="text-tiny">{{ row.certificate_reference or '-' }}</td>
+          <td>
+            <details class="inline-form"><summary>{{ t("Edit") }}</summary>
+              <form method="post" action="{{ url_for('procurement.update_delivery', delivery_id=row.id) }}" class="mt-1">
+                {{ select('status', C.DELIVERY_STATUS, row.status) }}
+                <input name="accepted_quantity" value="{{ row.accepted_quantity or 0 }}"
+                       class="form-control form-control-sm mt-1" placeholder="{{ t('Accepted') }}">
+                <input name="rejected_quantity" value="{{ row.rejected_quantity or 0 }}"
+                       class="form-control form-control-sm mt-1" placeholder="{{ t('Rejected') }}">
+                <input type="date" name="inspection_date" value="{{ row.inspection_date | iso }}"
+                       class="form-control form-control-sm mt-1">
+                <input name="inspected_by" value="{{ row.inspected_by or '' }}"
+                       class="form-control form-control-sm mt-1" placeholder="{{ t('Inspected by') }}">
+                <input name="certificate_reference" value="{{ row.certificate_reference or '' }}"
+                       class="form-control form-control-sm mt-1" placeholder="{{ t('Certificate') }}">
+                <button class="btn btn-sm btn-primary mt-1">{{ t("Save") }}</button>
+              </form>
+              <form method="post" action="{{ url_for('procurement.update_delivery', delivery_id=row.id) }}"
+                    class="mt-1" data-confirm="{{ t('Delete this delivery record and recalculate the material totals?') }}">
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="11">{{ empty(t('No delivery recorded in this period.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+{% endblock %}

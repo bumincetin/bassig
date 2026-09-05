@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="{{ LANG }}" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}{{ PROJECT.name if PROJECT else 'Bassignana' }}{% endblock %} &middot; BASSIGNANA EPC CONTROL</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230b3d5c'/><path d='M6 22 L14 8 L18 15 L22 11 L26 22 Z' fill='%23f5b301'/></svg>">
+</head>
+<body>
+
+<header class="app-header no-print">
+  <button class="btn btn-nav d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#navPanel" aria-label="{{ t('Open menu') }}">
+    <span class="burger"></span>
+  </button>
+  <a class="brand" href="{{ url_for('dashboard.index') }}">
+    <span class="brand-mark">BAS</span>
+    <span class="brand-text">
+      <strong>BASSIGNANA EPC CONTROL</strong>
+      <small>{{ PROJECT.name if PROJECT else 'Bassignana Solar 2' }} &mdash; {{ PROJECT.subtitle if PROJECT and PROJECT.subtitle else 'Project &amp; Site Control System' }}</small>
+    </span>
+  </a>
+  <div class="header-right">
+    {% if PROJECT and PROJECT.nominal_dc_kwp %}
+      <span class="header-chip d-none d-lg-inline">{{ PROJECT.nominal_dc_kwp | num(2) }} kWp</span>
+    {% endif %}
+    <span class="header-chip d-none d-sm-inline">{{ TODAY | d }}</span>
+    <div class="lang-switch" role="group" aria-label="{{ t('Language') }}">
+      {% for code, names in LANGUAGES.items() %}
+        <a class="lang-opt {{ 'active' if code == LANG }}"
+           href="{{ url_for(request.endpoint or 'dashboard.index', **dict(request.view_args or {}, **dict(request.args, lang=code))) }}"
+           title="{{ names[0] }}" hreflang="{{ code }}">{{ names[1] }}</a>
+      {% endfor %}
+    </div>
+    {% if AUTH_ENABLED %}
+      <form method="post" action="{{ url_for('auth.logout') }}" class="signout-form">
+        <button type="submit" class="btn-signout">{{ t("Sign out") }}</button>
+      </form>
+    {% endif %}
+    <a class="btn-today" href="{{ url_for('daily.today') }}">
+      <span class="btn-today-plus">+</span>
+      <span class="btn-today-text">{{ t("Today's site entry") }}</span>
+    </a>
+  </div>
+</header>
+
+<div class="app-body">
+  <nav class="app-nav d-none d-lg-block no-print">
+    {% include 'partials/nav.html' %}
+  </nav>
+
+  <div class="offcanvas offcanvas-start no-print" tabindex="-1" id="navPanel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">{{ t("Menu") }}</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">{% include 'partials/nav.html' %}</div>
+  </div>
+
+  <main class="app-main">
+    {% if SETUP_INCOMPLETE %}
+      <div class="alert alert-danger data-required-banner no-print" role="alert">
+        <strong>{{ t(C.DATA_REQUIRED) }}</strong> &mdash;
+        {{ t("{count} mandatory project input(s) are not yet registered. Figures shown below are incomplete until they are.",
+             count=HEALTH.missing_mandatory | length) }}
+        <a href="{{ url_for('setup.validation') }}" class="alert-link">{{ t("Open the validation report") }}</a>.
+      </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack no-print">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <footer class="app-footer no-print">
+      BASSIGNANA EPC CONTROL v{{ APP_VERSION }} &middot;
+      {{ t("local installation, no external service is contacted") }} &middot;
+      <a href="{{ url_for('backup.index') }}">{{ t("Back up the database") }}</a>
+    </footer>
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Normalise line endings so the same checkout works on Windows and Linux.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.sh text eol=lf
+
+# Binary content.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.db binary
+*.xlsx binary

@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, pct_kpi, bar, empty, data_required, select %}
+{% block title %}{{ t("Progress") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Progress measurement") }}</h1>
+    <div class="sub">
+      {{ version.label if version else t('no programme registered') }} {{ t("as at") }} {{ as_of | d }} &middot;
+      {{ t("weighting basis:") }} <strong>{{ t(basis_report.basis) }}</strong>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('progress.quantities') }}">{{ t("Quantity register") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('progress.forecast') }}">{{ t("Forecast") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('progress.export', as_of=as_of|iso) }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if not version %}
+  {{ data_required(t('a programme. Import the contractual baseline and the current working schedule first.')) }}
+{% else %}
+
+<div class="kpi-grid">
+  {{ pct_kpi(t('Contractual planned'), contractual, 'baseline dates', 'info') }}
+  {{ pct_kpi(t('Current planned'), rollup.overall_planned, 'working plan dates', 'info') }}
+  {{ pct_kpi(t('Actual'), rollup.overall_actual, rollup.leaf_count ~ ' leaf activities', 'good') }}
+  {{ kpi(t('Variance vs current plan'),
+         (rollup.variance | signed ~ ' pp') if rollup.variance is not none else 'DATA REQUIRED',
+         '', 'good' if (rollup.variance is not none and rollup.variance >= 0) else 'bad') }}
+  {{ kpi(t('Approved weights'), basis_report.approved_weight_count,
+         'activities carrying an approved weight',
+         'good' if basis_report.approved_weight_count else 'warn') }}
+</div>
+
+{% if basis_report.warning %}
+  <div class="alert alert-warning py-2 text-tiny">{{ basis_report.warning }}</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ t("Weighting basis") }}</h2>
+    <span class="source-note">{{ t("Project progress is never a simple mean of activity percentages.") }}</span>
+  </div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('progress.set_basis') }}" class="d-flex gap-2 flex-wrap align-items-end">
+      <div>
+        <label class="form-label">{{ t("Rollup weighting") }}</label>
+        {{ select('progress_weight_basis', basis_options, basis_report.basis) }}
+      </div>
+      <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+      <span class="source-note ms-2">
+        {{ t("APPROVED WEIGHT uses only weights imported from an approved progress-weight register.") }}
+        {{ t("DURATION DERIVED weights each leaf activity by its programme duration.") }}
+        {{ t("QUANTITY weights by total required quantity.") }}
+      </span>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Progress by work package") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Work package") }}</th><th class="num">{{ t("Activities") }}</th><th class="num">{{ t("Progress") }}</th><th></th></tr></thead>
+            <tbody>
+              {% for row in rollup.by_work_package %}
+              <tr><td>{{ row.name }}</td><td class="num">{{ row.count }}</td>
+                <td class="num">{{ row.progress | pc(1) if row.progress is not none else '-' }}</td>
+                <td style="width:120px">{{ bar(row.progress) }}</td></tr>
+              {% else %}<tr><td colspan="4">{{ empty(t('No measured activity yet.')) }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Progress by discipline") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Discipline") }}</th><th class="num">{{ t("Activities") }}</th><th class="num">{{ t("Progress") }}</th><th></th></tr></thead>
+            <tbody>
+              {% for row in rollup.by_discipline %}
+              <tr><td>{{ row.name }}</td><td class="num">{{ row.count }}</td>
+                <td class="num">{{ row.progress | pc(1) if row.progress is not none else '-' }}</td>
+                <td style="width:120px">{{ bar(row.progress) }}</td></tr>
+              {% else %}<tr><td colspan="4">{{ empty(t('No measured activity yet.')) }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Quantity delivered by workfront") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Area / workfront") }}</th><th class="num">{{ t("Planned qty") }}</th><th class="num">{{ t("Actual qty") }}</th>
+          <th class="num">{{ t("Daily entries") }}</th></tr></thead>
+        <tbody>
+          {% for row in area_progress %}
+          <tr><td>{{ row.area_label }}</td><td class="num">{{ row.planned | qty }}</td>
+            <td class="num">{{ row.actual | qty }}</td><td class="num">{{ row.entries }}</td></tr>
+          {% else %}<tr><td colspan="4">{{ empty(t('No daily progress has been allocated to a workfront yet.')) }}</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ t("Activity progress") }} ({{ rows | length }})</h2>
+    <form method="get" class="d-flex gap-2" data-autosubmit>
+      <input type="hidden" name="as_of" value="{{ as_of | iso }}">
+      <select name="method" class="form-select form-select-sm">
+        <option value="">{{ t("All methods") }}</option>
+        {% for value in C.PROGRESS_METHODS %}
+          <option value="{{ value }}" {{ 'selected' if method == value }}>{{ value }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky">
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Method") }}</th><th class="num">{{ t("Completed") }}</th>
+          <th class="num">{{ t("Required") }}</th><th>{{ t("Unit") }}</th><th class="num">{{ t("Actual %") }}</th><th></th>
+          <th class="num">{{ t("Weight") }}</th><th>{{ t("Basis") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="mono">{{ row.activity.wbs_code }}</td>
+            <td class="mw-260">{{ row.activity.activity_name }}</td>
+            <td>
+              <span class="badge {{ 'bg-primary' if row.basis == 'QUANTITY' else 'bg-secondary' }} badge-sm">
+                {{ row.activity.progress_method }}</span>
+              {% if row.activity.manual_pct and row.basis == 'MANUAL' %}
+                <span class="badge bg-warning text-dark badge-sm" title="{{ t('Percentage entered by hand or reported in the source programme') }}">MANUAL</span>
+              {% endif %}
+            </td>
+            <td class="num">{{ row.completed_quantity | qty if row.basis == 'QUANTITY' else '-' }}</td>
+            <td class="num">{{ row.activity.total_required_quantity | qty if row.activity.total_required_quantity else '-' }}</td>
+            <td class="text-tiny">{{ row.activity.unit or '-' }}</td>
+            <td class="num">
+              {% if row.actual is none %}<span class="data-required">DATA REQ.</span>
+              {% else %}{{ row.actual | pc(1) }}{% endif %}</td>
+            <td style="width:110px">{{ bar(row.actual) }}</td>
+            <td class="num">{{ row.weight | num(1) }}</td>
+            <td class="text-tiny">{{ row.activity.weight_basis }}</td>
+            <td><a class="btn btn-sm btn-outline-secondary py-0"
+                   href="{{ url_for('schedule.activity', activity_id=row.activity.id) }}">{{ t("Edit") }}</a></td>
+          </tr>
+          {% else %}<tr><td colspan="11">{{ empty(t('No leaf activity in the governing programme.')) }}</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

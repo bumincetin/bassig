@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, empty %}
+{% block title %}{{ t("Import preview") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Import preview") }} &mdash; {{ spec.label }}</h1>
+    <div class="sub">
+      {{ state.filename }}
+      {% if version %} &middot; {{ t("into") }} <strong>{{ version.label }}</strong> [{{ version.schedule_type }}]{% endif %}
+      {% if document %} &middot; {{ t("source:") }} <strong>{{ document.label }}</strong> [{{ document.status }}]{% endif %}
+    </div>
+  </div>
+  <div class="page-actions">
+    <form method="post" action="{{ url_for('dataio.cancel', key=key) }}">
+      <button class="btn btn-sm btn-outline-secondary">{{ t("Cancel import") }}</button>
+    </form>
+  </div>
+</div>
+
+{% for message in blocking %}
+  <div class="alert alert-danger py-2">{{ message }}</div>
+{% endfor %}
+
+{% if missing_columns %}
+  <div class="alert alert-danger py-2">
+    <strong>{{ t("Missing required column(s):") }}</strong>
+    <span class="font-monospace">{{ missing_columns | join(', ') }}</span>.
+    {{ t("Download the blank template and match the header row exactly.") }}
+  </div>
+{% endif %}
+
+{% if unknown_columns %}
+  <div class="alert alert-warning py-2 text-tiny">
+    <strong>{{ t("Columns not used by this import:") }}</strong>
+    <span class="font-monospace">{{ unknown_columns | join(', ') }}</span>. {{ t("They will be ignored.") }}
+  </div>
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Rows in file'), validation.summary.total) }}
+  {{ kpi(t('Will be created'), validation.summary.create, '', 'good') }}
+  {{ kpi(t('Will be updated'), validation.summary.update, '', 'info') }}
+  {{ kpi(t('Will be skipped'), validation.summary.skip) }}
+  {{ kpi(t('Rejected'), validation.summary.error, 'validation errors', 'bad' if validation.summary.error else 'good') }}
+  {{ kpi(t('With warnings'), validation.summary.warning, '', 'warn' if validation.summary.warning else 'good') }}
+</div>
+
+{% if version and version.is_contractual_baseline %}
+  <div class="alert alert-warning py-2 text-tiny">
+    {{ t("You are importing into the {baseline}. Contractual start and finish dates will be written from this file. This is correct only when first registering Schedule 03. An updated working programme must go into its own schedule version.",
+          baseline="<strong>" ~ t("contractual baseline") ~ "</strong>") | safe }}
+  </div>
+{% elif version %}
+  <div class="alert alert-secondary py-2 text-tiny">
+    {{ t("This is a working programme import. Contractual baseline dates are not touched: they stay in the registered baseline version and remain available for contractual comparison.") }}
+  </div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ t("Row-by-row validation") }}</h2>
+    <input type="search" class="form-control form-control-sm" style="max-width:280px"
+           placeholder="{{ t('Filter rows') }}" data-filter-table="#previewTable">
+  </div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data" id="previewTable">
+      <thead>
+        <tr>
+          <th>{{ t("Row") }}</th><th>{{ t("Action") }}</th>
+          {% for column in spec.columns %}<th>{{ column }}</th>{% endfor %}
+          <th>{{ t("Messages") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in validation.rows %}
+        <tr class="{{ 'row-critical' if row.action == 'ERROR' }}{{ 'row-atrisk' if row.warnings and row.action != 'ERROR' }}">
+          <td class="num">{{ row.index }}</td>
+          <td>
+            <span class="badge badge-sm
+              {{ 'bg-success' if row.action == 'CREATE' else ('bg-info text-dark' if row.action == 'UPDATE' else ('bg-danger' if row.action == 'ERROR' else 'bg-secondary')) }}">
+              {{ row.action }}</span>
+          </td>
+          {% for column in spec.columns %}
+            <td class="text-tiny">{{ row.raw.get(column, '') if row.raw.get(column) is not none else '' }}</td>
+          {% endfor %}
+          <td class="text-tiny">
+            {% for error in row.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+            {% for warning in row.warnings %}<div class="text-warning-emphasis">{{ warning }}</div>{% endfor %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ spec.columns | length + 3 }}">{{ empty(t('The file contains no data rows.')) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Confirm") }}</h2></div>
+  <div class="panel-body">
+    {% if can_commit %}
+      <p class="mb-2">
+        {{ t("{created} record(s) will be created and {updated} updated.",
+              created=validation.summary.create, updated=validation.summary.update) }}
+        {% if validation.summary.error %}
+          {{ t("{count} row(s) contain errors and will be skipped.", count=validation.summary.error) }}
+        {% endif %}
+      </p>
+      <form method="post" action="{{ url_for('dataio.commit', key=key) }}"
+            data-confirm="{{ t('Commit this import? {created} record(s) will be created and {updated} updated.', created=validation.summary.create, updated=validation.summary.update) }}">
+        <button class="btn btn-primary btn-lg">{{ t("Commit import") }}</button>
+      </form>
+    {% else %}
+      <div class="alert alert-danger py-2 mb-2">
+        {{ t("This import cannot be committed. Resolve the issues listed above and upload the file again.") }}
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('dataio.index') }}">{{ t("Back to import") }}</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

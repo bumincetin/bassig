@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ t("Blockers") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Blockers &amp; lost productivity") }}</h1>
+    <div class="sub">{{ date_from | d }} {{ t("to") }} {{ date_to | d }} &middot; {{ t("next number") }} {{ next_number }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('blockers.analysis') }}">{{ t("Cause analysis") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('blockers.export', **{'from': date_from|iso, 'to': date_to|iso}) }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Incidents'), summary.total) }}
+  {{ kpi(t('Open'), summary.open, '', 'bad' if summary.open else 'good') }}
+  {{ kpi(t('Lost hours'), summary.lost_hours | num(1), 'actual where recorded, else estimated', 'bad' if summary.lost_hours else 'good') }}
+  {{ kpi(t('Lost man-hours'), summary.lost_man_hours | num(0)) }}
+  {{ kpi(t('Top cause'), summary.top_cause.category if summary.top_cause else 'none',
+         (summary.top_cause.lost_hours | num(1) ~ ' h') if summary.top_cause else '',
+         'bad' if summary.top_cause else 'good') }}
+  {{ kpi(t('Recurring causes'), summary.recurring | length, '3 or more incidents', 'warn' if summary.recurring else 'good') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("Category") }}</label>
+    <select name="category" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.BLOCKER_CATEGORIES %}<option value="{{ value }}" {{ 'selected' if category == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Status") }}</label>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.ACTION_STATUS %}<option value="{{ value }}" {{ 'selected' if status == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="chart-grid no-print">
+  <div class="panel"><div class="panel-head"><h2>{{ t("Lost hours by category") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartCause"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Incidents by category") }}</h2></div>
+    <div class="panel-body"><div class="chart-box"><canvas id="chartIncidents"></canvas></div></div></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} blocker(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Date") }}</th><th>{{ t("Category") }}</th><th>{{ t("WBS") }}</th><th>{{ t("Area") }}</th>
+        <th>{{ t("Description") }}</th><th class="num">{{ t("Est. h") }}</th><th class="num">{{ t("Actual h") }}</th>
+        <th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Lost MH") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="mono">{{ row.blocker_number }}</td>
+          <td class="nowrap">{{ row.entry_date | d }}</td>
+          <td>{{ status_badge(row.category, 'sm') }}</td>
+          <td class="mono">{{ row.wbs_code or '-' }}</td>
+          <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+          <td class="mw-260">{{ row.description or '-' }}</td>
+          <td class="num">{{ row.estimated_lost_hours | num(1) }}</td>
+          <td class="num">{{ row.actual_lost_hours | num(1) if row.actual_lost_hours is not none else '-' }}</td>
+          <td class="num">{{ row.workers_affected }}</td>
+          <td class="num">{{ row.lost_man_hours | num(1) }}</td>
+          <td>{{ status_badge(row.status, 'sm') }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('blockers.detail', blocker_id=row.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="12">{{ empty(t('No blocker in this period.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Record a blocker") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('blockers.create') }}" class="form-grid" enctype="multipart/form-data">
+      <div><label class="form-label">{{ t("Date") }}</label>
+        <input type="date" name="entry_date" value="{{ TODAY | iso }}" class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.BLOCKER_CATEGORIES, 'Material', none, 'form-select form-select-lg') }}</div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas, none, 'Not allocated', 'form-select form-select-lg') }}</div>
+      <div class="full"><label class="form-label">{{ t("Activity affected") }}</label>
+        <input name="activity" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Description") }}</label>
+        <textarea name="description" rows="2" class="form-control" required></textarea></div>
+      <div><label class="form-label">{{ t("Start") }}</label>
+        <input type="datetime-local" name="start_datetime" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("End") }}</label>
+        <input type="datetime-local" name="end_datetime" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Estimated lost hours") }}</label>
+        <input name="estimated_lost_hours" inputmode="decimal" class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Actual lost hours") }}</label>
+        <input name="actual_lost_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Workers affected") }}</label>
+        <input name="workers_affected" inputmode="numeric" class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Equipment affected") }}</label>
+        <input name="equipment_affected" inputmode="numeric" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Responsible party") }}</label>
+        <input name="responsible_party" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Action") }}</label>
+        <textarea name="action" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><label class="form-label">{{ t("Photographs") }}</label>
+        <input type="file" name="photos" multiple accept="image/*" capture="environment" class="form-control form-control-lg"></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Record blocker") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+BAS.hbar('chartCause',
+  {{ summary.by_category | map(attribute='category') | list | tojson }},
+  {{ summary.by_category | map(attribute='lost_hours') | list | tojson }}, BAS.palette.red);
+BAS.hbar('chartIncidents',
+  {{ summary.by_category | map(attribute='category') | list | tojson }},
+  {{ summary.by_category | map(attribute='incidents') | list | tojson }}, BAS.palette.navy);
+</script>
+{% endblock %}

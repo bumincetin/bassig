@@ -1,0 +1,639 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select, photos %}
+{% block title %}{{ report.report_date | d }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Daily site diary") }} &mdash; {{ report.report_date | d }}</h1>
+    <div class="sub">
+      {{ report.report_number or t('no number') }} &middot; {{ t(report.shift) }} {{ t("shift") }} &middot;
+      {{ report.weather or 'weather not recorded' }}
+    </div>
+  </div>
+  <div class="page-actions day-nav">
+    {% if previous %}
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{{ url_for('daily.detail', report_id=previous.id) }}"
+         title="{{ previous.report_date | d }}">{{ t("&larr; Previous day") }}</a>
+    {% endif %}
+    {% if following %}
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{{ url_for('daily.detail', report_id=following.id) }}"
+         title="{{ following.report_date | d }}">{{ t("Next day &rarr;") }}</a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.index') }}">{{ t("All reports") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('reports.daily', date=report.report_date|iso) }}">{{ t("Printable report") }}</a>
+    <form method="post" action="{{ url_for('daily.delete', report_id=report.id) }}"
+          data-confirm="{{ t('Delete the whole daily report for {date} including all its progress, workforce, plant and observation lines?', date=report.report_date | d) }}">
+      <button class="btn btn-sm btn-outline-danger">{{ t("Delete report") }}</button>
+    </form>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Progress lines'), report.progress_entries | length) }}
+  {{ kpi(t('Workers'), report.total_workers, report.total_man_hours | num(0) ~ ' man-hours') }}
+  {{ kpi(t('Plant lines'), report.equipment_entries | length) }}
+  {{ kpi(t('Observations'), report.observations | length) }}
+  {{ kpi(t('Blockers raised'), blockers | length, '', 'bad' if blockers else '') }}
+  {{ kpi(t('Deliveries'), deliveries | length) }}
+  {{ kpi(t('Stock movements'), movements | length) }}
+  {{ kpi(t('Photographs'), report.photos | length) }}
+</div>
+
+{% set qualifies, reasons = report.adverse_weather(wind_threshold, rain_threshold) %}
+{% if report.adverse_weather_claimed or qualifies %}
+  <div class="alert {{ 'alert-warning' if qualifies else 'alert-secondary' }} py-2 text-tiny">
+    {% if qualifies %}
+      <strong>{{ t("Adverse weather thresholds met:") }}</strong> {{ reasons | join('; ') }}.
+      {{ t("The Contract allows an extension of time only where the measurement comes from calibrated site instrumentation.") }}
+    {% else %}
+      {% if report.max_wind_ms is none and report.max_rain_mm_h is none %}
+        {{ t("Adverse weather is claimed for this date but the recorded measurements are missing.") }}
+      {% else %}
+        {{ t("Adverse weather is claimed for this date but the recorded measurements do not exceed the registered contractual thresholds.") }}
+      {% endif %}
+      {{ t("Record the calibrated measurement before relying on this claim.") }}
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if report.report_date != TODAY %}
+  <div class="alert alert-info py-2">
+    {{ t("You are recording {date}, not today.", date="<strong>" ~ (report.report_date | d) ~ "</strong>") | safe }}
+    {{ t("Entries are saved against that date and the running totals of every later day are rebased automatically.") }}
+    <a class="alert-link" href="{{ url_for('daily.today') }}">{{ t("Go to today instead") }}</a>.
+  </div>
+{% endif %}
+
+<div class="carry-forward mb-3">
+  <strong>{{ t("Everything you record here carries forward.") }}</strong>
+  {{ t("Quantities entered today are added to the cumulative total, so tomorrow's entry starts from where this day finishes. The same applies to deliveries, stock and installed quantities.") }}
+  {% if previous %}
+    {{ t("The previous entry was {date}.",
+          date='<a href="' ~ url_for('daily.detail', report_id=previous.id) ~ '">' ~ (previous.report_date | d) ~ '</a>') | safe }}
+  {% else %}
+    {{ t("This is the first entry in the diary.") }}
+  {% endif %}
+</div>
+
+<!-- ============ HEADER ============ -->
+<div class="panel">
+  <div class="panel-head"><h2><span class="entry-step">1</span>{{ t("Report header") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div><label class="form-label">{{ t("Report number") }}</label>
+        <input name="report_number" value="{{ report.report_number or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Shift") }}</label>{{ select('shift', C.SHIFTS, report.shift) }}</div>
+      <div><label class="form-label">{{ t("Weather (AM)") }}</label>{{ select('weather', C.WEATHER, report.weather, 'Select') }}</div>
+      <div><label class="form-label">{{ t("Weather (PM)") }}</label>{{ select('weather_pm', C.WEATHER, report.weather_pm, 'Select') }}</div>
+      <div><label class="form-label">{{ t("Temp min") }}</label>
+        <input name="temperature_min_c" value="{{ report.temperature_min_c or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Temp max") }}</label>
+        <input name="temperature_max_c" value="{{ report.temperature_max_c or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Work start") }}</label>
+        <input name="work_start_time" value="{{ report.work_start_time or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Work end") }}</label>
+        <input name="work_end_time" value="{{ report.work_end_time or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Max wind (m/s)") }}</label>
+        <input name="max_wind_ms" value="{{ report.max_wind_ms if report.max_wind_ms is not none else '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Max rainfall (mm/h)") }}</label>
+        <input name="max_rain_mm_h" value="{{ report.max_rain_mm_h if report.max_rain_mm_h is not none else '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Adverse weather claimed") }}</label>
+        <div class="form-check mt-1">
+          <input type="checkbox" class="form-check-input" name="adverse_weather_claimed"
+                 value="1" {{ 'checked' if report.adverse_weather_claimed }}></div></div>
+      <div><label class="form-label">{{ t("Prepared by") }}</label>
+        <input name="prepared_by" value="{{ report.prepared_by or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Main contractor") }}</label>
+        <select name="contractor_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not recorded") }}</option>
+          {% for contractor in contractors %}
+            <option value="{{ contractor.id }}" {{ 'selected' if report.contractor_id == contractor.id }}>{{ contractor.name }}</option>
+          {% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Subcontractors") }}</label>
+        <input name="subcontractors" value="{{ report.subcontractors or '' }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("General comments") }}</label>
+        <textarea name="general_comments" rows="2" class="form-control form-control-sm">{{ report.general_comments or '' }}</textarea></div>
+      <div class="full"><label class="form-label">{{ t("Upcoming work") }}</label>
+        <textarea name="upcoming_work" rows="2" class="form-control form-control-sm">{{ report.upcoming_work or '' }}</textarea></div>
+      <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save header") }}</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ PROGRESS ============ -->
+<div class="panel">
+  <div class="panel-head"><h2><span class="entry-step">2</span>{{ t("Work done today") }}</h2><span class="source-note">{{ t("Quantities add to the cumulative total.") }}</span></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Area") }}</th><th class="num">{{ t("Planned") }}</th>
+          <th class="num">{{ t("Actual") }}</th><th class="num">{{ t("Ach. %") }}</th><th class="num">{{ t("Cum. before") }}</th>
+          <th class="num">{{ t("Cum. after") }}</th><th class="num">{{ t("Required") }}</th><th class="num">{{ t("Compl. %") }}</th>
+          <th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Hours") }}</th><th class="num">{{ t("Qty/wd") }}</th>
+          <th class="num">{{ t("Qty/wh") }}</th><th>{{ t("Blocker") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for entry in report.progress_entries %}
+          <tr>
+            <td class="mono">{{ entry.wbs_code }}</td>
+            <td class="mw-260">{{ entry.activity_name or '-' }}
+              {% if entry.comments %}<div class="text-tiny text-muted">{{ entry.comments }}</div>{% endif %}</td>
+            <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
+            <td class="num">{{ entry.planned_quantity | qty }}</td>
+            <td class="num"><strong>{{ entry.actual_quantity | qty }}</strong> {{ entry.unit or '' }}</td>
+            <td class="num">
+              {% if entry.achievement_pct is none %}<span class="text-muted" title="{{ t('No planned quantity recorded') }}">n/a</span>
+              {% else %}<span class="{{ 'text-success' if entry.achievement_pct >= 100 else 'text-danger' }}">{{ entry.achievement_pct | pc(0) }}</span>{% endif %}</td>
+            <td class="num">{{ entry.cumulative_before | qty }}</td>
+            <td class="num">{{ entry.cumulative_after | qty }}</td>
+            <td class="num">{{ entry.total_required_quantity | qty if entry.total_required_quantity else '-' }}</td>
+            <td class="num">{{ entry.completion_pct | pc(0) if entry.completion_pct is not none else '-' }}</td>
+            <td class="num">{{ entry.workers }}</td>
+            <td class="num">{{ entry.hours | num(1) }}</td>
+            <td class="num">{{ entry.quantity_per_worker_day | num(2) if entry.quantity_per_worker_day is not none else '-' }}</td>
+            <td class="num">{{ entry.quantity_per_worker_hour | num(3) if entry.quantity_per_worker_hour is not none else '-' }}</td>
+            <td class="text-tiny">
+              {% if entry.activity_affected %}
+                {{ status_badge(entry.blocker_category or 'Other', 'sm') }}
+                <div>{{ t("{hours} h lost", hours=entry.estimated_lost_hours | num(1)) }}</div>
+              {% else %}-{% endif %}</td>
+            <td><form method="post" action="{{ url_for('daily.delete_progress', entry_id=entry.id) }}"
+                      data-confirm="{{ t('Remove this progress line?') }}">
+              <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="16">{{ empty(t('No progress line recorded for this date yet.')) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-3 border-top">
+      <details class="inline-form" open>
+        <summary>{{ t("Add a progress line") }}</summary>
+        <form method="post" action="{{ url_for('daily.add_progress', report_id=report.id) }}"
+              class="form-grid mt-2" data-achievement>
+          <div class="full">
+            <label class="form-label">{{ t("WBS activity") }} ({{ version.label if version else t('no programme registered') }})</label>
+            <select name="wbs_code" class="form-select form-select-lg" required data-activity-picker>
+              <option value="">{{ t("Select the activity") }}</option>
+              {% for activity in activities %}
+                <option value="{{ activity.wbs_code }}"
+                        data-activity-name="{{ activity.activity_name }}"
+                        data-work-package="{{ activity.work_package or '' }}"
+                        data-unit="{{ activity.unit or '' }}"
+                        data-total-required-quantity="{{ activity.total_required_quantity or '' }}">
+                  {{ activity.wbs_code }} &mdash; {{ activity.activity_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="full"><label class="form-label">{{ t("Activity name") }}</label>
+            <input name="activity_name" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Work package") }}</label>
+            <input name="work_package" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Area / workfront") }}</label>{{ area_select('area_id', areas, none, 'Not allocated', 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Unit") }}</label>
+            <input name="unit" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Planned quantity") }}</label>
+            <input name="planned_quantity" inputmode="decimal" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Actual quantity") }}</label>
+            <input name="actual_quantity" inputmode="decimal" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Cumulative before") }}</label>
+            <input name="cumulative_before" inputmode="decimal" class="form-control form-control-sm"
+                   placeholder="{{ t('auto from earlier days') }}"></div>
+          <div><label class="form-label">{{ t("Total required") }}</label>
+            <input name="total_required_quantity" inputmode="decimal" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Workers") }}</label>
+            <input name="workers" inputmode="numeric" class="form-control form-control-lg"></div>
+          <div><label class="form-label">{{ t("Working hours") }}</label>
+            <input name="hours" inputmode="decimal" class="form-control form-control-lg"></div>
+          <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+            <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>
+          <div class="full">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" name="activity_affected" value="1" id="affected">
+              <label class="form-check-label" for="affected">{{ t("Activity was affected &mdash; raise a blocker") }}</label>
+            </div>
+          </div>
+          <div><label class="form-label">{{ t("Blocker category") }}</label>{{ select('blocker_category', C.BLOCKER_CATEGORIES, none, 'None') }}</div>
+          <div><label class="form-label">{{ t("Estimated lost hours") }}</label>
+            <input name="estimated_lost_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Blocker description") }}</label>
+            <textarea name="blocker_description" rows="2" class="form-control form-control-sm"></textarea></div>
+          <div class="full">
+            <span class="source-note me-3" data-achievement-out
+                  data-label-none="{{ t('Achievement: not calculable (no planned quantity)') }}"
+                  data-label-value="{{ t('Achievement: {value}%') }}"></span>
+            <button class="btn btn-primary">{{ t("Save progress line") }}</button>
+          </div>
+        </form>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ============ WORKFORCE ============ -->
+<div class="row g-3">
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2><span class="entry-step">3</span>{{ t("Workforce") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Contractor") }}</th><th>{{ t("Discipline") }}</th><th>{{ t("Area") }}</th><th class="num">{{ t("Workers") }}</th>
+              <th class="num">{{ t("Hours") }}</th><th class="num">{{ t("OT") }}</th><th class="num">{{ t("Man-hours") }}</th><th></th></tr></thead>
+            <tbody>
+              {% for entry in report.workforce_entries %}
+              <tr>
+                <td>{{ entry.contractor.name if entry.contractor else (entry.contractor_name or '-') }}</td>
+                <td>{{ entry.discipline }}</td>
+                <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
+                <td class="num">{{ entry.workers }}</td>
+                <td class="num">{{ entry.hours | num(1) }}</td>
+                <td class="num">{{ entry.overtime_hours | num(1) }}</td>
+                <td class="num">{{ entry.man_hours | num(1) }}</td>
+                <td><form method="post" action="{{ url_for('daily.delete_workforce', entry_id=entry.id) }}">
+                  <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td>
+              </tr>
+              {% else %}<tr><td colspan="8">{{ empty(t('No workforce recorded.')) }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="p-3 border-top">
+          <details class="inline-form"><summary>{{ t("Add workforce") }}</summary>
+            <form method="post" action="{{ url_for('daily.add_workforce', report_id=report.id) }}" class="form-grid mt-2">
+              <div><label class="form-label">{{ t("Contractor") }}</label>
+                <select name="contractor_id" class="form-select form-select-sm">
+                  <option value="">{{ t("Other (type below)") }}</option>
+                  {% for contractor in contractors %}<option value="{{ contractor.id }}">{{ contractor.name }}</option>{% endfor %}
+                </select></div>
+              <div><label class="form-label">{{ t("Other contractor") }}</label>
+                <input name="contractor_name" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, 'Civil') }}</div>
+              <div><label class="form-label">{{ t("Work package") }}</label>
+                <input name="work_package" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+              <div><label class="form-label">{{ t("Workers") }}</label>
+                <input name="workers" inputmode="numeric" class="form-control form-control-lg"></div>
+              <div><label class="form-label">{{ t("Hours") }}</label>
+                <input name="hours" inputmode="decimal" class="form-control form-control-lg"></div>
+              <div><label class="form-label">{{ t("Overtime") }}</label>
+                <input name="overtime_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+                <input name="comments" class="form-control form-control-sm"></div>
+              <div class="full"><button class="btn btn-primary btn-sm">{{ t("Add") }}</button></div>
+            </form>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EQUIPMENT ============ -->
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2><span class="entry-step">4</span>{{ t("Plant &amp; equipment") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Equipment") }}</th><th>{{ t("Owner") }}</th><th>{{ t("Status") }}</th><th class="num">{{ t("Qty") }}</th>
+              <th class="num">{{ t("Work") }}</th><th class="num">{{ t("Idle") }}</th><th class="num">{{ t("B/down") }}</th>
+              <th class="num">{{ t("Util. %") }}</th><th></th></tr></thead>
+            <tbody>
+              {% for entry in report.equipment_entries %}
+              <tr>
+                <td>{{ entry.equipment_type }}
+                  {% if entry.reason %}<div class="text-tiny text-muted">{{ entry.reason }}</div>{% endif %}</td>
+                <td class="text-tiny">{{ entry.owner or (entry.contractor.name if entry.contractor else '-') }}</td>
+                <td>{{ status_badge(entry.status, 'sm') }}</td>
+                <td class="num">{{ entry.quantity }}</td>
+                <td class="num">{{ entry.working_hours | num(1) }}</td>
+                <td class="num">{{ entry.idle_hours | num(1) }}</td>
+                <td class="num">{{ entry.breakdown_hours | num(1) }}</td>
+                <td class="num">{{ entry.utilisation_pct | pc(0) if entry.utilisation_pct is not none else '-' }}</td>
+                <td><form method="post" action="{{ url_for('daily.delete_equipment', entry_id=entry.id) }}">
+                  <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td>
+              </tr>
+              {% else %}<tr><td colspan="9">{{ empty(t('No plant recorded.')) }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="p-3 border-top">
+          <details class="inline-form"><summary>{{ t("Add plant / equipment") }}</summary>
+            <form method="post" action="{{ url_for('daily.add_equipment', report_id=report.id) }}" class="form-grid mt-2">
+              <div class="full"><label class="form-label">{{ t("Equipment type") }}</label>
+                <input name="equipment_type" class="form-control form-control-lg" required
+                       placeholder="{{ t('e.g. Pile driving rig, Excavator 20 t') }}"></div>
+              <div><label class="form-label">{{ t("Owner") }}</label>
+                <input name="owner" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Contractor") }}</label>
+                <select name="contractor_id" class="form-select form-select-sm">
+                  <option value="">{{ t("Not recorded") }}</option>
+                  {% for contractor in contractors %}<option value="{{ contractor.id }}">{{ contractor.name }}</option>{% endfor %}
+                </select></div>
+              <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+              <div><label class="form-label">{{ t("Quantity") }}</label>
+                <input name="quantity" value="1" inputmode="numeric" class="form-control form-control-lg"></div>
+              <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.EQUIPMENT_STATUS, 'WORKING') }}</div>
+              <div><label class="form-label">{{ t("Working hours") }}</label>
+                <input name="working_hours" inputmode="decimal" class="form-control form-control-lg"></div>
+              <div><label class="form-label">{{ t("Idle hours") }}</label>
+                <input name="idle_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Breakdown hours") }}</label>
+                <input name="breakdown_hours" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div class="full"><label class="form-label">{{ t("Reason (idle / breakdown)") }}</label>
+                <input name="reason" class="form-control form-control-sm"></div>
+              <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+                <input name="comments" class="form-control form-control-sm"></div>
+              <div class="full"><button class="btn btn-primary btn-sm">{{ t("Add") }}</button></div>
+            </form>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROCUREMENT ============ -->
+<div class="panel">
+  <div class="panel-head">
+    <h2><span class="entry-step">5</span>{{ t("Deliveries &amp; materials today") }}</h2>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.index') }}">{{ t("Procurement register") }}</a>
+  </div>
+  <div class="panel-body tight">
+    {% if not materials %}
+      <div class="empty-state">
+        {{ t("No material line is registered yet. Add packages and materials in {link}, or import them from Data Import, before recording deliveries here.",
+              link='<a href="' ~ url_for('procurement.index') ~ '">' ~ t("Procurement &amp; Materials") ~ '</a>') | safe }}
+      </div>
+    {% else %}
+
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Delivery note") }}</th><th>{{ t("Material") }}</th><th class="num">{{ t("Delivered") }}</th>
+          <th class="num">{{ t("Accepted") }}</th><th class="num">{{ t("Rejected") }}</th><th>{{ t("Status") }}</th>
+          <th>{{ t("Area") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for row in deliveries %}
+          <tr>
+            <td class="mono">{{ row.delivery_note_reference or '-' }}</td>
+            <td>{{ row.material.item if row.material else '-' }}</td>
+            <td class="num">{{ row.quantity | qty }} {{ row.unit or '' }}</td>
+            <td class="num">{{ row.accepted_quantity | qty }}</td>
+            <td class="num">{{ row.rejected_quantity | qty }}</td>
+            <td>{{ status_badge(row.status, 'sm') }}</td>
+            <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+            <td><form method="post" action="{{ url_for('daily.delete_delivery', delivery_id=row.id) }}"
+                      data-confirm="{{ t('Remove this delivery and recalculate the material totals?') }}">
+              <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8">{{ empty(t('No delivery recorded on this date.')) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap border-top">
+      <table class="data">
+        <thead><tr><th>{{ t("Movement") }}</th><th>{{ t("Material") }}</th><th class="num">{{ t("Quantity") }}</th>
+          <th>{{ t("Area") }}</th><th>{{ t("Reference") }}</th><th class="num">{{ t("Cumulative installed") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for row in movements %}
+          <tr>
+            <td>{{ status_badge(row.transaction_type, 'sm') }}</td>
+            <td>{{ row.material.item if row.material else '-' }}</td>
+            <td class="num">{{ row.quantity | qty }} {{ row.material.unit if row.material else '' }}</td>
+            <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+            <td class="text-tiny">{{ row.reference or '-' }}</td>
+            <td class="num">
+              {% if row.transaction_type in C.MATERIAL_TXN_INSTALL and row.material %}
+                {{ row.material.installed | qty }}
+                {% if row.material.total_required %}
+                  / {{ row.material.total_required | qty }}
+                {% endif %}
+              {% else %}-{% endif %}
+            </td>
+            <td><form method="post" action="{{ url_for('daily.delete_movement', txn_id=row.id) }}"
+                      data-confirm="{{ t('Remove this stock movement?') }}">
+              <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7">{{ empty(t('No stock movement recorded on this date.')) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-3 border-top">
+      <div class="row g-3">
+        <div class="col-12 col-xl-6">
+          <details class="inline-form" open>
+            <summary>{{ t("Record a delivery received today") }}</summary>
+            <form method="post" action="{{ url_for('daily.add_delivery', report_id=report.id) }}"
+                  class="form-grid mt-2">
+              <div class="full"><label class="form-label">{{ t("Material") }}</label>
+                <select name="material_id" class="form-select form-select-lg" required>
+                  <option value="">{{ t("Select the material") }}</option>
+                  {% for material in materials %}
+                    <option value="{{ material.id }}">
+                      {{ material.package.package_code if material.package else '' }} &mdash;
+                      {{ material.item }}
+                      {%- if material.total_required %} ({{ t("required") }} {{ material.total_required | qty }} {{ material.unit or '' }}){% endif %}
+                    </option>
+                  {% endfor %}
+                </select></div>
+              <div><label class="form-label">{{ t("Delivery note (DDT)") }}</label>
+                <input name="delivery_note_reference" class="form-control form-control-lg"></div>
+              <div><label class="form-label">{{ t("Quantity delivered") }}</label>
+                <input name="quantity" inputmode="decimal" class="form-control form-control-lg" required></div>
+              <div><label class="form-label">{{ t("Quantity accepted") }}</label>
+                <input name="accepted_quantity" inputmode="decimal" class="form-control form-control-lg"
+                       placeholder="{{ t('leave blank until inspected') }}"></div>
+              <div><label class="form-label">{{ t("Quantity rejected") }}</label>
+                <input name="rejected_quantity" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.DELIVERY_STATUS, 'DELIVERED') }}</div>
+              <div><label class="form-label">{{ t("Received at") }}</label>{{ area_select('area_id', areas) }}</div>
+              <div><label class="form-label">{{ t("Inspected by") }}</label>
+                <input name="inspected_by" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Certificate") }}</label>
+                <input name="certificate_reference" class="form-control form-control-sm"></div>
+              <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+                <input name="comments" class="form-control form-control-sm"></div>
+              <div class="full">
+                <button class="btn btn-primary">{{ t("Record delivery") }}</button>
+                <span class="source-note ms-2">
+                  {{ t("Accepting a quantity also puts it into store stock.") }}
+                </span>
+              </div>
+            </form>
+          </details>
+        </div>
+
+        <div class="col-12 col-xl-6">
+          <details class="inline-form" open>
+            <summary>{{ t("Record material issued or installed today") }}</summary>
+            <form method="post" action="{{ url_for('daily.add_material_movement', report_id=report.id) }}"
+                  class="form-grid mt-2">
+              <div class="full"><label class="form-label">{{ t("Material") }}</label>
+                <select name="material_id" class="form-select form-select-lg" required>
+                  <option value="">{{ t("Select the material") }}</option>
+                  {% for material in materials %}
+                    {% set view = material_views.get(material.id) %}
+                    <option value="{{ material.id }}">
+                      {{ material.item }} &mdash; {{ t("in store") }} {{ view.available | qty if view else '?' }}
+                      {{ material.unit or '' }}, {{ t("installed") }} {{ material.installed | qty }}
+                      {%- if material.total_required %} {{ t("of") }} {{ material.total_required | qty }}{% endif %}
+                    </option>
+                  {% endfor %}
+                </select></div>
+              <div><label class="form-label">{{ t("Movement") }}</label>
+                <select name="transaction_type" class="form-select form-select-lg">
+                  <option value="INSTALLED IN WORKS">{{ t("Installed in the works") }}</option>
+                  <option value="ISSUE TO WORKFRONT">{{ t("Issued from store to a workfront") }}</option>
+                  <option value="RETURN TO STORE">{{ t("Returned to store") }}</option>
+                  <option value="ADJUSTMENT">{{ t("Stock adjustment") }}</option>
+                </select></div>
+              <div><label class="form-label">{{ t("Quantity") }}</label>
+                <input name="quantity" inputmode="decimal" class="form-control form-control-lg" required></div>
+              <div><label class="form-label">{{ t("Workfront") }}</label>{{ area_select('area_id', areas) }}</div>
+              <div><label class="form-label">{{ t("Reference") }}</label>
+                <input name="reference" class="form-control form-control-sm"></div>
+              <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+                <input name="comments" class="form-control form-control-sm"></div>
+              <div class="full">
+                <button class="btn btn-primary">{{ t("Record movement") }}</button>
+                <span class="source-note ms-2">
+                  {{ t("Installing does not deduct from store a second time: the material left the store when it was issued.") }}
+                </span>
+              </div>
+            </form>
+          </details>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ============ OBSERVATIONS ============ -->
+<div class="panel">
+  <div class="panel-head"><h2><span class="entry-step">6</span>{{ t("Site observations") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Category") }}</th><th>{{ t("Severity") }}</th><th>{{ t("Area") }}</th><th>{{ t("Observation") }}</th>
+          <th>{{ t("Action required") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for entry in report.observations %}
+          <tr>
+            <td>{{ entry.category }}</td>
+            <td>{{ status_badge(entry.severity, 'sm') }}</td>
+            <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
+            <td class="mw-260">{{ entry.observation }}</td>
+            <td class="text-tiny">{{ entry.action_required or '-' }}</td>
+            <td class="text-tiny">{{ entry.responsible_party or '-' }}</td>
+            <td class="nowrap">{{ entry.target_date | d }}</td>
+            <td>{{ status_badge(entry.status, 'sm') }}</td>
+            <td class="nowrap">
+              {% if entry.status != 'CLOSED' %}
+              <form method="post" action="{{ url_for('daily.close_observation', observation_id=entry.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-outline-success py-0">{{ t("Close") }}</button></form>
+              {% endif %}
+              <form method="post" action="{{ url_for('daily.delete_observation', observation_id=entry.id) }}" class="d-inline">
+                <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form>
+            </td>
+          </tr>
+          {% else %}<tr><td colspan="9">{{ empty(t('No observation recorded.')) }}</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="p-3 border-top">
+      <details class="inline-form"><summary>{{ t("Add an observation") }}</summary>
+        <form method="post" action="{{ url_for('daily.add_observation', report_id=report.id) }}"
+              class="form-grid mt-2" enctype="multipart/form-data">
+          <div class="full"><label class="form-label">{{ t("Observation") }}</label>
+            <textarea name="observation" rows="2" class="form-control" required></textarea></div>
+          <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.OBSERVATION_CATEGORIES, 'Progress', none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Severity") }}</label>{{ select('severity', C.SEVERITIES, 'LOW', none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas, none, 'Not allocated', 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("WBS") }}</label>
+            <input name="wbs_code" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Action required") }}</label>
+            <textarea name="action_required" rows="2" class="form-control form-control-sm"></textarea></div>
+          <div><label class="form-label">{{ t("Responsible party") }}</label>
+            <input name="responsible_party" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Target date") }}</label>
+            <input type="date" name="target_date" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Photographs") }}</label>
+            <input type="file" name="photos" multiple accept="image/*" capture="environment"
+                   class="form-control form-control-lg"></div>
+          <div class="full"><button class="btn btn-primary">{{ t("Add observation") }}</button></div>
+        </form>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BLOCKERS + PHOTOS ============ -->
+<div class="row g-3">
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Blockers raised on this date") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('blockers.index') }}">{{ t("Blocker register") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Category") }}</th><th>{{ t("Description") }}</th><th class="num">{{ t("Lost h") }}</th><th>{{ t("Status") }}</th></tr></thead>
+            <tbody>
+              {% for blocker in blockers %}
+              <tr>
+                <td class="mono"><a href="{{ url_for('blockers.detail', blocker_id=blocker.id) }}">{{ blocker.blocker_number }}</a></td>
+                <td>{{ blocker.category }}</td>
+                <td class="mw-260 text-tiny">{{ blocker.description or '-' }}</td>
+                <td class="num">{{ blocker.effective_lost_hours | num(1) }}</td>
+                <td>{{ status_badge(blocker.status, 'sm') }}</td>
+              </tr>
+              {% else %}<tr><td colspan="5">{{ empty(t('No blocker recorded on this date.')) }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Photographs") }}</h2></div>
+      <div class="panel-body">
+        {% if report.photos %}
+          <div class="photo-grid mb-3">
+            {% for photo in report.photos %}
+              <figure>
+                <img src="{{ url_for('static', filename='uploads/' ~ photo.stored_path) }}"
+                     alt="{{ photo.caption or photo.filename }}" loading="lazy">
+                <figcaption>{{ photo.caption or photo.filename }}</figcaption>
+              </figure>
+            {% endfor %}
+          </div>
+        {% else %}{{ empty(t('No photograph attached to this report.')) }}{% endif %}
+        <form method="post" action="{{ url_for('daily.add_photos', report_id=report.id) }}"
+              enctype="multipart/form-data" class="form-grid">
+          <div class="full"><label class="form-label">{{ t("Caption") }}</label>
+            <input name="caption" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Photographs") }}</label>
+            <input type="file" name="photos" multiple accept="image/*" capture="environment"
+                   class="form-control form-control-lg"></div>
+          <div class="full"><button class="btn btn-primary btn-sm">{{ t("Upload") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

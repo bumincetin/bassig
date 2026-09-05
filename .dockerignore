@@ -1,0 +1,23 @@
+# Live data never goes into an image; it lives on the mounted volume.
+data/
+backups/
+static/uploads/*
+!static/uploads/.gitkeep
+project_data/source_documents/*
+!project_data/source_documents/.gitkeep
+
+# Confidential contract documents.
+BASSIGNANA_EPC_SOFTWARE_SOURCE_PACK_v1.0/
+
+# Development artefacts.
+.git/
+.github/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.local
+tests/
+deploy/

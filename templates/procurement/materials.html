@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty %}
+{% block title %}{{ t("Materials") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Materials &amp; warehouse") }}</h1>
+    <div class="sub">
+      {{ t("available = accepted receipts + adjustments &minus; issued to workfront") | safe }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.index') }}">{{ t("Packages") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('procurement.export_materials') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("As at") }}</label>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("Stock status") }}</label>
+    <select name="stock" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.STOCK_STATUS %}
+        <option value="{{ value }}" {{ 'selected' if stock_filter == value }}>{{ value }}</option>
+      {% endfor %}
+    </select></div>
+  <div class="field flex-grow-1"><label class="form-label">{{ t("Find") }}</label>
+    <input type="search" class="form-control form-control-sm" placeholder="{{ t('Item or vendor') }}"
+           data-filter-table="#materialsTable"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} material line(s)", count=views | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data" id="materialsTable">
+      <thead><tr><th>{{ t("Package") }}</th><th>{{ t("Item") }}</th><th>{{ t("Vendor") }}</th><th>{{ t("Unit") }}</th>
+        <th class="num">{{ t("Required") }}</th><th class="num">{{ t("Ordered") }}</th><th class="num">{{ t("Delivered") }}</th>
+        <th class="num">{{ t("Accepted") }}</th><th class="num">{{ t("Installed") }}</th><th class="num">{{ t("Available") }}</th>
+        <th>{{ t("Stock") }}</th><th>{{ t("Status") }}</th><th>{{ t("Planned") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for view in views %}
+        {% set material = view.material %}
+        <tr>
+          <td class="mono">{{ material.package.package_code if material.package else '-' }}</td>
+          <td>{{ material.item }}</td>
+          <td class="text-tiny">{{ material.vendor or '-' }}
+            {% if material.vendor and not material.approved_vendor %}
+              <span class="badge bg-warning text-dark badge-sm">NOT APPROVED</span>{% endif %}</td>
+          <td>{{ material.unit or '-' }}</td>
+          <td class="num">{{ material.total_required | qty }}</td>
+          <td class="num">{{ material.ordered | qty }}</td>
+          <td class="num">{{ material.delivered | qty }}</td>
+          <td class="num">{{ material.accepted | qty }}</td>
+          <td class="num">{{ material.installed | qty }}</td>
+          <td class="num"><strong>{{ view.available | qty }}</strong></td>
+          <td>{{ status_badge(view.stock_status, 'sm') }}</td>
+          <td>{{ status_badge(view.procurement_status, 'sm') }}</td>
+          <td class="nowrap">{{ material.planned_delivery | d }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('procurement.material', material_id=material.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="14">{{ empty(t('No material line registered.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+{% endblock %}

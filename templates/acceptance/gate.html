@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, bar, empty, select %}
+{% set gate = view.gate %}
+{% block title %}{{ t("Gate") }} {{ gate.gate_code }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name }}</h1>
+    <div class="sub">{{ gate.contract_reference }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('acceptance.index') }}">{{ t("All gates") }}</a>
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{{ url_for('acceptance.documents', gate=gate.gate_code) }}">{{ t("Gate documents") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('acceptance.export') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Readiness'), view.readiness_pct | pc(1) if view.readiness_pct is not none else 'DATA REQUIRED',
+         view.satisfied ~ ' of ' ~ view.considered ~ ' accepted',
+         'good' if (view.readiness_pct or 0) >= 100 else 'info') }}
+  {{ kpi(t('Recorded gate status'), gate.status) }}
+  {{ kpi(t('Derived state'), view.derived_state, 'calculated, not a decision') }}
+  {{ kpi(t('Open items'), view.open_items | length, '', 'warn' if view.open_items else 'good') }}
+  {{ kpi(t('Rejected items'), view.rejected_items | length, '', 'bad' if view.rejected_items else 'good') }}
+  {{ kpi(t('Missing mandatory documents'), documents.missing_count, '', 'bad' if documents.missing_count else 'good') }}
+</div>
+
+<div class="alert alert-secondary py-2 text-tiny">{{ note }}</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Gate items") }} ({{ gate.items | length }})</h2></div>
+      <div class="panel-body tight">
+        {% if not gate.items %}
+          <div class="alert alert-danger m-3 py-2">
+            <strong>{{ t(C.DATA_REQUIRED) }}:</strong>
+            {{ t("the Gate {code} prerequisite checklist from {reference}. Import it from Data Import &rarr; Acceptance Gate Items, or add items below.",
+                  code=gate.gate_code, reference=gate.contract_reference) }}
+          </div>
+        {% endif %}
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>#</th><th>{{ t("Item") }}</th><th>{{ t("Category") }}</th><th>{{ t("Responsible") }}</th>
+            <th>{{ t("Target") }}</th><th>{{ t("Actual") }}</th><th>{{ t("Evidence") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+          <tbody>
+            {% for item in gate.items %}
+            <tr>
+              <td class="mono">{{ item.item_code or loop.index }}</td>
+              <td class="mw-260"><strong>{{ item.item_name }}</strong>
+                {% if item.description %}<div class="text-tiny text-muted">{{ item.description }}</div>{% endif %}
+                {% if item.contract_reference %}<div class="source-note">{{ item.contract_reference }}</div>{% endif %}</td>
+              <td class="text-tiny">{{ item.category or '-' }}</td>
+              <td class="text-tiny">{{ item.responsible_party or '-' }}</td>
+              <td class="nowrap">{{ item.target_date | d }}</td>
+              <td class="nowrap">{{ item.actual_date | d }}</td>
+              <td class="text-tiny">{{ item.evidence_reference or '-' }}</td>
+              <td>{{ status_badge(item.status, 'sm') }}</td>
+              <td>
+                <details class="inline-form"><summary>{{ t("Edit") }}</summary>
+                  <form method="post" action="{{ url_for('acceptance.update_item', item_id=item.id) }}" class="mt-1">
+                    <input name="item_name" value="{{ item.item_name }}" class="form-control form-control-sm mb-1">
+                    <input name="item_code" value="{{ item.item_code or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Item code') }}">
+                    <input name="category" value="{{ item.category or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Category') }}">
+                    <input name="responsible_party" value="{{ item.responsible_party or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Responsible') }}">
+                    <input type="date" name="target_date" value="{{ item.target_date | iso }}" class="form-control form-control-sm mb-1">
+                    <input type="date" name="actual_date" value="{{ item.actual_date | iso }}" class="form-control form-control-sm mb-1">
+                    <input name="evidence_reference" value="{{ item.evidence_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Evidence reference') }}">
+                    <input name="contract_reference" value="{{ item.contract_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Contract reference') }}">
+                    <textarea name="description" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Description') }}">{{ item.description or '' }}</textarea>
+                    <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ item.comments or '' }}</textarea>
+                    {{ select('status', C.GATE_ITEM_STATUS, item.status, none, 'form-select form-select-lg mb-1') }}
+                    <button class="btn btn-sm btn-primary">{{ t("Save item") }}</button>
+                  </form>
+                  <form method="post" action="{{ url_for('acceptance.update_item', item_id=item.id) }}"
+                        class="mt-1" data-confirm="{{ t('Remove this gate item?') }}">
+                    <input type="hidden" name="action" value="delete">
+                    <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button>
+                  </form>
+                </details>
+              </td>
+            </tr>
+            {% else %}<tr><td colspan="9">{{ empty(t('No gate item registered.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+        <div class="p-3 border-top">
+          <details class="inline-form"><summary>{{ t("Add a gate item") }}</summary>
+            <form method="post" action="{{ url_for('acceptance.add_item', gate_code=gate.gate_code) }}" class="form-grid mt-2">
+              <div class="full"><label class="form-label">{{ t("Item") }}</label>
+                <input name="item_name" class="form-control form-control-lg" required></div>
+              <div><label class="form-label">{{ t("Item code") }}</label>
+                <input name="item_code" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Category") }}</label>
+                <input name="category" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Responsible") }}</label>
+                <input name="responsible_party" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Target date") }}</label>
+                <input type="date" name="target_date" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.GATE_ITEM_STATUS, 'NOT STARTED') }}</div>
+              <div class="full"><label class="form-label">{{ t("Contract reference") }}</label>
+                <input name="contract_reference" class="form-control form-control-sm"
+                       placeholder="{{ t('e.g. Schedule 04A clause 1.1(a)(ii)(A)') }}"></div>
+              <div class="full"><label class="form-label">{{ t("Description") }}</label>
+                <textarea name="description" rows="2" class="form-control form-control-sm"></textarea></div>
+              <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+                <select name="source_document_id" class="form-select form-select-sm">
+                  <option value="">{{ t("Not linked") }}</option>
+                  {% for doc in sources %}<option value="{{ doc.id }}">{{ doc.label }}</option>{% endfor %}
+                </select></div>
+              <div class="full"><button class="btn btn-primary btn-sm">{{ t("Add item") }}</button></div>
+            </form>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Gate decision") }}</h2></div>
+      <div class="panel-body">
+        <p class="text-tiny text-muted mb-2">
+          {{ t("The application never sets this by itself. Record the Client decision here when it happens.") }}
+        </p>
+        <form method="post" class="form-grid">
+          <div class="full"><label class="form-label">{{ t("Recorded gate status") }}</label>
+            {{ select('status', C.GATE_STATUS, gate.status, none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Target date") }}</label>
+            <input type="date" name="target_date" value="{{ gate.target_date | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Actual date") }}</label>
+            <input type="date" name="actual_date" value="{{ gate.actual_date | iso }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Accepted by (required to record ACCEPTED)") }}</label>
+            <input name="accepted_by" value="{{ gate.accepted_by or '' }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Notes") }}</label>
+            <textarea name="notes" rows="3" class="form-control form-control-sm">{{ gate.notes or '' }}</textarea></div>
+          <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save gate") }}</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Missing mandatory documents") }}</h2>
+        <span class="badge {{ 'bg-danger' if documents.missing_count else 'bg-success' }}">{{ documents.missing_count }}</span></div>
+      <div class="panel-body">
+        {% if documents.missing_mandatory %}
+          {% for row in documents.missing_mandatory %}
+            <div class="stat-line"><span>{{ row.title }}</span>{{ status_badge(row.status, 'sm') }}</div>
+          {% endfor %}
+        {% else %}{{ empty(t('No mandatory document is outstanding for this gate.')) }}{% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Punch List for this gate") }}</h2></div>
+      <div class="panel-body">
+        {% for row in punch %}
+          <div class="stat-line">
+            <span><a href="{{ url_for('quality.detail', record_id=row.id) }}">{{ row.record_number }}</a>
+              {{ row.title or '' }}</span>
+            {{ status_badge(row.status, 'sm') }}
+          </div>
+        {% else %}{{ empty(t('No punch item registered.')) }}{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

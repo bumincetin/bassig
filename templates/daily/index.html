@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import empty, kpi %}
+{% block title %}{{ t("Daily Site") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Daily Site Diary") }}</h1>
+    <div class="sub">{{ t("Next report number:") }} <strong>{{ next_number }}</strong></div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.observations') }}">{{ t("Observations") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.export') }}">{{ t("Export progress CSV") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('daily.create') }}">{{ t("New daily report") }}</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Open a day") }}</h2></div>
+  <div class="panel-body">
+    <form method="get" action="{{ url_for('daily.today') }}"
+          class="d-flex gap-2 align-items-end flex-wrap">
+      <div>
+        <label class="form-label">{{ t("Date") }}</label>
+        <input type="date" name="date" value="{{ TODAY | iso }}" max="{{ TODAY | iso }}"
+               class="form-control form-control-lg" required>
+      </div>
+      <button class="btn btn-primary btn-lg">{{ t("Open that day") }}</button>
+      <a class="btn btn-outline-primary btn-lg" href="{{ url_for('daily.today') }}">{{ t("Today") }}</a>
+      <span class="source-note ms-2">
+        {{ t("Any date can be opened, today or in the past. A day that has no diary yet is created when you open it, and entering a past day rebases the running totals of every later day automatically.") }}
+      </span>
+    </form>
+    {% if missing %}
+      <div class="mt-3">
+        <div class="form-label">{{ t("Days in this period with no diary") }} ({{ missing_total }})</div>
+        <div class="d-flex gap-1 flex-wrap">
+          {% for day in missing %}
+            <a class="btn btn-sm btn-outline-warning py-0"
+               href="{{ url_for('daily.today', date=day|iso) }}">{{ day | d }}</a>
+          {% endfor %}
+          {% if missing_total > missing | length %}
+            <span class="text-tiny text-muted align-self-center">
+              {{ t("showing the most recent {count}", count=missing | length) }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} report(s)", count=reports | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Number") }}</th><th>{{ t("Weather") }}</th><th>{{ t("Shift") }}</th><th>{{ t("Prepared by") }}</th>
+          <th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Man-hours") }}</th><th class="num">{{ t("Lines") }}</th>
+          <th class="num">{{ t("Planned") }}</th><th class="num">{{ t("Actual") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for report in reports %}
+          {% set totals = totals.get(report.id) %}
+          <tr>
+            <td class="nowrap"><strong>{{ report.report_date | d }}</strong></td>
+            <td class="mono">{{ report.report_number or '-' }}</td>
+            <td>{{ report.weather or '-' }}</td>
+            <td>{{ report.shift }}</td>
+            <td class="text-tiny">{{ report.prepared_by or '-' }}</td>
+            <td class="num">{{ report.total_workers }}</td>
+            <td class="num">{{ report.total_man_hours | num(0) }}</td>
+            <td class="num">{{ totals.entries if totals else 0 }}</td>
+            <td class="num">{{ totals.planned | qty if totals else '-' }}</td>
+            <td class="num">{{ totals.actual | qty if totals else '-' }}</td>
+            <td class="nowrap">
+              <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('daily.detail', report_id=report.id) }}">{{ t("Open") }}</a>
+              <a class="btn btn-sm btn-outline-secondary py-0" href="{{ url_for('reports.daily', date=report.report_date|iso) }}">{{ t("Report") }}</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="11">{{ empty(t('No daily report in this period. Create one to start recording site actuals.')) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

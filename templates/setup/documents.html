@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import status_badge, empty, select %}
+{% block title %}{{ t("Source documents") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Source document register") }}</h1>
+    <div class="sub">
+      {{ t("Every figure in the application traces back to a row here. Registering a new revision marks the prior one SUPERSEDED; it is never deleted or overwritten.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('setup.index') }}">{{ t("Back to setup") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('setup.export_documents') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if reconciliation %}
+<div class="alert alert-warning py-2">
+  <ul class="mb-0 text-tiny">
+    {% for item in reconciliation %}<li>{{ item.message }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="alert alert-secondary py-2 text-tiny">
+  <strong>{{ t("Precedence rules applied by the application.") }}</strong>
+  {{ t("(1) A contractual baseline stays immutable for contractual comparison.") }}
+  {{ t("(2) The newest formally approved revision governs execution.") }}
+  {{ t("(3) A current working schedule may govern operational planning without replacing the baseline.") }}
+  {{ t("(4) A DRAFT, REFERENCE ONLY, SUPERSEDED or REQUIRES RECONCILIATION document is refused as an import source.") }}
+  {{ t("(5) The source and revision are shown wherever a figure is used.") }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("Type") }}</label>
+    <select name="type" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.DOC_TYPES %}<option value="{{ value }}" {{ 'selected' if filters.type == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Status") }}</label>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.DOC_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} registered document(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("Type") }}</th><th>{{ t("Title") }}</th><th>{{ t("Rev") }}</th><th>{{ t("Document date") }}</th><th>{{ t("Effective") }}</th>
+        <th>{{ t("Status") }}</th><th>{{ t("Contractual") }}</th><th>{{ t("Supersedes") }}</th><th>{{ t("File") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="text-tiny">{{ row.document_type }}</td>
+          <td class="mw-260"><strong>{{ row.title }}</strong>
+            {% if row.source_reference %}<div class="source-note">{{ row.source_reference }}</div>{% endif %}
+            {% if row.notes %}<div class="text-tiny text-muted">{{ row.notes }}</div>{% endif %}</td>
+          <td class="mono">{{ row.revision or '-' }}</td>
+          <td class="nowrap">{{ row.document_date | d }}</td>
+          <td class="nowrap">{{ row.effective_date | d }}</td>
+          <td>{{ status_badge(row.status, 'sm') }}</td>
+          <td>{{ 'Yes' if row.contractual else 'No' }}</td>
+          <td class="text-tiny">{{ row.supersedes.title if row.supersedes else '-' }}</td>
+          <td>{% if row.stored_path %}
+              <a class="btn btn-sm btn-outline-secondary py-0" href="{{ url_for('setup.document_file', doc_id=row.id) }}">{{ t("Download") }}</a>
+            {% else %}<span class="text-muted text-tiny">{{ t("registered only") }}</span>{% endif %}</td>
+          <td>
+            <details class="inline-form"><summary>{{ t("Edit") }}</summary>
+              <form method="post" action="{{ url_for('setup.update_document', doc_id=row.id) }}" class="mt-1">
+                {{ select('document_type', C.DOC_TYPES, row.document_type, none, 'form-select form-select-sm mb-1') }}
+                <input name="title" value="{{ row.title }}" class="form-control form-control-sm mb-1">
+                <input name="revision" value="{{ row.revision or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Revision') }}">
+                <input type="date" name="document_date" value="{{ row.document_date | iso }}" class="form-control form-control-sm mb-1">
+                <input type="date" name="effective_date" value="{{ row.effective_date | iso }}" class="form-control form-control-sm mb-1">
+                {{ select('status', C.DOC_STATUS, row.status, none, 'form-select form-select-sm mb-1') }}
+                <div class="form-check mb-1"><input type="checkbox" class="form-check-input" name="contractual"
+                       value="1" {{ 'checked' if row.contractual }}> <span class="text-tiny">{{ t("Contractual") }}</span></div>
+                <input name="source_reference" value="{{ row.source_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Source reference') }}">
+                <textarea name="notes" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Notes') }}">{{ row.notes or '' }}</textarea>
+                <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
+              </form>
+              <form method="post" action="{{ url_for('setup.update_document', doc_id=row.id) }}" class="mt-1"
+                    data-confirm="{{ t('Remove {title} from the register? Records that cite it will show no source.', title=row.title) }}">
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="10">{{ empty(t('No source document registered. Register the signed contract and its schedules first.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register a source document") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid" enctype="multipart/form-data">
+      <div><label class="form-label">{{ t("Document type") }}</label>
+        {{ select('document_type', C.DOC_TYPES, 'CONTRACT SCHEDULE', none, 'form-select form-select-lg') }}</div>
+      <div class="full"><label class="form-label">{{ t("Title") }}</label>
+        <input name="title" class="form-control form-control-lg" required
+               placeholder="{{ t('e.g. Schedule 03 - Project Timeline') }}"></div>
+      <div><label class="form-label">{{ t("Revision") }}</label>
+        <input name="revision" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Document date") }}</label>
+        <input type="date" name="document_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Effective date") }}</label>
+        <input type="date" name="effective_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Status") }}</label>
+        {{ select('status', C.DOC_STATUS, 'CONTRACTUAL BASELINE', none, 'form-select form-select-lg') }}</div>
+      <div><label class="form-label">{{ t("Contractual") }}</label>
+        <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="contractual" value="1"></div></div>
+      <div class="full"><label class="form-label">{{ t("Supersedes") }}</label>
+        <select name="supersedes_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Nothing (first registration)") }}</option>
+          {% for doc in all_documents %}
+            <option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>
+          {% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Source reference") }}</label>
+        <input name="source_reference" class="form-control form-control-sm"
+               placeholder="{{ t('e.g. signed 11.05.2026, clause / annex reference') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Original filename") }}</label>
+        <input name="source_filename" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Attach the file (optional; stored in project_data/source_documents/)") }}</label>
+        <input type="file" name="file" class="form-control form-control-lg"></div>
+      <div class="full"><label class="form-label">{{ t("Notes") }}</label>
+        <textarea name="notes" rows="2" class="form-control form-control-sm"
+                  placeholder="{{ t('Data-quality warnings, reconciliation notes, known inconsistencies') }}"></textarea></div>
+      <div class="full"><button class="btn btn-primary btn-lg">{{ t("Register document") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

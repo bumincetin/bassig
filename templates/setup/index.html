@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty %}
+{% block title %}{{ t("Project Setup") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Project setup") }}</h1>
+    <div class="sub">
+      {{ t("{done} of {total} initialisation steps satisfied", done=health.satisfied_count, total=health.total_count) }}
+      {% if project and project.setup_complete %}
+        &middot; <span class="badge bg-success">SETUP COMPLETE</span>
+      {% else %}
+        &middot; <span class="badge bg-danger">SETUP INCOMPLETE</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('setup.validation') }}">{{ t("Validation report") }}</a>
+    {% if project and project.setup_complete %}
+      <form method="post" action="{{ url_for('setup.reopen') }}">
+        <button class="btn btn-sm btn-outline-warning">{{ t("Reopen setup") }}</button></form>
+    {% endif %}
+  </div>
+</div>
+
+{% if health.missing_mandatory %}
+<div class="alert alert-danger py-2">
+  <strong>{{ t(C.DATA_REQUIRED) }}</strong> &mdash; {{ t("setup cannot be completed while these are missing:") }}
+  <ul class="mb-0 mt-1 text-tiny">
+    {% for item in health.missing_mandatory %}<li>{{ item.label }}: {{ item.required_input }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if reconciliation %}
+<div class="alert alert-warning py-2">
+  <strong>{{ t("Source reconciliation") }}</strong>
+  <ul class="mb-0 mt-1 text-tiny">
+    {% for item in reconciliation %}<li>{{ item.message }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if schedule_warnings %}
+<div class="alert alert-warning py-2 text-tiny">
+  {% for warning in schedule_warnings %}<div>{{ warning }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Source documents'), health.counts.source_documents, health.counts.contractual_docs ~ ' contractual',
+         'good' if health.counts.source_documents else 'bad') }}
+  {{ kpi(t('Schedule versions'), versions | length,
+         health.counts.activities ~ ' activities', 'good' if versions else 'bad') }}
+  {{ kpi(t('Areas / workfronts'), health.counts.areas, '', 'good' if health.counts.areas else 'bad') }}
+  {{ kpi(t('BOQ quantities'), health.counts.quantities, '', 'good' if health.counts.quantities else 'bad') }}
+  {{ kpi(t('Procurement packages'), health.counts.packages, '', 'good' if health.counts.packages else 'bad') }}
+  {{ kpi(t('ITP requirements'), health.counts.inspections, '', 'good' if health.counts.inspections else 'bad') }}
+  {{ kpi(t('Gates with checklists'), health.counts.gates_with_items ~ ' / 4', '',
+         'good' if health.counts.gates_with_items >= 4 else 'warn') }}
+  {{ kpi(t('Permit items'), health.counts.permits, '', 'good' if health.counts.permits else 'warn') }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Initialisation wizard") }}</h2></div>
+  <div class="panel-body">
+    {% for number, label, endpoint in steps %}
+      {% set item = health.checks | selectattr('step', 'equalto', number) | list | first %}
+      <div class="wizard-step">
+        <div class="step-num {{ 'done' if item and item.satisfied else ('todo' if item and item.mandatory else '') }}">{{ number }}</div>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between gap-2 flex-wrap align-items-center">
+            <strong>{{ label }}</strong>
+            <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for(endpoint) }}">{{ t("Open") }}</a>
+          </div>
+          {% for check in health.checks if check.step == number %}
+            <div class="text-tiny {{ 'text-success' if check.satisfied else ('text-danger' if check.mandatory else 'text-warning-emphasis') }}">
+              {{ '✓' if check.satisfied else '✗' }} {{ check.label }}
+              {% if not check.satisfied %} &mdash; {{ check.required_input }}{% endif %}
+              {% if not check.mandatory %} <span class="badge bg-secondary badge-sm">{{ t("optional") }}</span>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Registered source documents") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('setup.documents') }}">{{ t("Manage") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Title") }}</th><th>{{ t("Type") }}</th><th>{{ t("Rev") }}</th><th>{{ t("Status") }}</th></tr></thead>
+          <tbody>
+            {% for doc in documents %}
+            <tr><td class="mw-260">{{ doc.title }}</td><td class="text-tiny">{{ doc.document_type }}</td>
+              <td class="mono">{{ doc.revision or '-' }}</td><td>{{ status_badge(doc.status, 'sm') }}</td></tr>
+            {% else %}<tr><td colspan="4">{{ empty(t('No source document registered yet.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Recent imports") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('dataio.index') }}">{{ t("Data import") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("When") }}</th><th>{{ t("Type") }}</th><th class="num">{{ t("Created") }}</th><th class="num">{{ t("Updated") }}</th></tr></thead>
+          <tbody>
+            {% for batch in batches %}
+            <tr><td class="nowrap">{{ batch.created_at | d }}</td><td>{{ batch.import_type }}</td>
+              <td class="num">{{ batch.created_count }}</td><td class="num">{{ batch.updated_count }}</td></tr>
+            {% else %}<tr><td colspan="4">{{ empty(t('No import committed yet.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, empty %}
+{% block title %}{{ t("Blocker analysis") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Lost productivity analysis") }}</h1>
+    <div class="sub">{{ date_from | d }} {{ t("to") }} {{ date_to | d }}</div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('blockers.index') }}">{{ t("Blocker register") }}</a>
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="kpi-grid">
+  {{ kpi(t('Incidents'), summary.total) }}
+  {{ kpi(t('Lost hours'), summary.lost_hours | num(1)) }}
+  {{ kpi(t('Lost man-hours'), summary.lost_man_hours | num(0)) }}
+  {{ kpi(t('Recurring causes'), summary.recurring | length, '3 or more incidents in the period') }}
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <div class="panel"><div class="panel-head"><h2>{{ t("By cause") }}</h2></div>
+      <div class="panel-body tight"><div class="table-wrap"><table class="data">
+        <thead><tr><th>{{ t("Category") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost h") }}</th><th class="num">{{ t("Lost MH") }}</th></tr></thead>
+        <tbody>
+          {% for row in summary.by_category %}
+          <tr><td>{{ row.category }}{% if row.incidents >= 3 %} <span class="badge bg-warning text-dark badge-sm">RECURRING</span>{% endif %}</td>
+            <td class="num">{{ row.incidents }}</td><td class="num">{{ row.lost_hours | num(1) }}</td>
+            <td class="num">{{ row.lost_man_hours | num(0) }}</td></tr>
+          {% else %}<tr><td colspan="4">{{ empty(t('No blocker in this period.')) }}</td></tr>{% endfor %}
+        </tbody></table></div></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="panel"><div class="panel-head"><h2>{{ t("Most affected areas") }}</h2></div>
+      <div class="panel-body tight"><div class="table-wrap"><table class="data">
+        <thead><tr><th>{{ t("Area") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost h") }}</th></tr></thead>
+        <tbody>
+          {% for row in summary.by_area %}
+          <tr><td>{{ row.area }}</td><td class="num">{{ row.incidents }}</td>
+            <td class="num">{{ row.lost_hours | num(1) }}</td></tr>
+          {% else %}<tr><td colspan="3">{{ empty(t('Nothing recorded.')) }}</td></tr>{% endfor %}
+        </tbody></table></div></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="panel"><div class="panel-head"><h2>{{ t("Most affected activities") }}</h2></div>
+      <div class="panel-body tight"><div class="table-wrap"><table class="data">
+        <thead><tr><th>{{ t("Activity") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost h") }}</th></tr></thead>
+        <tbody>
+          {% for row in summary.by_activity %}
+          <tr><td class="mw-260">{{ row.activity }}</td><td class="num">{{ row.incidents }}</td>
+            <td class="num">{{ row.lost_hours | num(1) }}</td></tr>
+          {% else %}<tr><td colspan="3">{{ empty(t('Nothing recorded.')) }}</td></tr>{% endfor %}
+        </tbody></table></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-grid no-print">
+  <div class="panel"><div class="panel-head"><h2>{{ t("Lost hours by cause") }}</h2></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="chartCause"></canvas></div></div></div>
+  <div class="panel"><div class="panel-head"><h2>{{ t("Lost hours by area") }}</h2></div>
+    <div class="panel-body"><div class="chart-box tall"><canvas id="chartArea"></canvas></div></div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+BAS.hbar('chartCause',
+  {{ summary.by_category | map(attribute='category') | list | tojson }},
+  {{ summary.by_category | map(attribute='lost_hours') | list | tojson }}, BAS.palette.red);
+BAS.hbar('chartArea',
+  {{ summary.by_area | map(attribute='area') | list | tojson }},
+  {{ summary.by_area | map(attribute='lost_hours') | list | tojson }}, BAS.palette.amber);
+</script>
+{% endblock %}

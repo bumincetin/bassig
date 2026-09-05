@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, empty %}
+{% block title %}{{ t("Backup") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Backup &amp; data safety") }}</h1>
+    <div class="sub">
+      {{ t("Backups are taken through SQLite's own backup API, so a copy is consistent even while the application is running.") }}
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('backup.create') }}" class="page-actions">
+    <button class="btn btn-primary">{{ t("Back up the database now") }}</button>
+  </form>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Live database'), database_size_mb | num(2) ~ ' MB', database.name if database else '-') }}
+  {{ kpi(t('Backups on disk'), backups | length) }}
+  {{ kpi(t('Evidence photographs'), uploads.file_count, uploads.total_mb | num(2) ~ ' MB') }}
+  {{ kpi(t('Registered source files'), sources.file_count, sources.total_mb | num(2) ~ ' MB') }}
+</div>
+
+<div class="alert alert-warning py-2">
+  <strong>{{ t("The database is not the whole record.") }}</strong>
+  {{ t("Photographs and evidence files live in {uploads} and registered source documents in {sources}. A database backup alone does not contain them. Copy those folders too whenever you move or archive the project.",
+        uploads="<code>static/uploads/</code>",
+        sources="<code>project_data/source_documents/</code>") | safe }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Backups") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("File") }}</th><th>{{ t("Created") }}</th><th class="num">{{ t("Size") }}</th><th>{{ t("Integrity") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in backups %}
+        <tr class="{{ 'table-active' if verified == row.name }}">
+          <td class="mono">{{ row.name }}</td>
+          <td class="nowrap">{{ row.created | d }}</td>
+          <td class="num">{{ row.size_mb | num(2) }} MB</td>
+          <td>
+            {% if row.integrity %}
+              <span class="badge {{ 'bg-success' if row.integrity[0] else 'bg-danger' }} badge-sm">
+                {{ 'PASSED' if row.integrity[0] else 'FAILED' }}</span>
+              <div class="text-tiny text-muted">{{ row.integrity[1] }}</div>
+            {% else %}
+              <span class="text-muted text-tiny">{{ t("not checked") }}</span>
+            {% endif %}
+          </td>
+          <td class="nowrap">
+            <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('backup.download', name=row.name) }}">{{ t("Download") }}</a>
+            <form method="post" action="{{ url_for('backup.verify', name=row.name) }}" class="d-inline">
+              <button class="btn btn-sm btn-outline-secondary py-0">{{ t("Verify") }}</button></form>
+            <details class="inline-form d-inline-block">
+              <summary class="d-inline">{{ t("Delete") }}</summary>
+              <form method="post" action="{{ url_for('backup.delete', name=row.name) }}" class="mt-1">
+                <p class="text-tiny text-danger mb-1">
+                  {{ t("This permanently deletes the backup file. Type the file name to confirm.") }}
+                </p>
+                <input name="confirm" class="form-control form-control-sm mb-1"
+                       placeholder="{{ row.name }}" autocomplete="off">
+                <button class="btn btn-sm btn-outline-danger">{{ t("Delete permanently") }}</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="5">{{ empty(t('No backup taken yet. Take one now and repeat it at the end of every reporting week.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("How to restore a backup") }}</h2></div>
+      <div class="panel-body">
+        <ol class="mb-0 text-tiny">
+          {% for step in restore %}<li class="mb-1">{{ step }}</li>{% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Moving the system to another machine") }}</h2></div>
+      <div class="panel-body">
+        <ol class="mb-2 text-tiny">
+          {% for step in migration %}<li class="mb-1">{{ step }}</li>{% endfor %}
+        </ol>
+        <div class="text-tiny">
+          <strong>{{ t("Paths on this machine") }}</strong>
+          <div class="stat-line"><span>{{ t("Database") }}</span><strong class="font-monospace">{{ database }}</strong></div>
+          <div class="stat-line"><span>{{ t("Uploads") }}</span><strong class="font-monospace">{{ uploads.path }}</strong></div>
+          <div class="stat-line"><span>{{ t("Source documents") }}</span><strong class="font-monospace">{{ sources.path }}</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ record.record_number }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ record.record_number }}</h1>
+    <div class="sub">
+      <span class="badge bg-secondary">{{ record.record_type }}</span>
+      {{ record.title or '' }} &middot; {{ t("raised") }} {{ record.record_date | d }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{{ url_for('issues.index') if record.record_type in ['NCR', 'PUNCH LIST'] else url_for('quality.index') }}">{{ t("Back") }}</a>
+    <form method="post" action="{{ url_for('quality.delete', record_id=record.id) }}"
+          data-confirm="{{ t('Delete {number} permanently?', number=record.record_number) }}">
+      <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button></form>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Status'), derived, 'recorded: ' ~ record.status,
+         'bad' if derived in ['OVERDUE', 'ACTION REQUIRED', 'REJECTED'] else ('good' if derived in ['ACCEPTED', 'CLOSED'] else 'warn')) }}
+  {{ kpi(t('Severity'), record.severity or '-') }}
+  {{ kpi(t('Target closure'), record.target_closure_date | d) }}
+  {{ kpi(t('Closed'), record.closure_date | d) }}
+  {{ kpi(t('Photographs'), record.photos | length) }}
+</div>
+
+{% if record.record_type in ['NCR', 'PUNCH LIST'] %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Classification") }}</h2></div>
+  <div class="panel-body">
+    <p class="text-tiny mb-2">
+      {{ t("A Punch List item and an NCR are different contractual instruments. Reclassification is explicit, is recorded in the comments and issues a new record number.") }}
+    </p>
+    <form method="post" action="{{ url_for('issues.reclassify', record_id=record.id) }}"
+          class="d-flex gap-2 align-items-end flex-wrap"
+          data-confirm="{{ t('Reclassify {number}? A new record number will be issued.', number=record.record_number) }}">
+      <div>
+        <label class="form-label">{{ t("Reclassify as") }}</label>
+        {{ select('record_type', ['NCR', 'PUNCH LIST'], record.record_type) }}
+      </div>
+      <button class="btn btn-sm btn-outline-warning">{{ t("Reclassify") }}</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Record") }}</h2></div>
+      <div class="panel-body">
+        <form method="post" class="form-grid" enctype="multipart/form-data">
+          <div><label class="form-label">{{ t("Date") }}</label>
+            <input type="date" name="record_date" value="{{ record.record_date | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.QUALITY_STATUS, record.status, none, 'form-select form-select-lg') }}</div>
+          <div><label class="form-label">{{ t("Closure date") }}</label>
+            <input type="date" name="closure_date" value="{{ record.closure_date | iso }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Title") }}</label>
+            <input name="title" value="{{ record.title or '' }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Description") }}</label>
+            <textarea name="description" rows="3" class="form-control form-control-sm">{{ record.description or '' }}</textarea></div>
+          <div><label class="form-label">{{ t("WBS") }}</label>
+            <input name="wbs_code" value="{{ record.wbs_code or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Work package") }}</label>
+            <input name="work_package" value="{{ record.work_package or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas, record.area_id) }}</div>
+          <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, record.discipline, 'Not set') }}</div>
+          <div><label class="form-label">{{ t("ITP reference") }}</label>
+            <input name="itp_reference" value="{{ record.itp_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Specification") }}</label>
+            <input name="specification_reference" value="{{ record.specification_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Drawing") }}</label>
+            <input name="drawing_reference" value="{{ record.drawing_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Responsible") }}</label>
+            <input name="responsible_party" value="{{ record.responsible_party or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Severity") }}</label>{{ select('severity', C.SEVERITIES, record.severity) }}</div>
+          <div><label class="form-label">{{ t("Target closure") }}</label>
+            <input type="date" name="target_closure_date" value="{{ record.target_closure_date | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Inspection result") }}</label>{{ select('inspection_result', C.INSPECTION_RESULTS, record.inspection_result) }}</div>
+          <div><label class="form-label">{{ t("Acceptance gate") }}</label>
+            <select name="gate_code" class="form-select form-select-sm">
+              <option value="">{{ t("Not linked") }}</option>
+              {% for code, name, ref in C.GATES %}
+                <option value="{{ code }}" {{ 'selected' if record.gate_code == code }}>{{ t("Gate") }} {{ code }} &mdash; {{ name }}</option>
+              {% endfor %}
+            </select></div>
+          <div class="full"><label class="form-label">{{ t("Corrective action") }}</label>
+            <textarea name="corrective_action" rows="3" class="form-control form-control-sm">{{ record.corrective_action or '' }}</textarea></div>
+          <div class="full"><label class="form-label">{{ t("Evidence reference") }}</label>
+            <input name="evidence_reference" value="{{ record.evidence_reference or '' }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ record.comments or '' }}</textarea></div>
+          <div class="full"><label class="form-label">{{ t("Add photographs") }}</label>
+            <input type="file" name="photos" multiple accept="image/*" capture="environment" class="form-control form-control-lg"></div>
+          <div class="full"><button class="btn btn-primary">{{ t("Save record") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Linked ITP requirement") }}</h2></div>
+      <div class="panel-body">
+        {% if record.inspection_requirement %}
+          {% set requirement = record.inspection_requirement %}
+          <div class="stat-line"><span>{{ t("Reference") }}</span><strong>{{ requirement.itp_reference }}</strong></div>
+          <div class="stat-line"><span>{{ t("Point type") }}</span><strong>{{ requirement.point_type }}</strong></div>
+          <div class="stat-line"><span>{{ t("Inspection type") }}</span><strong>{{ requirement.inspection_type or '-' }}</strong></div>
+          <div class="stat-line"><span>{{ t("Specification") }}</span><strong>{{ requirement.applicable_specification or '-' }}</strong></div>
+          <p class="mt-2 mb-1 text-tiny"><strong>{{ t("Required evidence") }}</strong><br>{{ requirement.required_evidence or '-' }}</p>
+          <p class="mb-0 text-tiny"><strong>{{ t("Acceptance criterion") }}</strong><br>{{ requirement.acceptance_criterion or '-' }}</p>
+        {% else %}{{ empty(t('No ITP requirement is linked to this record.')) }}{% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Photographs") }}</h2></div>
+      <div class="panel-body">
+        {% if record.photos %}
+          <div class="photo-grid">
+            {% for photo in record.photos %}
+              <figure>
+                <img src="{{ url_for('static', filename='uploads/' ~ photo.stored_path) }}"
+                     alt="{{ photo.caption or photo.filename }}" loading="lazy">
+                <figcaption>{{ photo.taken_date | d }}</figcaption>
+              </figure>
+            {% endfor %}
+          </div>
+        {% else %}{{ empty(t('No photograph attached.')) }}{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

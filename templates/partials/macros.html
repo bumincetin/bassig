@@ -1,0 +1,103 @@
+{# Shared presentation macros. Status classification always arrives already
+   decided by app/services/status_rules.py — nothing is re-derived here. #}
+
+{% macro kpi(label, value, note='', tone='', small=false) %}
+<div class="kpi {{ tone }}">
+  <div class="k-label">{{ label }}</div>
+  <div class="k-value {{ 'small' if small }}">{{ value }}</div>
+  {% if note %}<div class="k-note">{{ note }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro pct_kpi(label, value, note='', tone='') %}
+{{ kpi(label, value | pc if value is not none else 'DATA REQUIRED', note, tone if value is not none else 'bad') }}
+{% endmacro %}
+
+{# The stored value drives the colour and stays English in the database;
+   only the label shown to the user is translated. #}
+{% macro status_badge(value, size='') %}
+<span class="badge {{ badge(value) }} {{ 'badge-sm' if size == 'sm' }}">{{ t(value) if value else '-' }}</span>
+{% endmacro %}
+
+{% macro bar(value, tone='') %}
+{% if value is none %}
+  <span class="data-required">DATA REQUIRED</span>
+{% else %}
+  <div class="progress-mini" title="{{ value | pc }}">
+    <span class="{{ tone }}" style="width: {{ [[value, 0] | max, 100] | min }}%"></span>
+  </div>
+{% endif %}
+{% endmacro %}
+
+{% macro variance(value) %}
+{% if value is none %}<span class="text-muted">-</span>
+{% else %}<span class="{{ variance_class(value) }} fw-semibold">{{ value | signed }} {{ t("pp") }}</span>{% endif %}
+{% endmacro %}
+
+{% macro data_required(what) %}
+<div class="alert alert-danger py-2 my-2">
+  <strong>DATA REQUIRED:</strong> {{ what }}
+</div>
+{% endmacro %}
+
+{% macro empty(message) %}
+<div class="empty-state">{{ message }}</div>
+{% endmacro %}
+
+{% macro source_of(record) %}
+{% if record and record.source_document %}
+  <span class="source-note">{{ t("Source:") }} {{ record.source_document.label }}
+    ({{ t(record.source_document.status) }})</span>
+{% else %}
+  <span class="source-note">{{ t("Source: not recorded") }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro date_filter(action, date_from, date_to, extra='') %}
+<form class="filter-bar no-print" method="get" action="{{ action }}" data-autosubmit>
+  <div class="field">
+    <label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm">
+  </div>
+  <div class="field">
+    <label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm">
+  </div>
+  {{ extra | safe }}
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+{% endmacro %}
+
+{% macro select(name, options, selected=none, blank='', classes='form-select form-select-sm') %}
+<select name="{{ name }}" class="{{ classes }}">
+  {% if blank %}<option value="">{{ blank }}</option>{% endif %}
+  {% for option in options %}
+    <option value="{{ option }}" {{ 'selected' if option == selected }}>{{ option }}</option>
+  {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro area_select(name, areas, selected=none, blank='Area / workfront', classes='form-select form-select-sm') %}
+<select name="{{ name }}" class="{{ classes }}">
+  <option value="">{{ blank }}</option>
+  {% for area in areas %}
+    <option value="{{ area.id }}" {{ 'selected' if selected and area.id == selected }}>{{ area.label }}</option>
+  {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro photos(items, title='Photographs') %}
+{% if items %}
+<div class="report-section">
+  <h3>{{ title }} ({{ items | length }})</h3>
+  <div class="photo-grid">
+    {% for photo in items %}
+      <figure>
+        <img src="{{ url_for('static', filename='uploads/' ~ photo.stored_path) }}" alt="{{ photo.caption or photo.filename }}" loading="lazy">
+        <figcaption>{{ photo.caption or photo.filename }}<br><span class="text-muted">{{ photo.taken_date | d }}</span></figcaption>
+      </figure>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,18 @@
+{
+ "Access password": "Erişim parolası",
+ "Achievement: not calculable (no planned quantity)": "Gerçekleşme: hesaplanamıyor (planlanan miktar yok)",
+ "Achievement: {value}%": "Gerçekleşme: %{value}",
+ "Ask the project manager for the password.": "Parolayı proje yöneticisinden isteyin.",
+ "File type '{suffix}' is not accepted for document registration.": "'{suffix}' dosya türü belge kaydı için kabul edilmiyor.",
+ "Remembered on this device for 30 days.": "Bu cihazda 30 gün boyunca hatırlanır.",
+ "Sign in": "Giriş yap",
+ "Sign out": "Çıkış yap",
+ "Signed out.": "Çıkış yapıldı.",
+ "The live database file could not be located.": "Canlı veritabanı dosyası bulunamadı.",
+ "The password is not correct.": "Parola doğru değil.",
+ "This installation is protected by a shared password. Enter it to open the site control system.": "Bu kurulum ortak bir parolayla korunmaktadır. Saha kontrol sistemini açmak için parolayı girin.",
+ "Too many failed attempts. Try again in {minutes} minute(s).": "Çok fazla başarısız deneme. {minutes} dakika sonra yeniden deneyin.",
+ "Unsupported import file type '{suffix}'. Use .csv or .xlsx.": "Desteklenmeyen içe aktarma dosya türü: '{suffix}'. .csv veya .xlsx kullanın.",
+ "Uploaded import file is no longer available. Please upload it again.": "Yüklenen içe aktarma dosyası artık mevcut değil. Lütfen yeniden yükleyin.",
+ "openpyxl is required to read .xlsx import files": ".xlsx içe aktarma dosyalarını okumak için openpyxl gereklidir"
+}

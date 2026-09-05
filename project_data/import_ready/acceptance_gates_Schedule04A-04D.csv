@@ -1,0 +1,69 @@
+gate_code,item_code,item_name,description,category,responsible_party,target_date,contract_reference,source
+A,A-01,Grid readiness statement issued to the DSO,"Communication ""completamento opere strettamente necessarie"" as per TICA, submitted to the DSO, if applicable.",Grid / DSO,Contractor,,Schedule 04A clause 1.1(a)(i),Schedule 04A - Works Completion Acceptance
+A,A-02,All PV modules installed,Photovoltaic system fully installed as per the Contract.,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii)(A),Schedule 04A - Works Completion Acceptance
+A,A-03,All inverters installed,,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii)(A),Schedule 04A - Works Completion Acceptance
+A,A-04,All mounting structures installed,,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii)(A),Schedule 04A - Works Completion Acceptance
+A,A-05,All cables installed,,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii)(A),Schedule 04A - Works Completion Acceptance
+A,A-06,All earthing components installed,,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii)(A),Schedule 04A - Works Completion Acceptance
+A,A-07,"SCADA, DC, LV and MV terminations completed",,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii)(A),Schedule 04A - Works Completion Acceptance
+A,A-08,CCTV and monitoring systems fully installed,,Installation,Contractor,,Schedule 04A clause 1.1(a)(ii),Schedule 04A - Works Completion Acceptance
+A,A-09,All work packages completed and verified by the Contractor,As per the stipulations in the statement of works.,Works,Contractor,,Schedule 04A clause 1.1(a)(ii)(B),Schedule 04A - Works Completion Acceptance
+A,A-10,Cold commissioning completed to the applicable standards,"Including but not limited to CEI 82-16, CEI EN 62446-1 (CEI 82-56) and CEI 82-65; the plant and all ancillary installations are ready for start-up.",Commissioning,Contractor,,Schedule 04A clause 1.1(a)(ii)(C),Schedule 04A - Works Completion Acceptance
+A,A-11,Plant is safe to connect to the grid and complies with the project requirements,,Safety,Contractor,,Schedule 04A clause 1.1(a)(iii),Schedule 04A - Works Completion Acceptance
+A,A-12,All civil and reinstatement works completed,"Trenches backfilled to specification, roads repaired, ground levelled, excess material and waste removed.",Civil,Contractor,,Schedule 04A clause 1.1(a)(iv),Schedule 04A - Works Completion Acceptance
+A,A-13,Works Completion Statement issued with supporting documentation,Cannot be issued until every prerequisite in clause 1.1(a) is satisfied.,Documentation,Contractor,,Schedule 04A clause 1.1(b),Schedule 04A - Works Completion Acceptance
+A,A-14,Supporting documentation submitted (Attachment 1 documentation list),"Elaborati, MV cable, terminations, supports/poles, MV panels, Di.Co. 37/08, tests, designer and works-director declarations.",Documentation,Contractor,,Schedule 04A Attachment 1,Schedule 04A - Works Completion Acceptance
+A,A-15,Commissioning check list submitted (Attachment 2),22-item cold/hot commissioning document list.,Documentation,Contractor,,Schedule 04A Attachment 2,Schedule 04A - Works Completion Acceptance
+A,A-16,Works Completion Visit performed by the Client,Within ten (10) working days of the Works Completion Statement.,Client review,Client,,Schedule 04A clause 1.1(c),Schedule 04A - Works Completion Acceptance
+A,A-17,Punch List Works agreed between the parties,Within ten (10) days of the Works Completion Visit; completion period not exceeding 30 calendar days from the visit; aggregate cost not exceeding 2% of the Contract price.,Punch list,Client and Contractor,,Schedule 04A clause 1.1(d),Schedule 04A - Works Completion Acceptance
+A,A-18,Works Completion Certificate signed with the Punch List attached,,Certificate,Client and Contractor,,Schedule 04A clause 1.1(e),Schedule 04A - Works Completion Acceptance
+B,B-01,Works Completion Certificate signed by both parties,,Prerequisite,Client and Contractor,,Schedule 04B clause 1.1(a),Schedule 04B - Commissioning Acceptance
+B,B-02,PV plant installation completed in accordance with the design,,Works,Contractor,,Schedule 04B clause 1.1(b),Schedule 04B - Commissioning Acceptance
+B,B-03,Plant energised and fully operational down to string level,"All strings, combiner boxes, inverters and sensors visible live on the monitoring portal; all cameras streaming live on the CCTV portal; credentials provided to the Client.",Energisation,Contractor,,Schedule 04B clause 1.1(c),Schedule 04B - Commissioning Acceptance
+B,B-04,Grid Connection test completed and DSO forms signed,"In accordance with local regulations, if applicable.",Grid / DSO,Contractor,,Schedule 04B clause 1.1(d),Schedule 04B - Commissioning Acceptance
+B,B-05,IEC 62446-1 activities completed successfully,,Testing,Contractor,,Schedule 04B clause 1.1(e),Schedule 04B - Commissioning Acceptance
+B,B-06,Commissioning tests of electrical equipment and earthing systems completed,Conformity with applicable Italian regulations and local DSO requirements.,Testing,Contractor,,Schedule 04B clause 1.1(f),Schedule 04B - Commissioning Acceptance
+B,B-07,Manufacturer-required commissioning tests completed,"Inverters, combiner boxes, LV/MV/HV switchgear, transformers, CCTV and monitoring system.",Testing,Contractor,,Schedule 04B clause 1.1(g),Schedule 04B - Commissioning Acceptance
+B,B-08,SCADA and CCTV commissioning completed; surveillance company appointed,,Commissioning,Contractor,,Schedule 04B clause 1.1(h),Schedule 04B - Commissioning Acceptance
+B,B-09,Functional tests passed,"Signal transfer to monitoring portals, alarms and sensors, UPS battery endurance, emergency off, monitoring with string-level visibility, protection relay reset and restart, thermostat controls, security and interlocks, pyranometers and sensors, import/export and MV meters, sample IV testing.",Testing,Client,,Schedule 04B clause 1.3,Schedule 04B - Commissioning Acceptance
+B,B-10,Commissioning test results and verification submitted (IEC 62446-1:2016),,Documentation,Contractor,,Schedule 04B clause 1.1(j)(i),Schedule 04B - Commissioning Acceptance
+B,B-11,Ground earth resistance test evidence submitted,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(ii),Schedule 04B - Commissioning Acceptance
+B,B-12,"Inverter, circuit breaker and transformer commissioning evidence submitted",Dated on or before the date of commissioning.,Documentation,Contractor,,Schedule 04B clause 1.1(j)(iii),Schedule 04B - Commissioning Acceptance
+B,B-13,Proof of protection schemes commissioning submitted,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(iv),Schedule 04B - Commissioning Acceptance
+B,B-14,VLF test results for MV cables submitted,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(v),Schedule 04B - Commissioning Acceptance
+B,B-15,Cable dielectric and continuity test results signed off,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(vi),Schedule 04B - Commissioning Acceptance
+B,B-16,Import/export meter evidence submitted,Photograph of the meters with a time-stamped confirmation of the date.,Documentation,Contractor,,Schedule 04B clause 1.1(j)(vii),Schedule 04B - Commissioning Acceptance
+B,B-17,Commissioning method and health and safety documents submitted,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(viii),Schedule 04B - Commissioning Acceptance
+B,B-18,As-built site plan and single line diagram submitted,Showing site boundaries and total DC and AC capacity.,Documentation,Contractor,,Schedule 04B clause 1.1(j)(ix),Schedule 04B - Commissioning Acceptance
+B,B-19,MV meter calibration certificates submitted,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(x),Schedule 04B - Commissioning Acceptance
+B,B-20,Calibration certificates of all test equipment submitted,,Documentation,Contractor,,Schedule 04B clause 1.1(j)(xi),Schedule 04B - Commissioning Acceptance
+B,B-21,"Contractor certification that test results are complete, current and accurate",,Documentation,Contractor,,Schedule 04B clause 1.2(b),Schedule 04B - Commissioning Acceptance
+B,B-22,Client notification of acceptance of the test results,Within five (5) working days of the Contractor certification.,Client review,Client,,Schedule 04B clause 1.2(c),Schedule 04B - Commissioning Acceptance
+B,B-23,Commissioning Certificate signed,,Certificate,Client and Contractor,,Schedule 04B,Schedule 04B - Commissioning Acceptance
+C,C-01,Works Completion Certificate signed,,Prerequisite,Client and Contractor,,Schedule 04C clause 1.1(a),Schedule 04C - PAC Acceptance
+C,C-02,Commissioning Certificate signed,,Prerequisite,Client and Contractor,,Schedule 04C clause 1.1(a),Schedule 04C - PAC Acceptance
+C,C-03,Project documentation submitted per the Schedule 04C folder structure,Submitted electronically; as-built drawings stamped AS BUILT; studies signed by the responsible engineer; native formats (.DWG) provided in addition to PDF.,Documentation,Contractor,,Schedule 04C clause 1.2,Schedule 04C - PAC Acceptance
+C,C-04,Performance Test completed successfully (EN IEC 61724-1:2021),"Ten consecutive full days for the whole plant, or fifteen non-consecutive days where minimum irradiation requirements are not met on a given day.",Performance,Contractor,,Schedule 04C clause 1.3,Schedule 04C - PAC Acceptance
+C,C-05,Measured Performance Ratio exceeds the Guaranteed Performance Ratio,,Performance,Contractor,,Schedule 04C clause 1.3(b)(i),Schedule 04C - PAC Acceptance
+C,C-06,"Plant, pyranometer, energy meter and temperature sensor availability 100% during daylight hours",,Performance,Contractor,,Schedule 04C clause 1.3(b)(iii),Schedule 04C - PAC Acceptance
+C,C-07,Global incident to global horizontal ratio complies with the simulation,As per Schedule 4.5.,Performance,Contractor,,Schedule 04C clause 1.3(b)(iv),Schedule 04C - PAC Acceptance
+C,C-08,All Punch List Works completed,,Punch list,Contractor,,Schedule 04C clause 1.1(d),Schedule 04C - PAC Acceptance
+C,C-09,"All drawings, safety manuals and usage handbooks available on site",,Documentation,Contractor,,Schedule 04C clause 1.1(e),Schedule 04C - PAC Acceptance
+C,C-10,Warranty Bond submitted,,Commercial,Contractor,,Schedule 04C clause 1.1(f),Schedule 04C - PAC Acceptance
+C,C-11,"O&M Contract signed, if applicable",,Commercial,Contractor,,Schedule 04C clause 1.1(g),Schedule 04C - PAC Acceptance
+C,C-12,Spare parts delivered,,O&M,Contractor,,Schedule 04C clause 1.1(h),Schedule 04C - PAC Acceptance
+C,C-13,Downtime and impairment log maintained during the Performance Test,"Cause, duration and the times at which testing was suspended and resumed.",Performance,Contractor,,Schedule 04C clause 1.3(c),Schedule 04C - PAC Acceptance
+C,C-14,Client given the opportunity to witness all tests,,Client review,Contractor,,Schedule 04C clause 1.3(d),Schedule 04C - PAC Acceptance
+C,C-15,Provisional Acceptance Certificate issued,,Certificate,Client,,Schedule 04C,Schedule 04C - PAC Acceptance
+D,D-01,Defects Notification Period of two years from PAC signature completed,Warranty Period is two years starting from the date of the PAC.,Warranty,Contractor,,Schedule 04D clause 1 and 3,Schedule 04D - Final Acceptance
+D,D-02,Continuous recording of plant parameters throughout both annual periods,"Module plane-of-array irradiance, irradiance, ambient temperature and electricity at the delivery point (fiscal meter).",Monitoring,Contractor,,Schedule 04D clause 1,Schedule 04D - Final Acceptance
+D,D-03,Annual performance evaluations completed at the end of each operating period,"Raw data, spreadsheets and computations provided to the General Contractor for review; raw data supplied before any manipulation with data gaps highlighted.",Performance,Contractor,,Schedule 04D clause 1,Schedule 04D - Final Acceptance
+D,D-04,Final Acceptance Test executed within 15 days of the two-year anniversary of PAC,Using the data of the two previous years.,Performance,Contractor,,Schedule 04D clause 1,Schedule 04D - Final Acceptance
+D,D-05,Measured PR at FAC meets or exceeds the guaranteed value,"PR_G_FAC = PR_G_PAC x K x (1 - 2 x DG), with yearly degradation DG = 0.45% and forecast annual availability K = 99%.",Performance,Contractor,,Schedule 04D clause 3,Schedule 04D - Final Acceptance
+D,D-06,Plant and instrument availability 100% during daylight hours,,Performance,Contractor,,Schedule 04D clause 3,Schedule 04D - Final Acceptance
+D,D-07,Final Acceptance Test report produced,,Documentation,Contractor,,Schedule 04D clause 1,Schedule 04D - Final Acceptance
+D,D-08,Final acceptance inspection of the plant and grid connection infrastructure,,Inspection,Inspector,,Schedule 04D clause 4,Schedule 04D - Final Acceptance
+D,D-09,Operational review of the two-year Warranty Period completed,Any malfunction or defect that could jeopardise correct operation removed by the Contractor at its own expense.,Inspection,Inspector,,Schedule 04D clause 5,Schedule 04D - Final Acceptance
+D,D-10,Outstanding defects rectified,,Defects,Contractor,,Schedule 04D clause 5,Schedule 04D - Final Acceptance
+D,D-11,Final Punch List closed,,Punch list,Contractor,,Schedule 04D,Schedule 04D - Final Acceptance
+D,D-12,Final Acceptance Certificate issued and signed off by the Inspector,,Certificate,Inspector,,Schedule 04D clause 7,Schedule 04D - Final Acceptance

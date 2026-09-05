@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, empty %}
+{% block title %}{{ t("Validation report") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Initialisation validation report") }}</h1>
+    <div class="sub">
+      {{ t("{done} of {total} checks satisfied", done=health.satisfied_count, total=health.total_count) }} &middot;
+      {{ t("{count} mandatory input(s) outstanding", count=health.missing_mandatory | length) }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('setup.index') }}">{{ t("Back to setup") }}</a>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-print>{{ t("Print") }}</button>
+    <form method="post" action="{{ url_for('setup.complete') }}">
+      <button class="btn btn-sm btn-primary" {{ 'disabled' if health.missing_mandatory }}>
+        {{ t("Mark setup complete") }}
+      </button>
+    </form>
+  </div>
+</div>
+
+{% if health.missing_mandatory %}
+<div class="alert alert-danger">
+  <strong>{{ t("Setup cannot be marked complete.") }}</strong>
+  {{ t("The following mandatory inputs are not registered:") }}
+  <ul class="mb-0 mt-1">
+    {% for item in health.missing_mandatory %}
+      <li><strong>{{ item.label }}</strong> &mdash; {{ item.required_input }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<div class="alert alert-success py-2">
+  {{ t("All mandatory master data is registered. Setup can be marked complete.") }}
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Checks") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th class="num">{{ t("Step") }}</th><th>{{ t("Check") }}</th><th>{{ t("Mandatory") }}</th><th>{{ t("Result") }}</th>
+        <th>{{ t("Required Bassignana input") }}</th></tr></thead>
+      <tbody>
+        {% for item in health.checks %}
+        <tr class="{{ 'row-critical' if item.mandatory and not item.satisfied }}">
+          <td class="num">{{ item.step }}</td>
+          <td><strong>{{ item.label }}</strong></td>
+          <td>{{ 'Yes' if item.mandatory else 'No' }}</td>
+          <td>
+            {% if item.satisfied %}<span class="badge bg-success badge-sm">SATISFIED</span>
+            {% elif item.mandatory %}<span class="badge bg-danger badge-sm">DATA REQUIRED</span>
+            {% else %}<span class="badge bg-warning text-dark badge-sm">OPTIONAL, MISSING</span>{% endif %}
+          </td>
+          <td class="text-tiny">{{ item.required_input }}</td>
+        </tr>
+        {% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Registered record counts") }}</h2></div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-12 col-md-6">
+        <div class="stat-line"><span>{{ t("Source documents") }}</span><strong>{{ health.counts.source_documents }}</strong></div>
+        <div class="stat-line"><span>{{ t("&mdash; contractual baseline documents") }}</span><strong>{{ health.counts.contractual_docs }}</strong></div>
+        <div class="stat-line"><span>{{ t("Contractual baseline programmes") }}</span><strong>{{ health.counts.baseline_versions }}</strong></div>
+        <div class="stat-line"><span>{{ t("Current working programmes") }}</span><strong>{{ health.counts.working_versions }}</strong></div>
+        <div class="stat-line"><span>{{ t("WBS activities") }}</span><strong>{{ health.counts.activities }}</strong></div>
+        <div class="stat-line"><span>{{ t("BOQ quantities") }}</span><strong>{{ health.counts.quantities }}</strong></div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="stat-line"><span>{{ t("Active areas / workfronts") }}</span><strong>{{ health.counts.areas }}</strong></div>
+        <div class="stat-line"><span>{{ t("Procurement packages") }}</span><strong>{{ health.counts.packages }}</strong></div>
+        <div class="stat-line"><span>{{ t("ITP requirements") }}</span><strong>{{ health.counts.inspections }}</strong></div>
+        <div class="stat-line"><span>{{ t("Acceptance gates with checklists") }}</span><strong>{{ health.counts.gates_with_items }} / 4</strong></div>
+        <div class="stat-line"><span>{{ t("Permit items") }}</span><strong>{{ health.counts.permits }}</strong></div>
+        <div class="stat-line"><span>{{ t("Activities with approved weights") }}</span><strong>{{ health.counts.approved_weights }}</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if reconciliation %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Source reconciliation required") }}</h2></div>
+  <div class="panel-body">
+    {% for item in reconciliation %}
+      <div class="stat-line"><span>{{ item.message }}</span>
+        <span class="badge {{ badge(item.document.status) }} badge-sm">{{ item.document.status }}</span></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if schedule_warnings %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Schedule warnings") }}</h2></div>
+  <div class="panel-body">
+    {% for warning in schedule_warnings %}<div class="stat-line"><span>{{ warning }}</span></div>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Progress weighting") }}</h2></div>
+  <div class="panel-body">
+    <div class="stat-line"><span>{{ t("Basis in force") }}</span><strong>{{ basis.basis }}</strong></div>
+    <div class="stat-line"><span>{{ t("Activities carrying an approved weight") }}</span><strong>{{ basis.approved_weight_count }}</strong></div>
+    {% if basis.warning %}<p class="text-tiny text-danger mt-2 mb-0">{{ basis.warning }}</p>{% endif %}
+  </div>
+</div>
+
+{% if prepared %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Prepared import files available") }}</h2></div>
+  <div class="panel-body">
+    {% for file in prepared %}
+      <div class="stat-line"><span class="font-monospace">{{ file.name }}</span>
+        <span>{{ (file.size / 1024) | num(1) }} kB</span></div>
+    {% endfor %}
+    <a class="btn btn-sm btn-primary mt-2" href="{{ url_for('dataio.index') }}">{{ t("Go to Data Import") }}</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Bassignana inputs still to be supplied by the project") }}</h2></div>
+  <div class="panel-body text-tiny">
+    <p class="mb-1">{{ t("These are the documents the application needs before it can be considered fully initialised for live use. Register them under Project Setup &rarr; Source documents and import the structured extract where one exists.") }}</p>
+    <ol class="mb-0">
+      <li>{{ t("Signed EPC Contract") }}</li>
+      <li>{{ t("Schedule 01 General Report / Site Description") }}</li>
+      <li>{{ t("Schedule 02 Technical Specification") }}</li>
+      <li>{{ t("Schedule 03 Project Timeline (contractual baseline)") }}</li>
+      <li>{{ t("Latest approved / current updated programme, as XLSX / CSV / MS Project / Primavera export") }}</li>
+      <li>{{ t("Approved IFC / general layout drawing register with revisions") }}</li>
+      <li>{{ t("WBS / BOQ quantity register with unit and total required quantity") }}</li>
+      <li>{{ t("Verified live permit / readiness register (Schedule 05 requires reconciliation first)") }}</li>
+      <li>{{ t("Verified document deliverables register (Schedule 06 requires verification first)") }}</li>
+      <li>{{ t("Current Scope of Work clarifications (Schedule 13B)") }}</li>
+      <li>{{ t("Approved Bassignana QA/QC Plan and ITPs (Schedule 17 is a generic template)") }}</li>
+      <li>{{ t("Testing and acceptance protocols (Schedules 04, 04A, 04B, 04C, 04D)") }}</li>
+      <li>{{ t("Approved progress-weight register, if weighted progress is to be contractual") }}</li>
+      <li>{{ t("Current procurement register, PO status, FAT register and delivery forecast") }}</li>
+      <li>{{ t("Current HSE / PSC / POS set (Schedule 08 is a placeholder)") }}</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

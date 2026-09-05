@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ t("Quality") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Quality management") }}</h1>
+    <div class="sub">
+      {{ t("Inspections, ITP points, checklists, corrective actions and test records.") }}
+      {{ t("NCRs and Punch List items are kept in the {link} register.",
+            link='<a href="' ~ url_for('issues.index') ~ '">' ~ t("Issues / Punch / NCR") ~ '</a>') | safe }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('quality.requirements') }}">{{ t("ITP requirements") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('quality.export', type=filters.type or '') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Open inspections'), summary.open_inspection, '', 'warn' if summary.open_inspection else 'good') }}
+  {{ kpi(t('Open ITP points'), summary.hold_points, 'inspection holds', 'warn' if summary.hold_points else 'good') }}
+  {{ kpi(t('Open NCRs'), summary.open_ncr, summary.overdue_ncr ~ ' overdue', 'bad' if summary.open_ncr else 'good') }}
+  {{ kpi(t('Open punch items'), summary.open_punch, summary.overdue_punch ~ ' overdue', 'warn' if summary.open_punch else 'good') }}
+  {{ kpi(t('Registered ITP requirements'), requirements | length, '', 'good' if requirements else 'bad') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("Record type") }}</label>
+    <select name="type" class="form-select form-select-sm">
+      <option value="">{{ t("Quality records") }}</option>
+      {% for value in types %}<option value="{{ value }}" {{ 'selected' if filters.type == value }}>{{ value }}</option>{% endfor %}
+      <option value="NCR" {{ 'selected' if filters.type == 'NCR' }}>NCR</option>
+      <option value="PUNCH LIST" {{ 'selected' if filters.type == 'PUNCH LIST' }}>PUNCH LIST</option>
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Status") }}</label>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.QUALITY_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("View") }}</label>
+    <select name="view" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      <option value="overdue" {{ 'selected' if filters.view == 'overdue' }}>{{ t("Overdue only") }}</option>
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Area") }}</label>
+    {{ area_select('area', areas, filters.area, 'All areas') }}</div>
+  <div class="field"><label class="form-label">{{ t("WBS starts with") }}</label>
+    <input name="wbs" value="{{ filters.wbs or '' }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ filters['from'] | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ filters['to'] | iso }}" class="form-control form-control-sm"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} record(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Type") }}</th><th>{{ t("Date") }}</th><th>{{ t("WBS") }}</th><th>{{ t("Area") }}</th><th>{{ t("Title") }}</th>
+        <th>{{ t("ITP ref.") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th><th>{{ t("Result") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="mono">{{ row.record_number }}</td>
+          <td><span class="badge bg-secondary badge-sm">{{ row.record_type }}</span></td>
+          <td class="nowrap">{{ row.record_date | d }}</td>
+          <td class="mono">{{ row.wbs_code or '-' }}</td>
+          <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+          <td class="mw-260">{{ row.title or (row.description or '')[:80] }}</td>
+          <td class="text-tiny">{{ row.itp_reference or '-' }}</td>
+          <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+          <td class="nowrap">{{ row.target_closure_date | d }}</td>
+          <td>{% if row.inspection_result %}{{ status_badge(row.inspection_result, 'sm') }}{% else %}-{% endif %}</td>
+          <td>{{ status_badge(derived.get(row.id, row.status), 'sm') }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('quality.detail', record_id=row.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="12">{{ empty(t('No quality record matches the filters.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Raise a quality record") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('quality.create') }}" class="form-grid" enctype="multipart/form-data">
+      <div><label class="form-label">{{ t("Record type") }}</label>
+        <select name="record_type" class="form-select form-select-lg">
+          {% for value in types %}<option value="{{ value }}">{{ value }} &rarr; {{ next_numbers[value] }}</option>{% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("Date") }}</label>
+        <input type="date" name="record_date" value="{{ TODAY | iso }}" class="form-control form-control-lg"></div>
+      <div class="full"><label class="form-label">{{ t("Title") }}</label>
+        <input name="title" class="form-control form-control-lg"></div>
+      <div class="full"><label class="form-label">{{ t("Description") }}</label>
+        <textarea name="description" rows="2" class="form-control"></textarea></div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Work package") }}</label>
+        <input name="work_package" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas, none, 'Not allocated', 'form-select form-select-lg') }}</div>
+      <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, none, 'Not set') }}</div>
+      <div><label class="form-label">{{ t("ITP requirement") }}</label>
+        <select name="inspection_requirement_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for requirement in requirements %}
+            <option value="{{ requirement.id }}">{{ requirement.itp_reference }} &mdash; {{ requirement.inspection_type or '' }}</option>
+          {% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("ITP reference") }}</label>
+        <input name="itp_reference" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Specification") }}</label>
+        <input name="specification_reference" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Drawing") }}</label>
+        <input name="drawing_reference" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Raised by") }}</label>
+        <input name="raised_by" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Responsible") }}</label>
+        <input name="responsible_party" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Severity") }}</label>{{ select('severity', C.SEVERITIES, 'MEDIUM') }}</div>
+      <div><label class="form-label">{{ t("Target closure") }}</label>
+        <input type="date" name="target_closure_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Result") }}</label>{{ select('inspection_result', C.INSPECTION_RESULTS, '') }}</div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.QUALITY_STATUS, 'OPEN') }}</div>
+      <div class="full"><label class="form-label">{{ t("Photographs") }}</label>
+        <input type="file" name="photos" multiple accept="image/*" capture="environment" class="form-control form-control-lg"></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Create record") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

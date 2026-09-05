@@ -1,0 +1,26 @@
+<ul class="nav-list">
+  {% for endpoint, label, icon in NAV %}
+    {% set blueprint = endpoint.split('.')[0] %}
+    <li>
+      <a href="{{ url_for(endpoint) }}"
+         class="nav-link-item {{ 'active' if CURRENT_ENDPOINT.startswith(blueprint ~ '.') else '' }}">
+        <span class="nav-ico ico-{{ icon }}"></span>
+        <span class="nav-label">{{ t(label) }}</span>
+        {% if blueprint == 'setup' and SETUP_INCOMPLETE %}
+          <span class="badge bg-danger nav-count">{{ HEALTH.missing_mandatory | length }}</span>
+        {% endif %}
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+
+<div class="nav-foot">
+  <div class="nav-foot-row">
+    <span>{{ t('Baseline') }}</span>
+    <strong>{{ BASELINE_VERSION.label if BASELINE_VERSION else t(C.DATA_REQUIRED) }}</strong>
+  </div>
+  <div class="nav-foot-row">
+    <span>{{ t('Working plan') }}</span>
+    <strong>{{ CURRENT_VERSION.label if CURRENT_VERSION else t(C.DATA_REQUIRED) }}</strong>
+  </div>
+</div>

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, select %}
+{% block title %}{{ row.item_name[:40] }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ row.item_name }}</h1>
+    <div class="sub">{{ row.authority or 'authority not recorded' }} &middot; {{ disclaimer }}</div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('permits.index') }}">{{ t("Back") }}</a>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Status'), derived, 'recorded: ' ~ row.status,
+         'bad' if derived in ['OVERDUE', 'EXPIRED', 'REJECTED'] else ('good' if derived == 'ISSUED' else 'warn')) }}
+  {{ kpi(t('Required by'), row.required_by_date | d) }}
+  {{ kpi(t('Issued'), row.issued_date | d) }}
+  {{ kpi(t('Expiry'), row.expiry_date | d) }}
+  {{ kpi(t('Verified'), 'Yes' if row.verified else 'No', '', 'good' if row.verified else 'warn') }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register entry") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div class="full"><label class="form-label">{{ t("Item") }}</label>
+        <input name="item_name" value="{{ row.item_name }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Authority") }}</label>
+        <input name="authority" value="{{ row.authority or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Responsibility") }}</label>
+        <input name="responsibility" value="{{ row.responsibility or '' }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Required for") }}</label>
+        <input name="required_for" value="{{ row.required_for or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Required by") }}</label>
+        <input type="date" name="required_by_date" value="{{ row.required_by_date | iso }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Issued") }}</label>
+        <input type="date" name="issued_date" value="{{ row.issued_date | iso }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Expiry") }}</label>
+        <input type="date" name="expiry_date" value="{{ row.expiry_date | iso }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.PERMIT_STATUS, row.status, none, 'form-select form-select-lg') }}</div>
+      <div><label class="form-label">{{ t("Verified") }}</label>
+        <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="verified"
+               value="1" {{ 'checked' if row.verified }}></div></div>
+      <div class="full"><label class="form-label">{{ t("Document reference") }}</label>
+        <input name="document_reference" value="{{ row.document_reference or '' }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Blocker impact") }}</label>
+        <textarea name="blocker_impact" rows="2" class="form-control form-control-sm">{{ row.blocker_impact or '' }}</textarea></div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for doc in documents %}
+            <option value="{{ doc.id }}" {{ 'selected' if row.source_document_id == doc.id }}>{{ doc.label }}</option>
+          {% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+        <textarea name="comments" rows="3" class="form-control form-control-sm">{{ row.comments or '' }}</textarea></div>
+      <div class="full">
+        <button class="btn btn-primary">{{ t("Save") }}</button>
+        <button class="btn btn-outline-danger ms-2" name="action" value="delete"
+                formnovalidate onclick="return confirm('Remove this permit register entry?')">{{ t("Delete") }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

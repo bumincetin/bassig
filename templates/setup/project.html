@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}{{ t("Project identity") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Project identity") }}</h1>
+    <div class="sub">
+      {{ t("Step 1 of initialisation. Take every value from the signed EPC Contract and Schedule 01. Nothing here is pre-filled with an assumed figure.") }}
+    </div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('setup.index') }}">{{ t("Back to setup") }}</a>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Contract and plant data") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div class="full"><label class="form-label">{{ t("Project name") }}</label>
+        <input name="name" value="{{ row.name or '' }}" class="form-control form-control-lg" required></div>
+      <div class="full"><label class="form-label">{{ t("Subtitle") }}</label>
+        <input name="subtitle" value="{{ row.subtitle or '' }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Plant name") }}</label>
+        <input name="plant_name" value="{{ row.plant_name or '' }}" class="form-control form-control-sm"
+               placeholder="{{ t('e.g. Impianto Fotovoltaico Fornace di Bassignana') }}"></div>
+      <div><label class="form-label">{{ t("Client") }}</label>
+        <input name="client" value="{{ row.client or '' }}" class="form-control form-control-lg"
+               placeholder="{{ t('from the signed contract') }}"></div>
+      <div><label class="form-label">{{ t("EPC contractor") }}</label>
+        <input name="epc_contractor" value="{{ row.epc_contractor or '' }}" class="form-control form-control-lg"
+               placeholder="{{ t('from the signed contract') }}"></div>
+      <div><label class="form-label">{{ t("Contract reference") }}</label>
+        <input name="contract_reference" value="{{ row.contract_reference or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Notice to Proceed date") }}</label>
+        <input type="date" name="ntp_date" value="{{ row.ntp_date | iso }}" class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Contractual completion date") }}</label>
+        <input type="date" name="contract_completion_date" value="{{ row.contract_completion_date | iso }}"
+               class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Comune") }}</label>
+        <input name="comune" value="{{ row.comune or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Provincia") }}</label>
+        <input name="provincia" value="{{ row.provincia or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Regione") }}</label>
+        <input name="regione" value="{{ row.regione or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Country") }}</label>
+        <input name="country" value="{{ row.country or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Nominal DC capacity (kWp)") }}</label>
+        <input name="nominal_dc_kwp" value="{{ row.nominal_dc_kwp or '' }}" inputmode="decimal"
+               class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Nominal AC capacity (kW)") }}</label>
+        <input name="nominal_ac_kw" value="{{ row.nominal_ac_kw or '' }}" inputmode="decimal"
+               class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Grid connection voltage (kV)") }}</label>
+        <input name="grid_voltage_kv" value="{{ row.grid_voltage_kv or '' }}" inputmode="decimal"
+               class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Distribution system operator") }}</label>
+        <input name="dso" value="{{ row.dso or '' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("POD code") }}</label>
+        <input name="pod_code" value="{{ row.pod_code or '' }}" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Authorisation reference") }}</label>
+        <input name="authorisation_reference" value="{{ row.authorisation_reference or '' }}"
+               class="form-control form-control-sm"
+               placeholder="{{ t('e.g. Det. DDVA4-733-2024 of 08.08.2024') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Cadastral reference") }}</label>
+        <input name="cadastral_reference" value="{{ row.cadastral_reference or '' }}"
+               class="form-control form-control-sm" placeholder="{{ t('foglio / mappali') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Notes") }}</label>
+        <textarea name="notes" rows="3" class="form-control form-control-sm">{{ row.notes or '' }}</textarea></div>
+      <div class="full"><button class="btn btn-primary btn-lg">{{ t("Save project identity") }}</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Contractual and commercial parameters") }}</h2></div>
+  <div class="panel-body">
+    <p class="text-tiny text-muted mb-2">
+      {{ t("Every value here comes from the signed EPC Contract. They drive the payment-milestone amounts, the delay-damages exposure figure and the contractual adverse-weather test in the daily diary. Leave a field blank rather than estimating it -- the application will show DATA REQUIRED instead of a wrong number.") }}
+    </p>
+    <form method="post" class="form-grid">
+      <input type="hidden" name="name" value="{{ row.name or '' }}">
+      <input type="hidden" name="client" value="{{ row.client or '' }}">
+      <input type="hidden" name="epc_contractor" value="{{ row.epc_contractor or '' }}">
+      <input type="hidden" name="ntp_date" value="{{ row.ntp_date | iso }}">
+      <input type="hidden" name="plant_name" value="{{ row.plant_name or '' }}">
+      <input type="hidden" name="subtitle" value="{{ row.subtitle or '' }}">
+      <input type="hidden" name="contract_reference" value="{{ row.contract_reference or '' }}">
+      <input type="hidden" name="contract_completion_date" value="{{ row.contract_completion_date | iso }}">
+      <input type="hidden" name="comune" value="{{ row.comune or '' }}">
+      <input type="hidden" name="provincia" value="{{ row.provincia or '' }}">
+      <input type="hidden" name="regione" value="{{ row.regione or '' }}">
+      <input type="hidden" name="country" value="{{ row.country or '' }}">
+      <input type="hidden" name="nominal_dc_kwp" value="{{ row.nominal_dc_kwp or '' }}">
+      <input type="hidden" name="nominal_ac_kw" value="{{ row.nominal_ac_kw or '' }}">
+      <input type="hidden" name="grid_voltage_kv" value="{{ row.grid_voltage_kv or '' }}">
+      <input type="hidden" name="dso" value="{{ row.dso or '' }}">
+      <input type="hidden" name="pod_code" value="{{ row.pod_code or '' }}">
+      <input type="hidden" name="authorisation_reference" value="{{ row.authorisation_reference or '' }}">
+      <input type="hidden" name="cadastral_reference" value="{{ row.cadastral_reference or '' }}">
+      <input type="hidden" name="notes" value="{{ row.notes or '' }}">
+
+      <div><label class="form-label">{{ t("Contract Price") }}</label>
+        <input name="contract_price" value="{{ row.contract_price or '' }}" inputmode="decimal"
+               class="form-control form-control-lg"></div>
+      <div><label class="form-label">{{ t("Currency") }}</label>
+        <input name="currency" value="{{ row.currency or 'EUR' }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Advance payment %") }}</label>
+        <input name="advance_payment_pct" value="{{ row.advance_payment_pct or '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Performance bond %") }}</label>
+        <input name="performance_bond_pct" value="{{ row.performance_bond_pct or '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Delay LDs % per day") }}</label>
+        <input name="delay_lds_pct_per_day" value="{{ row.delay_lds_pct_per_day or '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Delay LDs cap %") }}</label>
+        <input name="delay_lds_cap_pct" value="{{ row.delay_lds_cap_pct or '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Termination threshold (days of delay)") }}</label>
+        <input name="delay_termination_days" value="{{ row.delay_termination_days or '' }}"
+               inputmode="numeric" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Defects Notification Period (months)") }}</label>
+        <input name="dnp_months" value="{{ row.dnp_months or '' }}" inputmode="numeric"
+               class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Minimum system availability %") }}</label>
+        <input name="min_availability_pct" value="{{ row.min_availability_pct or '' }}"
+               inputmode="decimal" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Guaranteed Performance Ratio basis") }}</label>
+        <input name="guaranteed_pr_note" value="{{ row.guaranteed_pr_note or '' }}"
+               class="form-control form-control-sm"
+               placeholder="{{ t('e.g. design performance ratio less 1.00%') }}"></div>
+      <div><label class="form-label">{{ t("Adverse weather: wind above (m/s)") }}</label>
+        <input name="adverse_wind_ms" value="{{ row.adverse_wind_ms or '' }}" inputmode="decimal"
+               class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Adverse weather: rainfall above (mm/h)") }}</label>
+        <input name="adverse_rain_mm_h" value="{{ row.adverse_rain_mm_h or '' }}" inputmode="decimal"
+               class="form-control form-control-sm"></div>
+      <div class="full"><button class="btn btn-primary btn-lg">{{ t("Save contractual parameters") }}</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Where these values come from") }}</h2></div>
+  <div class="panel-body text-tiny">
+    <p class="mb-1"><strong>{{ t("Client, EPC contractor, contract reference, Notice to Proceed date") }}</strong>
+      &mdash; {{ t("signed EPC Contract.") }}</p>
+    <p class="mb-1"><strong>{{ t("Plant name, nominal DC capacity, comune / provincia / regione, grid voltage") }}</strong>
+      &mdash; {{ t("Schedule 01 General Report and Site Description, and the Autorizzazione Unica.") }}</p>
+    <p class="mb-0"><strong>{{ t("Contractual completion date") }}</strong> &mdash;
+      {{ t("the contractual baseline programme (Schedule 03). Register that programme separately in Schedule &amp; WBS so the dates stay traceable to their source.") }}</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ t("RFI") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("RFI / technical query register") }}</h1>
+    <div class="sub">{{ t("Next number:") }} <strong>{{ next_number }}</strong></div>
+  </div>
+  <a class="btn btn-sm btn-primary" href="{{ url_for('rfi.export') }}">{{ t("Export CSV") }}</a>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Total RFIs'), summary.total) }}
+  {{ kpi(t('Open'), summary.open, '', 'warn' if summary.open else 'good') }}
+  {{ kpi(t('Overdue'), summary.overdue, 'past required response date', 'bad' if summary.overdue else 'good') }}
+  {{ kpi(t('Answered'), summary.answered) }}
+  {{ kpi(t('Closed'), summary.closed) }}
+  {{ kpi(t('With schedule impact'), summary.schedule_impact, '', 'bad' if summary.schedule_impact else 'good') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("As at") }}</label>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("Status") }}</label>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.RFI_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Discipline") }}</label>
+    <select name="discipline" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.DISCIPLINES %}<option value="{{ value }}" {{ 'selected' if filters.discipline == value }}>{{ value }}</option>{% endfor %}
+    </select></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ rows | length }} RFI(s)</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Raised") }}</th><th>{{ t("Subject") }}</th><th>{{ t("Discipline") }}</th><th>{{ t("WBS") }}</th>
+        <th>{{ t("Area") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Required by") }}</th><th>{{ t("Responded") }}</th>
+        <th>{{ t("Impact") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="mono">{{ row.rfi_number }}</td>
+          <td class="nowrap">{{ row.date_raised | d }}</td>
+          <td class="mw-260">{{ row.subject }}</td>
+          <td class="text-tiny">{{ row.discipline or '-' }}</td>
+          <td class="mono">{{ row.wbs_code or '-' }}</td>
+          <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+          <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+          <td class="nowrap {{ 'text-danger fw-bold' if derived[row.id] == 'OVERDUE' }}">{{ row.required_response_date | d }}</td>
+          <td class="nowrap">{{ row.response_date | d }}</td>
+          <td>{% if row.schedule_impact %}
+              <span class="badge bg-danger badge-sm">{{ row.estimated_delay_days | num(0) if row.estimated_delay_days else '?' }} d</span>
+            {% else %}-{% endif %}</td>
+          <td>{{ status_badge(derived[row.id], 'sm') }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('rfi.detail', rfi_id=row.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="12">{{ empty(t('No RFI registered.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Raise an RFI") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('rfi.create') }}" class="form-grid" enctype="multipart/form-data">
+      <div class="full"><label class="form-label">{{ t("Subject") }}</label>
+        <input name="subject" class="form-control form-control-lg" required></div>
+      <div class="full"><label class="form-label">{{ t("Question") }}</label>
+        <textarea name="question" rows="3" class="form-control"></textarea></div>
+      <div><label class="form-label">{{ t("Date raised") }}</label>
+        <input type="date" name="date_raised" value="{{ TODAY | iso }}" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Raised by") }}</label>
+        <input name="raised_by" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, none, 'Not set') }}</div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+      <div><label class="form-label">{{ t("Responsible party") }}</label>
+        <input name="responsible_party" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Required response date") }}</label>
+        <input type="date" name="required_response_date" class="form-control form-control-lg"></div>
+      <div class="full"><label class="form-label">{{ t("Drawing / specification reference") }}</label>
+        <input name="reference" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Schedule impact") }}</label>
+        <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="schedule_impact" value="1"></div></div>
+      <div><label class="form-label">{{ t("Estimated delay (days)") }}</label>
+        <input name="estimated_delay_days" inputmode="decimal" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Linked blocker") }}</label>
+        <select name="blocker_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for blocker in blockers %}
+            <option value="{{ blocker.id }}">{{ blocker.blocker_number }} &mdash; {{ blocker.category }}</option>
+          {% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Attachments") }}</label>
+        <input type="file" name="photos" multiple accept="image/*" class="form-control form-control-lg"></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Raise RFI") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

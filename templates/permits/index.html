@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, data_required %}
+{% block title %}{{ t("Permits &amp; Readiness") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Permits &amp; readiness register") }}</h1>
+    <div class="sub">{{ disclaimer }}</div>
+  </div>
+  <a class="btn btn-sm btn-primary" href="{{ url_for('permits.export') }}">{{ t("Export CSV") }}</a>
+</div>
+
+{% if not summary.total %}
+  {{ data_required(t('a verified Bassignana permit / readiness register. Schedule 05 in the source pack references non-Bassignana authorities and must be reconciled before import.')) }}
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Registered items'), summary.total) }}
+  {{ kpi(t('Issued'), summary.issued, '', 'good') }}
+  {{ kpi(t('Outstanding'), summary.open, '', 'warn' if summary.open else 'good') }}
+  {{ kpi(t('Past required-by date'), summary.overdue, '', 'bad' if summary.overdue else 'good') }}
+  {{ kpi(t('Expired'), summary.expired, '', 'bad' if summary.expired else 'good') }}
+  {{ kpi(t('Not verified'), summary.unverified, 'entry not confirmed against the authority', 'warn' if summary.unverified else 'good') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("As at") }}</label>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("Status") }}</label>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.PERMIT_STATUS + ['OVERDUE'] %}
+        <option value="{{ value }}" {{ 'selected' if status == value }}>{{ value }}</option>
+      {% endfor %}
+    </select></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} item(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data">
+      <thead><tr><th>{{ t("Item") }}</th><th>{{ t("Authority") }}</th><th>{{ t("Responsibility") }}</th><th>{{ t("Required for") }}</th>
+        <th>{{ t("Required by") }}</th><th>{{ t("Issued") }}</th><th>{{ t("Expiry") }}</th><th>{{ t("Status") }}</th><th>{{ t("Verified") }}</th>
+        <th>{{ t("Reference") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row, derived in rows %}
+        <tr>
+          <td class="mw-260"><strong>{{ row.item_name }}</strong>
+            {% if row.blocker_impact %}<div class="text-tiny text-danger">{{ row.blocker_impact }}</div>{% endif %}</td>
+          <td class="text-tiny">{{ row.authority or '-' }}</td>
+          <td class="text-tiny">{{ row.responsibility or '-' }}</td>
+          <td class="text-tiny">{{ row.required_for or '-' }}</td>
+          <td class="nowrap {{ 'text-danger fw-bold' if derived == 'OVERDUE' }}">{{ row.required_by_date | d }}</td>
+          <td class="nowrap">{{ row.issued_date | d }}</td>
+          <td class="nowrap {{ 'text-danger fw-bold' if derived == 'EXPIRED' }}">{{ row.expiry_date | d }}</td>
+          <td>{{ status_badge(derived, 'sm') }}</td>
+          <td>{% if row.verified %}<span class="badge bg-success badge-sm">YES</span>
+              {% else %}<span class="badge bg-warning text-dark badge-sm">NO</span>{% endif %}</td>
+          <td class="text-tiny">{{ row.document_reference or '-' }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('permits.detail', item_id=row.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="11">{{ empty(t('No permit or readiness item registered.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register a permit / readiness item") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('permits.create') }}" class="form-grid">
+      <div class="full"><label class="form-label">{{ t("Item") }}</label>
+        <input name="item_name" class="form-control form-control-lg" required
+               placeholder="{{ t('e.g. Autorizzazione Unica, start-of-work notification, DSO connection readiness') }}"></div>
+      <div><label class="form-label">{{ t("Authority") }}</label>
+        <input name="authority" class="form-control form-control-sm"
+               placeholder="{{ t('e.g. Provincia di Alessandria') }}"></div>
+      <div><label class="form-label">{{ t("Responsibility") }}</label>
+        <input name="responsibility" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Required for") }}</label>
+        <input name="required_for" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Required by date") }}</label>
+        <input type="date" name="required_by_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Issued date") }}</label>
+        <input type="date" name="issued_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Expiry date") }}</label>
+        <input type="date" name="expiry_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.PERMIT_STATUS, 'NOT STARTED') }}</div>
+      <div><label class="form-label">{{ t("Verified against the authority") }}</label>
+        <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="verified" value="1"></div></div>
+      <div class="full"><label class="form-label">{{ t("Document reference") }}</label>
+        <input name="document_reference" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Blocker impact if not obtained") }}</label>
+        <textarea name="blocker_impact" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+        </select></div>
+      <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+        <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Register item") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

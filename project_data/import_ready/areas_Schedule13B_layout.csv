@@ -1,0 +1,13 @@
+area_code,area_name,description,parent_area,drawing_reference,ifc_revision,active
+PLANT,Bassignana Solar 2 PV plant,"Whole plant area, Comune di Bassignana, foglio 17. Parent of every workfront below.",,001-25-0096-4001_1,,YES
+CT1,Transformer substation CT1,"Transformer substation within the Contractor scope of work (Schedule 13B rev.2 item 9, shown in black on the layout).",PLANT,001-25-0096-4001_1,,YES
+CT2,Transformer substation CT2,Transformer substation within the Contractor scope of work.,PLANT,001-25-0096-4001_1,,YES
+CT3,Transformer substation CT3,Transformer substation within the Contractor scope of work.,PLANT,001-25-0096-4001_1,,YES
+CU,Cabina Utente (user cabin),"User cabin. Within the Contractor scope, together with the MV cable connection to the Cabina di Consegna (Schedule 13B rev.2 item 10).",PLANT,001-25-0096-4001_1,,YES
+LT,Locale Tecnico (technical room),Technical room included in the Contractor scope of work (Schedule 13B rev.2 item 9).,PLANT,001-25-0096-4001_1,,YES
+CC,Cabina di Consegna (delivery cabin),EXCLUDED from the Contractor scope of work: supply and installation are expressly excluded (Schedule 13B rev.2 items 9 and 10). The Opere di Rete are executed by E-Distribuzione. The Client is to make available a 7.5 x 2.5 x 2.5 m precast building per STMG page 32/45. Retained as a workfront so interface work and access can be recorded against it.,PLANT,001-25-0096-4001_1,,YES
+PERIM,"Perimeter fence, gates and perimeter road","Perimeter fence, pedestrian and vehicle gates, perimeter road and the 3 m gravel strip between the fence and the modules (Schedule 02 par. 2.14.19 to 2.14.27).",PLANT,001-25-0096-4001_1,,YES
+ROADS,Internal roads and site access,"Approximately 1,800 m of stabilised internal road including the east-west route added for year-round accessibility (Schedule 13B rev.2 item 7).",PLANT,001-25-0096-4001_1,,YES
+DRAIN,Drainage system and river outfall,"Drainage channels to the river, including the culverts identified for replacement and strengthening in the 27.08.2026 site report.",PLANT,26C009-2C020,,YES
+LAYDOWN,Storage and laydown area,Storage and other areas prepared under WBS 1.2.2.3.,PLANT,001-25-0096-4001_1,,YES
+BLDG,Existing building / site accommodation,"Existing building reused for site accommodation. The 27.08.2026 site report records that the WCs, the electrical installation and the electricity supply must be made serviceable before use.",PLANT,,,YES

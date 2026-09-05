@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="{{ LANG }}" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ t("Sign in") }} &middot; BASSIGNANA EPC CONTROL</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%230b3d5c'/><path d='M6 22 L14 8 L18 15 L22 11 L26 22 Z' fill='%23f5b301'/></svg>">
+</head>
+<body class="login-body">
+
+<header class="app-header">
+  <span class="brand">
+    <span class="brand-mark">BAS</span>
+    <span class="brand-text">
+      <strong>BASSIGNANA EPC CONTROL</strong>
+      <small>{{ PROJECT.name if PROJECT else 'Bassignana Solar 2' }} &mdash; {{ PROJECT.subtitle if PROJECT and PROJECT.subtitle else 'Project &amp; Site Control System' }}</small>
+    </span>
+  </span>
+  <div class="header-right">
+    <div class="lang-switch" role="group" aria-label="{{ t('Language') }}">
+      {% for code, names in LANGUAGES.items() %}
+        <a class="lang-opt {{ 'active' if code == LANG }}"
+           href="{{ url_for('auth.login', lang=code, next=next) }}"
+           title="{{ names[0] }}" hreflang="{{ code }}">{{ names[1] }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</header>
+
+<main class="login-main">
+  <div class="panel login-panel">
+    <div class="panel-head"><h2>{{ t("Sign in") }}</h2></div>
+    <div class="panel-body">
+      <p class="mb-3">{{ t("This installation is protected by a shared password. Enter it to open the site control system.") }}</p>
+      {% if error %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="{{ url_for('auth.login', next=next, lang=LANG) }}">
+        <label class="form-label" for="password">{{ t("Access password") }}</label>
+        <input type="password" id="password" name="password" class="form-control form-control-lg mb-3"
+               autocomplete="current-password" autofocus required>
+        <button class="btn btn-primary btn-lg w-100" type="submit">{{ t("Sign in") }}</button>
+      </form>
+      <p class="source-note mt-3 mb-0">
+        {{ t("Ask the project manager for the password.") }}
+        {{ t("Remembered on this device for 30 days.") }}
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer class="app-footer">
+  BASSIGNANA EPC CONTROL v{{ APP_VERSION }}
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% set package = view.package %}
+{% block title %}{{ package.package_code }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ package.package_code }} &mdash; {{ package.package_name }}</h1>
+    <div class="sub">{{ package.category or t('no category') }} &middot; {{ t("stage") }} {{ package.stage }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.index') }}">{{ t("All packages") }}</a>
+    <form method="post" action="{{ url_for('procurement.delete_package', package_id=package.id) }}"
+          data-confirm="{{ t('Delete package {code} and all its material lines?', code=package.package_code) }}">
+      <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button></form>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Status'), view.status, '', 'bad' if view.status == 'LATE' else ('warn' if view.status == 'AT RISK' else 'good')) }}
+  {{ kpi(t('Material lines'), view.materials | length) }}
+  {{ kpi(t('Late lines'), view.late_count, '', 'bad' if view.late_count else 'good') }}
+  {{ kpi(t('Shortages'), view.shortage_count, '', 'bad' if view.shortage_count else 'good') }}
+  {{ kpi(t('Procurement stage'), view.stage_pct | pc(0) if view.stage_pct else '-', package.stage) }}
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Procurement chain") }}</h2></div>
+  <div class="panel-body">
+    <div class="timeline-stage">
+      {% for stage in C.PROCUREMENT_STAGES %}
+        <span class="{{ 'current' if stage == package.stage else ('done' if loop.index0 < view.stage_index else '') }}">{{ stage }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-5">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Package data") }}</h2></div>
+      <div class="panel-body">
+        <form method="post" class="form-grid">
+          <div class="full"><label class="form-label">{{ t("Package name") }}</label>
+            <input name="package_name" value="{{ package.package_name }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Category") }}</label>
+            <input name="category" value="{{ package.category or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Equipment") }}</label>
+            <input name="equipment" value="{{ package.equipment or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Stage") }}</label>{{ select('stage', C.PROCUREMENT_STAGES, package.stage) }}</div>
+          <div><label class="form-label">{{ t("WBS") }}</label>
+            <input name="wbs_code" value="{{ package.wbs_code or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Responsible") }}</label>
+            <input name="responsible_party" value="{{ package.responsible_party or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("PO reference") }}</label>
+            <input name="po_reference" value="{{ package.po_reference or '' }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Planned delivery") }}</label>
+            <input type="date" name="planned_delivery" value="{{ package.planned_delivery | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Forecast delivery") }}</label>
+            <input type="date" name="forecast_delivery" value="{{ package.forecast_delivery | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Actual delivery") }}</label>
+            <input type="date" name="actual_delivery" value="{{ package.actual_delivery | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("FAT required") }}</label>
+            <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="fat_required"
+                   value="1" {{ 'checked' if package.fat_required }}></div></div>
+          <div><label class="form-label">{{ t("FAT status") }}</label>{{ select('fat_status', C.FAT_STATUS, package.fat_status) }}</div>
+          <div><label class="form-label">{{ t("FAT date") }}</label>
+            <input type="date" name="fat_date" value="{{ package.fat_date | iso }}" class="form-control form-control-sm"></div>
+          <div class="full"><label class="form-label">{{ t("Approved vendors") }}</label>
+            <textarea name="approved_vendors" rows="3" class="form-control form-control-sm">{{ package.approved_vendors or '' }}</textarea></div>
+          <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+            <select name="source_document_id" class="form-select form-select-sm">
+              <option value="">{{ t("Not linked") }}</option>
+              {% for doc in documents %}
+                <option value="{{ doc.id }}" {{ 'selected' if package.source_document_id == doc.id }}>{{ doc.label }}</option>
+              {% endfor %}
+            </select></div>
+          <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ package.comments or '' }}</textarea></div>
+          <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save package") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-7">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Material lines") }}</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Item") }}</th><th>{{ t("Vendor") }}</th><th class="num">{{ t("Required") }}</th><th class="num">{{ t("Ordered") }}</th>
+            <th class="num">{{ t("Delivered") }}</th><th class="num">{{ t("Accepted") }}</th><th class="num">{{ t("Installed") }}</th>
+            <th class="num">{{ t("Stock") }}</th><th>{{ t("Stock") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+          <tbody>
+            {% for line in view.materials %}
+            {% set material = line.material %}
+            <tr>
+              <td>{{ material.item }}
+                {% if material.manufacturer %}<div class="text-tiny text-muted">{{ material.manufacturer }}</div>{% endif %}</td>
+              <td class="text-tiny">{{ material.vendor or '-' }}
+                {% if material.vendor and not material.approved_vendor %}
+                  <span class="badge bg-warning text-dark badge-sm">NOT APPROVED</span>{% endif %}</td>
+              <td class="num">{{ material.total_required | qty }}</td>
+              <td class="num">{{ material.ordered | qty }}</td>
+              <td class="num">{{ material.delivered | qty }}</td>
+              <td class="num">{{ material.accepted | qty }}</td>
+              <td class="num">{{ material.installed | qty }}</td>
+              <td class="num">{{ line.available | qty }}</td>
+              <td>{{ status_badge(line.stock_status, 'sm') }}</td>
+              <td>{{ status_badge(line.procurement_status, 'sm') }}</td>
+              <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('procurement.material', material_id=material.id) }}">{{ t("Open") }}</a></td>
+            </tr>
+            {% else %}<tr><td colspan="11">{{ empty(t('No material line in this package.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+        <div class="p-3 border-top">
+          <details class="inline-form"><summary>{{ t("Add a material line") }}</summary>
+            <form method="post" action="{{ url_for('procurement.add_material', package_id=package.id) }}" class="form-grid mt-2">
+              <div class="full"><label class="form-label">{{ t("Item") }}</label>
+                <input name="item" class="form-control form-control-lg" required></div>
+              <div><label class="form-label">{{ t("Manufacturer") }}</label>
+                <input name="manufacturer" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Vendor") }}</label>
+                <input name="vendor" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Approved vendor") }}</label>
+                <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="approved_vendor" value="1"></div></div>
+              <div><label class="form-label">{{ t("Unit") }}</label>
+                <input name="unit" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Contract qty") }}</label>
+                <input name="contract_quantity" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Required qty") }}</label>
+                <input name="total_required" inputmode="decimal" class="form-control form-control-lg"></div>
+              <div><label class="form-label">{{ t("Ordered qty") }}</label>
+                <input name="ordered" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Manufactured qty") }}</label>
+                <input name="manufactured" inputmode="decimal" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("PO reference") }}</label>
+                <input name="po_reference" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Planned delivery") }}</label>
+                <input type="date" name="planned_delivery" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("Forecast delivery") }}</label>
+                <input type="date" name="forecast_delivery" class="form-control form-control-sm"></div>
+              <div><label class="form-label">{{ t("FAT required") }}</label>
+                <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="fat_required" value="1"></div></div>
+              <div><label class="form-label">{{ t("Allocated area") }}</label>{{ area_select('allocated_area_id', areas) }}</div>
+              <div class="full"><label class="form-label">{{ t("Comments") }}</label>
+                <input name="comments" class="form-control form-control-sm"></div>
+              <div class="full"><button class="btn btn-primary btn-sm">{{ t("Add material") }}</button></div>
+            </form>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

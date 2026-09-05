@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}{{ t("Error") }} {{ code }}{% endblock %}
+{% block content %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Error") }} {{ code }}</h2></div>
+  <div class="panel-body">
+    <p class="mb-3">{{ message }}</p>
+    <a class="btn btn-primary" href="{{ url_for('dashboard.index') }}">{{ t("Back to the dashboard") }}</a>
+  </div>
+</div>
+{% endblock %}

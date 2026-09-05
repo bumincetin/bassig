@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select %}
+{% block title %}{{ t("Document register") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Document register") }}</h1>
+    <div class="sub">
+      {{ t("A lightweight register of required project evidence, not a document management system. Files themselves stay in the project folder structure.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('acceptance.index') }}">{{ t("Acceptance gates") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('acceptance.export_documents') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Registered documents'), summary.total) }}
+  {{ kpi(t('Mandatory'), summary.mandatory) }}
+  {{ kpi(t('Accepted'), summary.accepted, '', 'good') }}
+  {{ kpi(t('Missing mandatory'), summary.missing_count, '', 'bad' if summary.missing_count else 'good') }}
+  {{ kpi(t('Overdue'), summary.overdue, '', 'bad' if summary.overdue else 'good') }}
+  {{ kpi(t('Completeness'),
+         summary.completeness_pct | pc(0) if summary.completeness_pct is not none else 'n/a',
+         'mandatory documents accepted') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("Gate") }}</label>
+    <select name="gate" class="form-select form-select-sm">
+      <option value="">{{ t("All gates") }}</option>
+      {% for gate in gates %}
+        <option value="{{ gate.gate_code }}" {{ 'selected' if gate_code == gate.gate_code }}>
+          {{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name }}</option>
+      {% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Category") }}</label>
+    <select name="category" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.DOCUMENT_CATEGORIES %}
+        <option value="{{ value }}" {{ 'selected' if category == value }}>{{ value }}</option>
+      {% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("View") }}</label>
+    <select name="view" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      <option value="missing" {{ 'selected' if view == 'missing' }}>{{ t("Missing mandatory only") }}</option>
+    </select></div>
+  <div class="field flex-grow-1"><label class="form-label">{{ t("Find") }}</label>
+    <input type="search" class="form-control form-control-sm" data-filter-table="#docTable" placeholder="{{ t('Title or number') }}"></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} document(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky"><table class="data" id="docTable">
+      <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Title") }}</th><th>{{ t("Category") }}</th><th>{{ t("Discipline") }}</th><th>{{ t("Rev") }}</th>
+        <th>{{ t("Gate") }}</th><th>{{ t("Mandatory") }}</th><th>{{ t("Required") }}</th><th>{{ t("Submitted") }}</th><th>{{ t("Accepted") }}</th>
+        <th>{{ t("Status") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row, derived in rows %}
+        <tr>
+          <td class="mono">{{ row.document_number or '-' }}</td>
+          <td class="mw-260">{{ row.title }}
+            {% if row.folder_path %}<div class="source-note">{{ row.folder_path }}</div>{% endif %}</td>
+          <td class="text-tiny">{{ row.category or '-' }}</td>
+          <td class="text-tiny">{{ row.discipline or '-' }}</td>
+          <td class="mono">{{ row.revision or '-' }}</td>
+          <td>{{ row.gate_code or '-' }}</td>
+          <td>{{ 'Yes' if row.mandatory else 'No' }}</td>
+          <td class="nowrap {{ 'text-danger fw-bold' if derived == 'OVERDUE' }}">{{ row.required_date | d }}</td>
+          <td class="nowrap">{{ row.submitted_date | d }}</td>
+          <td class="nowrap">{{ row.accepted_date | d }}</td>
+          <td>{{ status_badge(derived, 'sm') }}</td>
+          <td>
+            <details class="inline-form"><summary>{{ t("Edit") }}</summary>
+              <form method="post" action="{{ url_for('acceptance.update_document', doc_id=row.id) }}" class="mt-1">
+                <input name="document_number" value="{{ row.document_number or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Number') }}">
+                <input name="title" value="{{ row.title }}" class="form-control form-control-sm mb-1">
+                <input name="category" value="{{ row.category or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Category') }}">
+                <input name="discipline" value="{{ row.discipline or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Discipline') }}">
+                <input name="wbs_code" value="{{ row.wbs_code or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('WBS') }}">
+                <input name="revision" value="{{ row.revision or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Revision') }}">
+                {{ select('status', C.DOCUMENT_STATUS, row.status, none, 'form-select form-select-sm mb-1') }}
+                <input type="date" name="required_date" value="{{ row.required_date | iso }}" class="form-control form-control-sm mb-1">
+                <input type="date" name="submitted_date" value="{{ row.submitted_date | iso }}" class="form-control form-control-sm mb-1">
+                <input type="date" name="accepted_date" value="{{ row.accepted_date | iso }}" class="form-control form-control-sm mb-1">
+                <input name="gate_code" value="{{ row.gate_code or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Gate A/B/C/D') }}">
+                <input name="folder_path" value="{{ row.folder_path or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Folder') }}">
+                <input name="source_path" value="{{ row.source_path or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Path') }}">
+                <div class="form-check mb-1"><input type="checkbox" class="form-check-input" name="mandatory"
+                       value="1" {{ 'checked' if row.mandatory }}> <span class="text-tiny">{{ t("Mandatory") }}</span></div>
+                <textarea name="remarks" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Remarks') }}">{{ row.remarks or '' }}</textarea>
+                <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
+              </form>
+              <form method="post" action="{{ url_for('acceptance.update_document', doc_id=row.id) }}"
+                    class="mt-1" data-confirm="{{ t('Remove this register entry?') }}">
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-sm btn-outline-danger">{{ t("Delete") }}</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="12">{{ empty(t('No document registered. Import the Schedule 04C documentation structure from Data Import.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Register a document") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div><label class="form-label">{{ t("Document number") }}</label>
+        <input name="document_number" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Title") }}</label>
+        <input name="title" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.DOCUMENT_CATEGORIES, none, 'Select') }}</div>
+      <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, none, 'Not set') }}</div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Revision") }}</label>
+        <input name="revision" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.DOCUMENT_STATUS, 'NOT STARTED') }}</div>
+      <div><label class="form-label">{{ t("Required date") }}</label>
+        <input type="date" name="required_date" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Acceptance gate") }}</label>
+        <select name="gate_code" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for gate in gates %}<option value="{{ gate.gate_code }}">{{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name }}</option>{% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("Mandatory") }}</label>
+        <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="mandatory" value="1" checked></div></div>
+      <div class="full"><label class="form-label">{{ t("Folder path (as-built structure)") }}</label>
+        <input name="folder_path" class="form-control form-control-sm"
+               placeholder="{{ t('e.g. 3 As Built / Civil and architectural / Cable Trenches') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Remarks") }}</label>
+        <textarea name="remarks" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Register document") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

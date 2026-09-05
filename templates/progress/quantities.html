@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import empty, data_required, area_select %}
+{% block title %}{{ t("Quantity register") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Quantities / BOQ register") }}</h1>
+    <div class="sub">
+      {{ t("Every quantity carries the document it came from. Missing quantities are reported as DATA REQUIRED and are never estimated.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('dataio.index') }}">{{ t("Import BOQ") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('progress.export_quantities') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if not rows %}
+  {{ data_required(t('an approved BOQ / quantity register with WBS, unit and total required quantity.')) }}
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} registered quantities", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Item") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Area") }}</th><th class="num">{{ t("Quantity") }}</th>
+          <th>{{ t("Unit") }}</th><th>{{ t("Source document") }}</th><th>{{ t("Source ref.") }}</th><th>{{ t("Rev") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="mono">{{ row.wbs_code or '-' }}</td>
+            <td>{{ row.item }}{% if row.notes %}<div class="text-tiny text-muted">{{ row.notes }}</div>{% endif %}</td>
+            <td class="text-tiny">{{ row.activity_name or '-' }}</td>
+            <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+            <td class="num"><strong>{{ row.total_quantity | qty }}</strong></td>
+            <td>{{ row.unit or '-' }}</td>
+            <td class="text-tiny">{{ row.source_document.label if row.source_document else 'not linked' }}</td>
+            <td class="text-tiny">{{ row.source_reference or '-' }}</td>
+            <td class="mono">{{ row.revision or '-' }}</td>
+            <td><form method="post" action="{{ url_for('progress.delete_quantity', row_id=row.id) }}"
+                      data-confirm="{{ t('Remove this quantity register entry?') }}">
+              <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td>
+          </tr>
+          {% else %}<tr><td colspan="10">{{ empty(t('No quantity registered.')) }}</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Add a quantity") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" class="form-grid">
+      <div><label class="form-label">{{ t("WBS code") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Item") }}</label>
+        <input name="item" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Activity name") }}</label>
+        <input name="activity_name" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+      <div><label class="form-label">{{ t("Total quantity") }}</label>
+        <input name="total_quantity" inputmode="decimal" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Unit") }}</label>
+        <input name="unit" class="form-control form-control-lg" placeholder="{{ t('no, m, m2, m3, kg') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked (the entry will show no provenance)") }}</option>
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+        </select></div>
+      <div><label class="form-label">{{ t("Source reference") }}</label>
+        <input name="source_reference" class="form-control form-control-sm" placeholder="{{ t('clause / sheet / table') }}"></div>
+      <div><label class="form-label">{{ t("Revision") }}</label>
+        <input name="revision" class="form-control form-control-sm"></div>
+      <div class="full"><label class="form-label">{{ t("Notes") }}</label>
+        <textarea name="notes" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Add quantity") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

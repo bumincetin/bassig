@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
+{% block title %}{{ t("Issues / Punch / NCR") }}{% endblock %}
+
+{% macro quality_table(rows, derived_map, caption, kind) %}
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ caption }}</h2>
+    <div class="d-flex gap-1">
+      <span class="badge bg-secondary">{{ rows | length }}</span>
+      <a class="btn btn-sm btn-outline-secondary py-0"
+         href="{{ url_for('issues.export_ncr') if kind == 'NCR' else url_for('issues.export_punch') }}">{{ t("CSV") }}</a>
+    </div>
+  </div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Date") }}</th><th>{{ t("WBS") }}</th><th>{{ t("Area") }}</th><th>{{ t("Title") }}</th>
+        <th>{{ t("Severity") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="mono">{{ row.record_number }}</td>
+          <td class="nowrap">{{ row.record_date | d }}</td>
+          <td class="mono">{{ row.wbs_code or '-' }}</td>
+          <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+          <td class="mw-260">{{ row.title or (row.description or '')[:80] }}</td>
+          <td>{{ status_badge(row.severity, 'sm') }}</td>
+          <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+          <td class="nowrap">{{ row.target_closure_date | d }}</td>
+          <td>{{ status_badge(derived_map.get(row.id, row.status), 'sm') }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('quality.detail', record_id=row.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="10">{{ empty(t('Nothing registered.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro quality_form(action, kind, next_number) %}
+<form method="post" action="{{ action }}" class="form-grid" enctype="multipart/form-data">
+  <div class="full"><label class="form-label">{{ t("Title") }} ({{ kind }} {{ next_number }})</label>
+    <input name="title" class="form-control form-control-lg" required></div>
+  <div class="full"><label class="form-label">{{ t("Description") }}</label>
+    <textarea name="description" rows="2" class="form-control"></textarea></div>
+  <div><label class="form-label">{{ t("Date") }}</label>
+    <input type="date" name="record_date" value="{{ TODAY | iso }}" class="form-control form-control-sm"></div>
+  <div><label class="form-label">{{ t("WBS") }}</label>
+    <input name="wbs_code" class="form-control form-control-sm"></div>
+  <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+  <div><label class="form-label">{{ t("Discipline") }}</label>{{ select('discipline', C.DISCIPLINES, none, 'Not set') }}</div>
+  <div><label class="form-label">{{ t("Severity") }}</label>{{ select('severity', C.SEVERITIES, 'MEDIUM') }}</div>
+  <div><label class="form-label">{{ t("Responsible") }}</label>
+    <input name="responsible_party" class="form-control form-control-sm"></div>
+  <div><label class="form-label">{{ t("Raised by") }}</label>
+    <input name="raised_by" class="form-control form-control-sm"></div>
+  <div><label class="form-label">{{ t("Target closure") }}</label>
+    <input type="date" name="target_closure_date" class="form-control form-control-sm"></div>
+  <div><label class="form-label">{{ t("Specification") }}</label>
+    <input name="specification_reference" class="form-control form-control-sm"></div>
+  <div><label class="form-label">{{ t("Drawing") }}</label>
+    <input name="drawing_reference" class="form-control form-control-sm"></div>
+  {% if kind == 'PUNCH LIST' %}
+  <div><label class="form-label">{{ t("Acceptance gate") }}</label>
+    <select name="gate_code" class="form-select form-select-sm">
+      <option value="">{{ t("Not linked") }}</option>
+      {% for code, name, ref in C.GATES %}<option value="{{ code }}">{{ t("Gate") }} {{ code }} &mdash; {{ name }}</option>{% endfor %}
+    </select></div>
+  {% endif %}
+  <div class="full"><label class="form-label">{{ t("Photographs") }}</label>
+    <input type="file" name="photos" multiple accept="image/*" capture="environment" class="form-control form-control-lg"></div>
+  <div class="full"><button class="btn btn-primary">{{ t("Raise") }} {{ kind }}</button></div>
+</form>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Issues, Punch List and NCRs") }}</h1>
+    <div class="sub">
+      {{ t("Three separate registers. A punch item is never reported as an NCR unless a person reclassifies it explicitly.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-primary" href="{{ url_for('issues.export') }}">{{ t("Export actions CSV") }}</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  {{ kpi(t('Open actions'), summary.open, summary.overdue ~ ' overdue', 'warn' if summary.open else 'good') }}
+  {{ kpi(t('Open NCRs'), quality_summary.open_ncr, quality_summary.overdue_ncr ~ ' overdue', 'bad' if quality_summary.open_ncr else 'good') }}
+  {{ kpi(t('Open punch items'), quality_summary.open_punch, quality_summary.overdue_punch ~ ' overdue', 'warn' if quality_summary.open_punch else 'good') }}
+  {{ kpi(t('Overdue observations'), observations | length, 'from the daily diary', 'warn' if observations else 'good') }}
+</div>
+
+<ul class="nav nav-tabs no-print mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-actions">{{ t("Actions") }}</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ncr">NCR ({{ ncrs | length }})</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-punch">{{ t("Punch List") }} ({{ punch | length }})</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-obs">{{ t("Observations") }} ({{ observations | length }})</button></li>
+</ul>
+
+<div class="tab-content">
+  <!-- ACTIONS -->
+  <div class="tab-pane fade show active" id="tab-actions">
+    <form class="filter-bar" method="get" data-autosubmit>
+      <div class="field"><label class="form-label">{{ t("Status") }}</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">{{ t("All") }}</option>
+          {% for value in C.ACTION_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label class="form-label">{{ t("Category") }}</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">{{ t("All") }}</option>
+          {% for value in C.ISSUE_CATEGORIES %}<option value="{{ value }}" {{ 'selected' if filters.category == value }}>{{ value }}</option>{% endfor %}
+        </select></div>
+      <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+    </form>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Action register") }} ({{ rows | length }})</h2></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Raised") }}</th><th>{{ t("Title") }}</th><th>{{ t("Category") }}</th><th>{{ t("Priority") }}</th>
+            <th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td class="mono">{{ row.issue_number }}</td>
+              <td class="nowrap">{{ row.date_raised | d }}</td>
+              <td class="mw-260">{{ row.title }}</td>
+              <td>{{ row.category or '-' }}</td>
+              <td>{{ status_badge(row.priority, 'sm') }}</td>
+              <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+              <td class="nowrap">{{ row.target_date | d }}</td>
+              <td>{{ status_badge(derived.get(row.id, row.status), 'sm') }}</td>
+              <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('issues.detail', issue_id=row.id) }}">{{ t("Open") }}</a></td>
+            </tr>
+            {% else %}<tr><td colspan="9">{{ empty(t('No action registered.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Raise an action") }} ({{ next_issue }})</h2></div>
+      <div class="panel-body">
+        <form method="post" action="{{ url_for('issues.create') }}" class="form-grid">
+          <div class="full"><label class="form-label">{{ t("Title") }}</label>
+            <input name="title" class="form-control form-control-lg" required></div>
+          <div class="full"><label class="form-label">{{ t("Description") }}</label>
+            <textarea name="description" rows="2" class="form-control"></textarea></div>
+          <div><label class="form-label">{{ t("Date raised") }}</label>
+            <input type="date" name="date_raised" value="{{ TODAY | iso }}" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.ISSUE_CATEGORIES, 'Progress') }}</div>
+          <div><label class="form-label">{{ t("Priority") }}</label>{{ select('priority', C.PRIORITIES, 'MEDIUM') }}</div>
+          <div><label class="form-label">{{ t("WBS") }}</label>
+            <input name="wbs_code" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Area") }}</label>{{ area_select('area_id', areas) }}</div>
+          <div><label class="form-label">{{ t("Raised by") }}</label>
+            <input name="raised_by" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Responsible") }}</label>
+            <input name="responsible_party" class="form-control form-control-sm"></div>
+          <div><label class="form-label">{{ t("Target date") }}</label>
+            <input type="date" name="target_date" class="form-control form-control-sm"></div>
+          <div class="full"><button class="btn btn-primary">{{ t("Raise action") }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- NCR -->
+  <div class="tab-pane fade" id="tab-ncr">
+    {{ quality_table(ncrs, ncr_derived, 'Non-conformance reports', 'NCR') }}
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Raise an NCR") }}</h2></div>
+      <div class="panel-body">{{ quality_form(url_for('issues.create_ncr'), 'NCR', next_ncr) }}</div>
+    </div>
+  </div>
+
+  <!-- PUNCH -->
+  <div class="tab-pane fade" id="tab-punch">
+    {{ quality_table(punch, punch_derived, 'Punch List', 'PUNCH LIST') }}
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Raise a Punch List item") }}</h2></div>
+      <div class="panel-body">{{ quality_form(url_for('issues.create_punch'), 'PUNCH LIST', next_punch) }}</div>
+    </div>
+  </div>
+
+  <!-- OBSERVATIONS -->
+  <div class="tab-pane fade" id="tab-obs">
+    <div class="panel">
+      <div class="panel-head"><h2>{{ t("Overdue site observations") }}</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.observations') }}">{{ t("All observations") }}</a></div>
+      <div class="panel-body tight">
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Category") }}</th><th>{{ t("Severity") }}</th><th>{{ t("Area") }}</th><th>{{ t("Observation") }}</th>
+            <th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th></tr></thead>
+          <tbody>
+            {% for row in observations %}
+            <tr><td class="nowrap">{{ row.entry_date | d }}</td><td>{{ row.category }}</td>
+              <td>{{ status_badge(row.severity, 'sm') }}</td>
+              <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+              <td class="mw-260">{{ row.observation }}</td>
+              <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+              <td class="nowrap text-danger fw-bold">{{ row.target_date | d }}</td></tr>
+            {% else %}<tr><td colspan="7">{{ empty(t('No overdue observation.')) }}</td></tr>{% endfor %}
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

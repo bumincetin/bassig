@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import status_badge, empty, data_required %}
+{% block title %}{{ t("Recovery comparison") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Programme comparison against the contractual baseline") }}</h1>
+    <div class="sub">
+      {{ t("Baseline:") }} {{ baseline.label if baseline else t(C.DATA_REQUIRED) }} &middot;
+      {{ t("Slip is measured activity by activity, matching by name first because WBS codes were renumbered between the contractual and updated programmes.") }}
+    </div>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.index') }}">{{ t("Back to schedule") }}</a>
+</div>
+
+{% if not baseline %}
+  {{ data_required(t('the contractual baseline programme (Schedule 03). Register it before comparing revisions.')) }}
+{% elif not comparisons %}
+  {{ empty(t('Only the contractual baseline is registered. Import an updated programme as a separate version to compare.')) }}
+{% else %}
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Registered programmes vs baseline") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>{{ t("Programme") }}</th><th>{{ t("Type") }}</th><th>{{ t("Effective") }}</th><th class="num">{{ t("Activities") }}</th>
+            <th class="num">{{ t("Unmatched") }}</th><th class="num">{{ t("Max finish slip (days)") }}</th>
+            <th class="num">{{ t("Avg finish slip") }}</th><th class="num">{{ t("Avg start slip") }}</th>
+            <th>{{ t("Programme finish") }}</th></tr>
+        </thead>
+        <tbody>
+          {% for row in comparisons %}
+          <tr>
+            <td>{{ row.version.label }}</td>
+            <td>{{ status_badge(row.version.schedule_type, 'sm') }}</td>
+            <td class="nowrap">{{ row.version.effective_date | d }}</td>
+            <td class="num">{{ row.activities }}</td>
+            <td class="num">{{ row.unmatched }}</td>
+            <td class="num {{ 'text-danger' if row.max_finish_slip and row.max_finish_slip > 0 }}">
+              {{ row.max_finish_slip if row.max_finish_slip is not none else '-' }}</td>
+            <td class="num">{{ row.avg_finish_slip | num(1) if row.avg_finish_slip is not none else '-' }}</td>
+            <td class="num">{{ row.avg_start_slip | num(1) if row.avg_start_slip is not none else '-' }}</td>
+            <td class="nowrap">{{ row.project_finish | d }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("How to read this") }}</h2></div>
+  <div class="panel-body text-tiny">
+    <p class="mb-1">{{ t("Positive slip means the programme finishes later than the contractual baseline.") }}</p>
+    <p class="mb-1">{{ t("Unmatched activities have no contractual counterpart: either new scope, or an activity whose name changed. Set an explicit baseline link on the activity page to resolve it.") }}</p>
+    <p class="mb-0">{{ t("This comparison is informational. It does not alter the contractual baseline, which stays locked and unchanged.") }}</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

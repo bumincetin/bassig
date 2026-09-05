@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, variance, empty, data_required %}
+{% block title %}{{ t("Schedule &amp; WBS") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Schedule &amp; WBS") }}</h1>
+    <div class="sub">
+      {{ t("Showing") }} <strong>{{ version.label if version else t('no programme') }}</strong>
+      {{ t("compared against contractual baseline") }}
+      <strong>{{ baseline.label if baseline else t(C.DATA_REQUIRED) }}</strong> {{ t("as at") }} {{ as_of | d }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.lookahead', as_of=as_of|iso) }}">{{ t("Lookahead") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.recovery') }}">{{ t("Recovery comparison") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('schedule.versions') }}">{{ t("Versions") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('schedule.export', as_of=as_of|iso) }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if not version %}
+  {{ data_required(t('a programme. Register a schedule version and import Schedule 03 (contractual baseline) from Data Import.')) }}
+{% else %}
+
+{% if baseline and version.id == baseline.id %}
+  <div class="alert alert-warning py-2 text-tiny">
+    {{ t("No separate current working programme is registered, so the contractual baseline is shown in both the baseline and current columns. Register the updated programme as its own schedule version to compare them.") }}
+  </div>
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Activities'), counts.total, version.schedule_type) }}
+  {{ kpi(t('Critical'), counts.critical, 'variance below the critical threshold', 'bad' if counts.critical else 'good') }}
+  {{ kpi(t('At risk'), counts.at_risk, '', 'warn' if counts.at_risk else 'good') }}
+  {{ kpi(t('Overdue'), counts.overdue, 'past planned finish, incomplete', 'bad' if counts.overdue else 'good') }}
+  {{ kpi(t('Late start'), counts.late_start, 'planned start passed, not started', 'warn' if counts.late_start else 'good') }}
+  {{ kpi(t('Milestones'), counts.milestones) }}
+  {{ kpi(t('Unmatched to baseline'), counts.unmatched, 'no contractual counterpart found', 'warn' if counts.unmatched else 'good') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field">
+    <label class="form-label">{{ t("Programme") }}</label>
+    <select name="version" class="form-select form-select-sm">
+      {% for v in versions %}
+        <option value="{{ v.id }}" {{ 'selected' if version and v.id == version.id }}>
+          {{ v.label }} [{{ v.schedule_type }}]
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="form-label">{{ t("As at") }}</label>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm">
+  </div>
+  <div class="field">
+    <label class="form-label">{{ t("Classification") }}</label>
+    <select name="classification" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.SCHEDULE_CLASSES %}
+        <option value="{{ value }}" {{ 'selected' if filters.classification == value }}>{{ value }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="form-label">{{ t("View") }}</label>
+    <select name="view" class="form-select form-select-sm">
+      <option value="all" {{ 'selected' if filters.view == 'all' }}>{{ t("All activities") }}</option>
+      <option value="milestones" {{ 'selected' if filters.view == 'milestones' }}>{{ t("Milestones only") }}</option>
+      <option value="overdue" {{ 'selected' if filters.view == 'overdue' }}>{{ t("Overdue") }}</option>
+      <option value="late_start" {{ 'selected' if filters.view == 'late_start' }}>{{ t("Late start") }}</option>
+      <option value="unmatched" {{ 'selected' if filters.view == 'unmatched' }}>{{ t("Unmatched to baseline") }}</option>
+    </select>
+  </div>
+  <div class="field">
+    <label class="form-label">{{ t("Work package") }}</label>
+    <select name="work_package" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in work_packages %}
+        <option value="{{ value }}" {{ 'selected' if filters.work_package == value }}>{{ value }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label class="form-label">{{ t("Discipline") }}</label>
+    <select name="discipline" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in disciplines %}
+        <option value="{{ value }}" {{ 'selected' if filters.discipline == value }}>{{ value }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field flex-grow-1">
+    <label class="form-label">{{ t("Search") }}</label>
+    <input type="search" name="q" value="{{ filters.q or '' }}" placeholder="{{ t('WBS or activity name') }}"
+           class="form-control form-control-sm">
+  </div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ t("{count} activities", count=rows | length) }}</h2>
+    <span class="source-note">
+      {{ t("Contractual dates come from the registered baseline and are never overwritten by a working-programme import.") }}
+    </span>
+  </div>
+  <div class="panel-body tight">
+    <div class="table-wrap sticky">
+      <table class="data" id="scheduleTable">
+        <thead>
+          <tr>
+            <th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th>
+            <th>{{ t("Baseline start") }}</th><th>{{ t("Baseline finish") }}</th>
+            <th>{{ t("Current start") }}</th><th>{{ t("Current finish") }}</th>
+            <th class="num">{{ t("Actual %") }}</th><th class="num">{{ t("Variance") }}</th>
+            <th class="num">{{ t("Delay days") }}</th><th>{{ t("Status") }}</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="lvl-{{ row.level if row.level <= 2 else '' }}
+                     {{ 'row-critical' if row.classification == 'CRITICAL' }}
+                     {{ 'row-atrisk' if row.classification == 'AT RISK' }}
+                     {{ 'milestone' if row.is_milestone }}">
+            <td class="mono">{{ row.wbs_code }}</td>
+            <td>
+              {{ row.name }}
+              {% if row.is_milestone %}<span class="badge bg-dark badge-sm">MS</span>{% endif %}
+              {% if row.match_kind == 'UNMATCHED' %}
+                <span class="badge bg-warning text-dark badge-sm" title="{{ t('No contractual counterpart found') }}">NO BASELINE</span>
+              {% elif row.match_kind == 'NAME' %}
+                <span class="badge bg-secondary badge-sm" title="{{ t('Matched to the baseline by activity name because the WBS code changed between revisions') }}">NAME MATCH</span>
+              {% endif %}
+            </td>
+            <td class="nowrap">{{ row.baseline_start | d }}</td>
+            <td class="nowrap">{{ row.baseline_finish | d }}</td>
+            <td class="nowrap">{{ row.plan_start | d }}</td>
+            <td class="nowrap">{{ row.plan_finish | d }}</td>
+            <td class="num">
+              {% if row.actual_pct is none %}<span class="data-required">DATA REQ.</span>
+              {% else %}{{ row.actual_pct | pc(0) }}{% endif %}
+            </td>
+            <td class="num">{{ variance(row.variance) }}</td>
+            <td class="num">
+              {% if row.finish_delay_days is none %}-
+              {% else %}<span class="{{ 'text-danger' if row.finish_delay_days > 0 else 'text-success' }}">{{ row.finish_delay_days }}</span>{% endif %}
+            </td>
+            <td>{{ status_badge(row.classification, 'sm') }}</td>
+            <td><a class="btn btn-sm btn-outline-secondary py-0" href="{{ url_for('schedule.activity', activity_id=row.activity.id) }}">{{ t("Open") }}</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="11">{{ empty(t('No activity matches the current filters.')) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

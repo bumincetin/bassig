@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import status_badge, empty %}
+{% block title %}{{ t("Site observations") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Site observations") }}</h1>
+    <div class="sub">{{ t("Observations recorded in the daily site diary across the selected period") }}</div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-primary" href="{{ url_for('dataio.export', key='observations', **{'from': date_from|iso, 'to': date_to|iso}) }}">{{ t("Export CSV") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('daily.index') }}">{{ t("Daily reports") }}</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("From") }}</label>
+    <input type="date" name="from" value="{{ date_from | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("To") }}</label>
+    <input type="date" name="to" value="{{ date_to | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("Category") }}</label>
+    <select name="category" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.OBSERVATION_CATEGORIES %}
+        <option value="{{ value }}" {{ 'selected' if category == value }}>{{ value }}</option>
+      {% endfor %}
+    </select></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("{count} observation(s)", count=rows | length) }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t("Date") }}</th><th>{{ t("Category") }}</th><th>{{ t("Severity") }}</th><th>{{ t("Area") }}</th><th>{{ t("Observation") }}</th>
+          <th>{{ t("Action required") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th><th>{{ t("Status") }}</th><th></th></tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="nowrap">{{ row.entry_date | d }}</td>
+            <td>{{ row.category }}</td>
+            <td>{{ status_badge(row.severity, 'sm') }}</td>
+            <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
+            <td class="mw-260">{{ row.observation }}</td>
+            <td class="text-tiny">{{ row.action_required or '-' }}</td>
+            <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+            <td class="nowrap {{ 'text-danger fw-bold' if row.target_date and row.target_date < TODAY and row.status != 'CLOSED' }}">
+              {{ row.target_date | d }}</td>
+            <td>{{ status_badge(row.status, 'sm') }}</td>
+            <td>
+              {% if row.status != 'CLOSED' %}
+              <form method="post" action="{{ url_for('daily.close_observation', observation_id=row.id) }}">
+                <button class="btn btn-sm btn-outline-success py-0">{{ t("Close") }}</button></form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}<tr><td colspan="10">{{ empty(t('No observation in this period.')) }}</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

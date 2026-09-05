@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import kpi, status_badge, empty, select, data_required %}
+{% block title %}{{ t("Procurement") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Procurement &amp; materials") }}</h1>
+    <div class="sub">
+      {{ t("Packages tracked through the full chain. Delivered, accepted and installed are three different quantities and are never inferred from one another.") }}
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.materials') }}">{{ t("Materials") }}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.deliveries') }}">{{ t("Deliveries") }}</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('procurement.export_packages') }}">{{ t("Export CSV") }}</a>
+  </div>
+</div>
+
+{% if not views %}
+  {{ data_required(t('the procurement package register (PO status, vendor, FAT and delivery forecast). Import it from Data Import, or add packages below.')) }}
+{% endif %}
+
+<div class="kpi-grid">
+  {{ kpi(t('Packages'), views | length) }}
+  {{ kpi(t('Late'), warnings.late_packages | length, '', 'bad' if warnings.late_packages else 'good') }}
+  {{ kpi(t('At risk'), warnings.at_risk_packages | length, '', 'warn' if warnings.at_risk_packages else 'good') }}
+  {{ kpi(t('Material shortages'), warnings.shortages | length, '', 'bad' if warnings.shortages else 'good') }}
+  {{ kpi(t('Unapproved vendors'), warnings.unapproved_vendors | length, 'not on Schedule 12 / 18', 'warn' if warnings.unapproved_vendors else 'good') }}
+  {{ kpi(t('FAT issues'), warnings.fat_issues | length, '', 'warn' if warnings.fat_issues else 'good') }}
+</div>
+
+<form class="filter-bar" method="get" data-autosubmit>
+  <div class="field"><label class="form-label">{{ t("As at") }}</label>
+    <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm"></div>
+  <div class="field"><label class="form-label">{{ t("Status") }}</label>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.PROCUREMENT_STATUS %}
+        <option value="{{ value }}" {{ 'selected' if status_filter == value }}>{{ value }}</option>
+      {% endfor %}
+    </select></div>
+  <div class="field"><label class="form-label">{{ t("Stage") }}</label>
+    <select name="stage" class="form-select form-select-sm">
+      <option value="">{{ t("All") }}</option>
+      {% for value in C.PROCUREMENT_STAGES %}
+        <option value="{{ value }}" {{ 'selected' if stage_filter == value }}>{{ value }}</option>
+      {% endfor %}
+    </select></div>
+  <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
+</form>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Packages") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("Code") }}</th><th>{{ t("Package") }}</th><th>{{ t("Stage") }}</th><th>{{ t("Status") }}</th><th>{{ t("Planned") }}</th>
+        <th>{{ t("Forecast") }}</th><th>{{ t("Actual") }}</th><th>{{ t("FAT") }}</th><th class="num">{{ t("Lines") }}</th>
+        <th class="num">{{ t("Late") }}</th><th class="num">{{ t("Short") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for view in views %}
+        <tr>
+          <td class="mono">{{ view.package.package_code }}</td>
+          <td>{{ view.package.package_name }}
+            {% if view.package.equipment %}<div class="text-tiny text-muted">{{ view.package.equipment }}</div>{% endif %}</td>
+          <td>
+            <div class="timeline-stage">
+              {% for stage in C.PROCUREMENT_STAGES %}
+                {% set index = loop.index0 %}
+                <span class="{{ 'current' if stage == view.package.stage else ('done' if index < view.stage_index else '') }}"
+                      title="{{ stage }}">{{ stage[:3] }}</span>
+              {% endfor %}
+            </div>
+            <div class="text-tiny mt-1">{{ view.package.stage }}</div>
+          </td>
+          <td>{{ status_badge(view.status, 'sm') }}</td>
+          <td class="nowrap">{{ view.package.planned_delivery | d }}</td>
+          <td class="nowrap">{{ view.package.forecast_delivery | d }}</td>
+          <td class="nowrap">{{ view.package.actual_delivery | d }}</td>
+          <td>{% if view.package.fat_required %}{{ status_badge(view.package.fat_status, 'sm') }}{% else %}<span class="text-muted text-tiny">n/a</span>{% endif %}</td>
+          <td class="num">{{ view.materials | length }}</td>
+          <td class="num {{ 'text-danger fw-bold' if view.late_count }}">{{ view.late_count }}</td>
+          <td class="num {{ 'text-danger fw-bold' if view.shortage_count }}">{{ view.shortage_count }}</td>
+          <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('procurement.package', package_id=view.package.id) }}">{{ t("Open") }}</a></td>
+        </tr>
+        {% else %}<tr><td colspan="12">{{ empty(t('No procurement package registered.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Add a package") }}</h2></div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('procurement.create_package') }}" class="form-grid">
+      <div><label class="form-label">{{ t("Package code") }}</label>
+        <input name="package_code" class="form-control form-control-lg" required placeholder="{{ t('PKG-01') }}"></div>
+      <div class="full"><label class="form-label">{{ t("Package name") }}</label>
+        <input name="package_name" class="form-control form-control-lg" required></div>
+      <div><label class="form-label">{{ t("Category") }}</label>
+        <input name="category" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Equipment") }}</label>
+        <input name="equipment" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Stage") }}</label>{{ select('stage', C.PROCUREMENT_STAGES, 'REQUIRED') }}</div>
+      <div><label class="form-label">{{ t("WBS") }}</label>
+        <input name="wbs_code" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Responsible party") }}</label>
+        <input name="responsible_party" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("PO reference") }}</label>
+        <input name="po_reference" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Planned delivery") }}</label>
+        <input type="date" name="planned_delivery" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("Forecast delivery") }}</label>
+        <input type="date" name="forecast_delivery" class="form-control form-control-sm"></div>
+      <div><label class="form-label">{{ t("FAT required") }}</label>
+        <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="fat_required" value="1"></div></div>
+      <div class="full"><label class="form-label">{{ t("Approved vendors (Schedule 12 / 18)") }}</label>
+        <textarea name="approved_vendors" rows="2" class="form-control form-control-sm"></textarea></div>
+      <div class="full"><label class="form-label">{{ t("Source document") }}</label>
+        <select name="source_document_id" class="form-select form-select-sm">
+          <option value="">{{ t("Not linked") }}</option>
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }}</option>{% endfor %}
+        </select></div>
+      <div class="full"><button class="btn btn-primary">{{ t("Create package") }}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

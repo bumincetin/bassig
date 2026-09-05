@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% from 'partials/macros.html' import empty, status_badge %}
+{% block title %}{{ t("Data Import / Export") }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ t("Data import / export") }}</h1>
+    <div class="sub">
+      {{ t("Structured CSV / XLSX only. The application does not read PDFs: complex programme PDFs are registered as evidence, never machine-interpreted.") }}
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('dataio.write_templates') }}" class="page-actions">
+    <button class="btn btn-sm btn-outline-secondary">{{ t("Write blank templates to disk") }}</button>
+  </form>
+</div>
+
+<div class="alert alert-secondary py-2 text-tiny">
+  {{ t("Every import runs in two steps. Step 1 validates the file and shows you exactly what will be created, updated, skipped or rejected. Step 2 commits only after you confirm. Nothing is written to the database before you confirm.") }}
+</div>
+
+{% if prepared %}
+<div class="panel">
+  <div class="panel-head">
+    <h2>{{ t("Prepared files from the Bassignana source pack") }}</h2>
+    <span class="badge bg-info text-dark">{{ prepared | length }}</span>
+  </div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("File") }}</th><th>{{ t("Import type") }}</th><th class="num">{{ t("Size") }}</th><th>{{ t("Use") }}</th></tr></thead>
+      <tbody>
+        {% for file in prepared %}
+        <tr>
+          <td class="mono">{{ file.name }}</td>
+          <td>{{ specs[file.key].label if file.key and file.key in specs else 'unrecognised' }}</td>
+          <td class="num">{{ (file.size / 1024) | num(1) }} kB</td>
+          <td>
+            {% if file.key and file.key in specs %}
+              <form method="post" action="{{ url_for('dataio.start_import', key=file.key) }}"
+                    class="d-flex gap-1 flex-wrap align-items-center">
+                <input type="hidden" name="prepared_file" value="{{ file.name }}">
+                {% if file.key == 'schedule' %}
+                  <select name="version_id" class="form-select form-select-sm" style="max-width:280px" required>
+                    <option value="">{{ t("Choose the schedule version") }}</option>
+                    {% for version in versions %}
+                      <option value="{{ version.id }}">{{ version.label }} [{{ version.schedule_type }}]{{ ' - LOCKED' if version.locked }}</option>
+                    {% endfor %}
+                  </select>
+                {% endif %}
+                <select name="source_document_id" class="form-select form-select-sm" style="max-width:260px">
+                  <option value="">{{ t("Source document (optional)") }}</option>
+                  {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+                </select>
+                <button class="btn btn-sm btn-primary">{{ t("Validate") }}</button>
+              </form>
+            {% else %}
+              <span class="text-muted text-tiny">{{ t("Rename the file to include the import key") }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody></table></div>
+    <p class="source-note p-3 mb-0">
+      {{ t("These files live in {folder}. They are structured extracts prepared from the registered source documents. They still pass through validation and confirmation like any other import.",
+            folder="<code>project_data/import_ready/</code>") | safe }}
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Import templates") }}</h2></div>
+  <div class="panel-body tight">
+    {% for key, spec in specs.items() %}
+    <div class="p-3 border-bottom">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+          <h3 class="h6 mb-1">{{ spec.label }}</h3>
+          <p class="text-tiny text-muted mb-1">{{ spec.description }}</p>
+          {% if spec.guidance %}<p class="source-note mb-1">{{ spec.guidance }}</p>{% endif %}
+          <p class="text-tiny mb-0">
+            <strong>{{ t("Columns:") }}</strong>
+            <span class="font-monospace">{{ spec.columns | join(', ') }}</span>
+          </p>
+          <p class="text-tiny mb-0">
+            <strong>{{ t("Required:") }}</strong>
+            <span class="font-monospace">{{ spec.required | join(', ') }}</span>
+          </p>
+        </div>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('dataio.template', key=key) }}">{{ t("Download template") }}</a>
+      </div>
+      <form method="post" action="{{ url_for('dataio.start_import', key=key) }}"
+            enctype="multipart/form-data" class="d-flex gap-2 flex-wrap align-items-end mt-2">
+        <div>
+          <label class="form-label">{{ t("File (.csv / .xlsx)") }}</label>
+          <input type="file" name="file" accept=".csv,.xlsx,.xlsm" class="form-control form-control-sm" required>
+        </div>
+        {% if key == 'schedule' %}
+        <div>
+          <label class="form-label">{{ t("Schedule version") }}</label>
+          <select name="version_id" class="form-select form-select-sm" required>
+            <option value="">{{ t("Choose the version") }}</option>
+            {% for version in versions %}
+              <option value="{{ version.id }}">{{ version.label }} [{{ version.schedule_type }}]{{ ' - LOCKED' if version.locked }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div>
+          <label class="form-label">{{ t("Source document") }}</label>
+          <select name="source_document_id" class="form-select form-select-sm">
+            <option value="">{{ t("Optional") }}</option>
+            {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-sm btn-primary">{{ t("Validate and preview") }}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("CSV exports") }}</h2></div>
+  <div class="panel-body">
+    <div class="d-flex flex-wrap gap-2">
+      {% for key, entry in exports.items() %}
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('dataio.export', key=key) }}">{{ entry[0] }}</a>
+      {% endfor %}
+    </div>
+    <p class="source-note mt-2 mb-0">
+      {{ t("Each register page also carries its own Export CSV button which preserves the filters currently applied on that page.") }}
+    </p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2>{{ t("Import history") }}</h2></div>
+  <div class="panel-body tight">
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>{{ t("When") }}</th><th>{{ t("Type") }}</th><th>{{ t("File") }}</th><th>{{ t("Source document") }}</th>
+        <th class="num">{{ t("Rows") }}</th><th class="num">{{ t("Created") }}</th><th class="num">{{ t("Updated") }}</th>
+        <th class="num">{{ t("Skipped") }}</th><th class="num">{{ t("Rejected") }}</th></tr></thead>
+      <tbody>
+        {% for batch in batches %}
+        <tr>
+          <td class="nowrap">{{ batch.created_at | d }}</td>
+          <td>{{ specs[batch.import_type].label if batch.import_type in specs else batch.import_type }}</td>
+          <td class="text-tiny">{{ batch.filename or '-' }}</td>
+          <td class="text-tiny">{{ batch.source_document.label if batch.source_document else '-' }}</td>
+          <td class="num">{{ batch.row_count }}</td>
+          <td class="num text-success">{{ batch.created_count }}</td>
+          <td class="num">{{ batch.updated_count }}</td>
+          <td class="num">{{ batch.skipped_count }}</td>
+          <td class="num {{ 'text-danger' if batch.error_count }}">{{ batch.error_count }}</td>
+        </tr>
+        {% else %}<tr><td colspan="9">{{ empty(t('No import has been committed yet.')) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+</div>
+{% endblock %}
