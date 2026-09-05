@@ -6,7 +6,7 @@
 <div class="page-head">
   <div>
     <h1>{{ blocker.blocker_number }}</h1>
-    <div class="sub">{{ blocker.category }} &middot; {{ blocker.entry_date | d }}</div>
+    <div class="sub">{{ t(blocker.category) }} &middot; {{ blocker.entry_date | d }}</div>
   </div>
   <div class="page-actions">
     <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('blockers.index') }}">{{ t("Back") }}</a>

@@ -23,7 +23,7 @@
     <select name="category" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.OBSERVATION_CATEGORIES %}
-        <option value="{{ value }}" {{ 'selected' if category == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if category == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select></div>
   <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
@@ -40,7 +40,7 @@
           {% for row in rows %}
           <tr>
             <td class="nowrap">{{ row.entry_date | d }}</td>
-            <td>{{ row.category }}</td>
+            <td>{{ t(row.category) }}</td>
             <td>{{ status_badge(row.severity, 'sm') }}</td>
             <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
             <td class="mw-260">{{ row.observation }}</td>

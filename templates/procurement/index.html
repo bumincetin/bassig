@@ -26,7 +26,7 @@
   {{ kpi(t('Late'), warnings.late_packages | length, '', 'bad' if warnings.late_packages else 'good') }}
   {{ kpi(t('At risk'), warnings.at_risk_packages | length, '', 'warn' if warnings.at_risk_packages else 'good') }}
   {{ kpi(t('Material shortages'), warnings.shortages | length, '', 'bad' if warnings.shortages else 'good') }}
-  {{ kpi(t('Unapproved vendors'), warnings.unapproved_vendors | length, 'not on Schedule 12 / 18', 'warn' if warnings.unapproved_vendors else 'good') }}
+  {{ kpi(t('Unapproved vendors'), warnings.unapproved_vendors | length, t('not on Schedule 12 / 18'), 'warn' if warnings.unapproved_vendors else 'good') }}
   {{ kpi(t('FAT issues'), warnings.fat_issues | length, '', 'warn' if warnings.fat_issues else 'good') }}
 </div>
 
@@ -37,14 +37,14 @@
     <select name="status" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.PROCUREMENT_STATUS %}
-        <option value="{{ value }}" {{ 'selected' if status_filter == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if status_filter == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("Stage") }}</label>
     <select name="stage" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.PROCUREMENT_STAGES %}
-        <option value="{{ value }}" {{ 'selected' if stage_filter == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if stage_filter == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select></div>
   <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
@@ -68,10 +68,10 @@
               {% for stage in C.PROCUREMENT_STAGES %}
                 {% set index = loop.index0 %}
                 <span class="{{ 'current' if stage == view.package.stage else ('done' if index < view.stage_index else '') }}"
-                      title="{{ stage }}">{{ stage[:3] }}</span>
+                      title="{{ t(stage) }}">{{ stage[:3] }}</span>
               {% endfor %}
             </div>
-            <div class="text-tiny mt-1">{{ view.package.stage }}</div>
+            <div class="text-tiny mt-1">{{ t(view.package.stage) }}</div>
           </td>
           <td>{{ status_badge(view.status, 'sm') }}</td>
           <td class="nowrap">{{ view.package.planned_delivery | d }}</td>

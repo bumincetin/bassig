@@ -105,6 +105,10 @@ def translate(text, language=None, **kwargs):
     if text is None:
         return ""
     source = str(text)
+    if not source.strip():
+        # A blank option label has nothing to translate and must not be
+        # reported as a missing entry.
+        return source
     language = language or current_language()
 
     if language == DEFAULT_LANGUAGE:

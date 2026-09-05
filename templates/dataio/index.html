@@ -32,7 +32,7 @@
         {% for file in prepared %}
         <tr>
           <td class="mono">{{ file.name }}</td>
-          <td>{{ specs[file.key].label if file.key and file.key in specs else 'unrecognised' }}</td>
+          <td>{{ t(specs[file.key].label) if file.key and file.key in specs else t('unrecognised') }}</td>
           <td class="num">{{ (file.size / 1024) | num(1) }} kB</td>
           <td>
             {% if file.key and file.key in specs %}
@@ -43,13 +43,13 @@
                   <select name="version_id" class="form-select form-select-sm" style="max-width:280px" required>
                     <option value="">{{ t("Choose the schedule version") }}</option>
                     {% for version in versions %}
-                      <option value="{{ version.id }}">{{ version.label }} [{{ version.schedule_type }}]{{ ' - LOCKED' if version.locked }}</option>
+                      <option value="{{ version.id }}">{{ version.label }} [{{ t(version.schedule_type) }}]{{ ' - LOCKED' if version.locked }}</option>
                     {% endfor %}
                   </select>
                 {% endif %}
                 <select name="source_document_id" class="form-select form-select-sm" style="max-width:260px">
                   <option value="">{{ t("Source document (optional)") }}</option>
-                  {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+                  {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
                 </select>
                 <button class="btn btn-sm btn-primary">{{ t("Validate") }}</button>
               </form>
@@ -75,9 +75,9 @@
     <div class="p-3 border-bottom">
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
-          <h3 class="h6 mb-1">{{ spec.label }}</h3>
-          <p class="text-tiny text-muted mb-1">{{ spec.description }}</p>
-          {% if spec.guidance %}<p class="source-note mb-1">{{ spec.guidance }}</p>{% endif %}
+          <h3 class="h6 mb-1">{{ t(spec.label) }}</h3>
+          <p class="text-tiny text-muted mb-1">{{ t(spec.description) }}</p>
+          {% if spec.guidance %}<p class="source-note mb-1">{{ t(spec.guidance) }}</p>{% endif %}
           <p class="text-tiny mb-0">
             <strong>{{ t("Columns:") }}</strong>
             <span class="font-monospace">{{ spec.columns | join(', ') }}</span>
@@ -101,7 +101,7 @@
           <select name="version_id" class="form-select form-select-sm" required>
             <option value="">{{ t("Choose the version") }}</option>
             {% for version in versions %}
-              <option value="{{ version.id }}">{{ version.label }} [{{ version.schedule_type }}]{{ ' - LOCKED' if version.locked }}</option>
+              <option value="{{ version.id }}">{{ version.label }} [{{ t(version.schedule_type) }}]{{ ' - LOCKED' if version.locked }}</option>
             {% endfor %}
           </select>
         </div>
@@ -110,7 +110,7 @@
           <label class="form-label">{{ t("Source document") }}</label>
           <select name="source_document_id" class="form-select form-select-sm">
             <option value="">{{ t("Optional") }}</option>
-            {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+            {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
           </select>
         </div>
         <button class="btn btn-sm btn-primary">{{ t("Validate and preview") }}</button>
@@ -125,7 +125,7 @@
   <div class="panel-body">
     <div class="d-flex flex-wrap gap-2">
       {% for key, entry in exports.items() %}
-        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('dataio.export', key=key) }}">{{ entry[0] }}</a>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('dataio.export', key=key) }}">{{ t(entry[0]) }}</a>
       {% endfor %}
     </div>
     <p class="source-note mt-2 mb-0">
@@ -145,7 +145,7 @@
         {% for batch in batches %}
         <tr>
           <td class="nowrap">{{ batch.created_at | d }}</td>
-          <td>{{ specs[batch.import_type].label if batch.import_type in specs else batch.import_type }}</td>
+          <td>{{ t(specs[batch.import_type].label) if batch.import_type in specs else t(batch.import_type) }}</td>
           <td class="text-tiny">{{ batch.filename or '-' }}</td>
           <td class="text-tiny">{{ batch.source_document.label if batch.source_document else '-' }}</td>
           <td class="num">{{ batch.row_count }}</td>

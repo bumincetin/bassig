@@ -6,7 +6,7 @@
 <div class="page-head">
   <div>
     <h1>{{ row.item_name }}</h1>
-    <div class="sub">{{ row.authority or 'authority not recorded' }} &middot; {{ disclaimer }}</div>
+    <div class="sub">{{ row.authority or t('authority not recorded') }} &middot; {{ t(disclaimer) }}</div>
   </div>
   <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('permits.index') }}">{{ t("Back") }}</a>
 </div>
@@ -17,7 +17,7 @@
   {{ kpi(t('Required by'), row.required_by_date | d) }}
   {{ kpi(t('Issued'), row.issued_date | d) }}
   {{ kpi(t('Expiry'), row.expiry_date | d) }}
-  {{ kpi(t('Verified'), 'Yes' if row.verified else 'No', '', 'good' if row.verified else 'warn') }}
+  {{ kpi(t('Verified'), t('Yes') if row.verified else t('No'), '', 'good' if row.verified else 'warn') }}
 </div>
 
 <div class="panel">

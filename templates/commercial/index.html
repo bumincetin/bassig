@@ -6,7 +6,7 @@
 <div class="page-head">
   <div>
     <h1>{{ t("Contractual payment milestones") }}</h1>
-    <div class="sub">{{ note }}</div>
+    <div class="sub">{{ t(note) }}</div>
   </div>
   <form class="page-actions" method="get" data-autosubmit>
     <input type="date" name="as_of" value="{{ as_of | iso }}" class="form-control form-control-sm">
@@ -28,17 +28,17 @@
 
 <div class="kpi-grid">
   {{ kpi(t('Contract Price'),
-         summary.contract_price | money(summary.currency) if summary.contract_price else 'DATA REQUIRED',
-         'signed EPC Contract', '' if summary.contract_price else 'bad') }}
-  {{ kpi(t('Milestones'), summary.count, summary.total_pct | pc(1) ~ ' of the price') }}
+         summary.contract_price | money(summary.currency) if summary.contract_price else t('DATA REQUIRED'),
+         t('signed EPC Contract'), '' if summary.contract_price else 'bad') }}
+  {{ kpi(t('Milestones'), summary.count, t('{percent} of the price', percent=summary.total_pct | pc(1))) }}
   {{ kpi(t('Earned to date'), summary.earned_amount | money(summary.currency) if summary.earned_amount is not none else '-',
-         summary.earned_pct | pc(1) ~ ' of the price', 'good') }}
+         t('{percent} of the price', percent=summary.earned_pct | pc(1)), 'good') }}
   {{ kpi(t('Paid to date'), summary.paid_amount | money(summary.currency) if summary.paid_amount is not none else '-',
-         summary.paid_pct | pc(1) ~ ' of the price', 'info') }}
+         t('{percent} of the price', percent=summary.paid_pct | pc(1)), 'info') }}
   {{ kpi(t('Earned not yet paid'),
          summary.outstanding_amount | money(summary.currency) if summary.outstanding_amount is not none else '-',
          '', 'warn' if (summary.outstanding_amount or 0) > 0 else '') }}
-  {{ kpi(t('Overdue milestones'), summary.overdue | length, 'past forecast date, not achieved',
+  {{ kpi(t('Overdue milestones'), summary.overdue | length, t('past forecast date, not achieved'),
          'bad' if summary.overdue else 'good') }}
 </div>
 
@@ -50,10 +50,10 @@
         <div class="stat-line"><span>{{ t("Value earned (milestones)") }}</span>
           <strong>{{ summary.earned_pct | pc(1) }}</strong></div>
         <div class="stat-line"><span>{{ t("Physical progress (weighted)") }}</span>
-          <strong>{{ summary.physical_pct | pc(1) if summary.physical_pct is not none else 'DATA REQUIRED' }}</strong></div>
+          <strong>{{ summary.physical_pct | pc(1) if summary.physical_pct is not none else t('DATA REQUIRED') }}</strong></div>
         <div class="stat-line"><span>{{ t("Difference") }}</span>
           <strong class="{{ variance_class(-(summary.commercial_vs_physical or 0)) }}">
-            {{ summary.commercial_vs_physical | signed ~ ' pp' if summary.commercial_vs_physical is not none else '-' }}
+            {{ summary.commercial_vs_physical | signed ~ ' ' ~ t('pp') if summary.commercial_vs_physical is not none else '-' }}
           </strong></div>
       </div>
       <div class="col-12 col-md-8">
@@ -69,7 +69,7 @@
 <div class="panel">
   <div class="panel-head">
     <h2>{{ t("Delay liquidated damages exposure") }}</h2>
-    {% if exposure.exposure %}<span class="badge bg-danger">AT RISK</span>{% endif %}
+    {% if exposure.exposure %}<span class="badge bg-danger">{{ t('AT RISK') }}</span>{% endif %}
   </div>
   <div class="panel-body">
     <div class="row g-3">
@@ -90,7 +90,7 @@
             {% if exposure.cap_days %}({{ exposure.cap_days | num(0) }} {{ t("days") }}){% endif %}</strong></div>
         <div class="stat-line"><span>{{ t("Exposure at the current forecast") }}</span>
           <strong class="text-danger">
-            {{ exposure.exposure | money(exposure.currency) if exposure.exposure else 'none' }}
+            {{ exposure.exposure | money(exposure.currency) if exposure.exposure else t('none') }}
             {% if exposure.capped %} ({{ t("capped") }}){% endif %}</strong></div>
       </div>
     </div>
@@ -218,7 +218,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
         <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>

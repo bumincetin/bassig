@@ -29,12 +29,12 @@
   <div class="report-section">
     <h3>{{ t("Overall progress") }}</h3>
     <div class="report-meta-grid">
-      <div><span>{{ t("Contractual planned") }}</span><br><strong>{{ contractual_planned_pct | pc(1) if contractual_planned_pct is not none else 'DATA REQUIRED' }}</strong></div>
-      <div><span>{{ t("Current plan") }}</span><br><strong>{{ rollup.overall_planned | pc(1) if rollup.overall_planned is not none else 'DATA REQUIRED' }}</strong></div>
-      <div><span>{{ t("Actual") }}</span><br><strong>{{ rollup.overall_actual | pc(1) if rollup.overall_actual is not none else 'DATA REQUIRED' }}</strong></div>
+      <div><span>{{ t("Contractual planned") }}</span><br><strong>{{ contractual_planned_pct | pc(1) if contractual_planned_pct is not none else t('DATA REQUIRED') }}</strong></div>
+      <div><span>{{ t("Current plan") }}</span><br><strong>{{ rollup.overall_planned | pc(1) if rollup.overall_planned is not none else t('DATA REQUIRED') }}</strong></div>
+      <div><span>{{ t("Actual") }}</span><br><strong>{{ rollup.overall_actual | pc(1) if rollup.overall_actual is not none else t('DATA REQUIRED') }}</strong></div>
       <div><span>{{ t("Variance vs contractual") }}</span><br><strong>{{ variance_vs_contractual | signed ~ ' pp' if variance_vs_contractual is not none else '-' }}</strong></div>
       <div><span>{{ t("Variance vs current plan") }}</span><br><strong>{{ rollup.variance | signed ~ ' pp' if rollup.variance is not none else '-' }}</strong></div>
-      <div><span>{{ t("Weighting basis") }}</span><br><strong>{{ rollup.basis.basis }}</strong></div>
+      <div><span>{{ t("Weighting basis") }}</span><br><strong>{{ t(rollup.basis.basis) }}</strong></div>
       <div><span>{{ t("Daily reports filed") }}</span><br><strong>{{ t("{filed} of 7", filed=reports_filed) }}</strong></div>
     </div>
     {% if rollup.basis.warning %}<p class="source-note mt-1">{{ rollup.basis.warning }}</p>{% endif %}
@@ -106,7 +106,7 @@
             <td>{{ row.plan_start | d }}</td><td>{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
             <td class="num">{{ row.variance | signed if row.variance is not none else '-' }}</td>
-            <td>{{ row.classification }}</td></tr>
+            <td>{{ t(row.classification) }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -126,7 +126,7 @@
             <td>{{ row.work_package or '-' }}</td><td>{{ row.plan_start | d }}</td>
             <td>{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
-            <td>{{ row.classification }}</td></tr>
+            <td>{{ t(row.classification) }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -143,7 +143,7 @@
           {% for row in milestones %}
           <tr><td>{{ row.name }}</td><td>{{ (row.plan_finish or row.plan_start) | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
-            <td>{{ row.classification }}</td></tr>
+            <td>{{ t(row.classification) }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -203,7 +203,7 @@
         <thead><tr><th>{{ t("Cause") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost hours") }}</th><th class="num">{{ t("Lost man-hours") }}</th></tr></thead>
         <tbody>
           {% for row in blockers.by_category %}
-          <tr><td>{{ row.category }}</td><td class="num">{{ row.incidents }}</td>
+          <tr><td>{{ t(row.category) }}</td><td class="num">{{ row.incidents }}</td>
             <td class="num">{{ row.lost_hours | num(1) }}</td>
             <td class="num">{{ row.lost_man_hours | num(0) }}</td></tr>
           {% endfor %}
@@ -250,10 +250,10 @@
       <tbody>
         {% for view in acceptance.gates %}
         <tr><td>{{ view.gate.gate_code }}</td><td>{{ view.gate.name }}</td>
-          <td class="num">{{ view.readiness_pct | pc(0) if view.readiness_pct is not none else 'DATA REQUIRED' }}</td>
+          <td class="num">{{ view.readiness_pct | pc(0) if view.readiness_pct is not none else t('DATA REQUIRED') }}</td>
           <td class="num">{{ view.satisfied }} / {{ view.considered }}</td>
           <td class="num">{{ view.documents.missing_count }}</td>
-          <td>{{ view.gate.status }}</td></tr>
+          <td>{{ t(view.gate.status) }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

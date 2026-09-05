@@ -6,7 +6,7 @@
 <div class="page-head">
   <div>
     <h1>{{ t("Permits &amp; readiness register") }}</h1>
-    <div class="sub">{{ disclaimer }}</div>
+    <div class="sub">{{ t(disclaimer) }}</div>
   </div>
   <a class="btn btn-sm btn-primary" href="{{ url_for('permits.export') }}">{{ t("Export CSV") }}</a>
 </div>
@@ -21,7 +21,7 @@
   {{ kpi(t('Outstanding'), summary.open, '', 'warn' if summary.open else 'good') }}
   {{ kpi(t('Past required-by date'), summary.overdue, '', 'bad' if summary.overdue else 'good') }}
   {{ kpi(t('Expired'), summary.expired, '', 'bad' if summary.expired else 'good') }}
-  {{ kpi(t('Not verified'), summary.unverified, 'entry not confirmed against the authority', 'warn' if summary.unverified else 'good') }}
+  {{ kpi(t('Not verified'), summary.unverified, t('entry not confirmed against the authority'), 'warn' if summary.unverified else 'good') }}
 </div>
 
 <form class="filter-bar" method="get" data-autosubmit>
@@ -31,7 +31,7 @@
     <select name="status" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.PERMIT_STATUS + ['OVERDUE'] %}
-        <option value="{{ value }}" {{ 'selected' if status == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if status == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select></div>
   <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
@@ -96,7 +96,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
         <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>

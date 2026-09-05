@@ -37,12 +37,12 @@
   <div class="field"><label class="form-label">{{ t("Type") }}</label>
     <select name="type" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.DOC_TYPES %}<option value="{{ value }}" {{ 'selected' if filters.type == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.DOC_TYPES %}<option value="{{ value }}" {{ 'selected' if filters.type == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("Status") }}</label>
     <select name="status" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.DOC_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.DOC_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
 </form>
@@ -56,7 +56,7 @@
       <tbody>
         {% for row in rows %}
         <tr>
-          <td class="text-tiny">{{ row.document_type }}</td>
+          <td class="text-tiny">{{ t(row.document_type) }}</td>
           <td class="mw-260"><strong>{{ row.title }}</strong>
             {% if row.source_reference %}<div class="source-note">{{ row.source_reference }}</div>{% endif %}
             {% if row.notes %}<div class="text-tiny text-muted">{{ row.notes }}</div>{% endif %}</td>
@@ -64,7 +64,7 @@
           <td class="nowrap">{{ row.document_date | d }}</td>
           <td class="nowrap">{{ row.effective_date | d }}</td>
           <td>{{ status_badge(row.status, 'sm') }}</td>
-          <td>{{ 'Yes' if row.contractual else 'No' }}</td>
+          <td>{{ t('Yes') if row.contractual else t('No') }}</td>
           <td class="text-tiny">{{ row.supersedes.title if row.supersedes else '-' }}</td>
           <td>{% if row.stored_path %}
               <a class="btn btn-sm btn-outline-secondary py-0" href="{{ url_for('setup.document_file', doc_id=row.id) }}">{{ t("Download") }}</a>
@@ -120,7 +120,7 @@
         <select name="supersedes_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Nothing (first registration)") }}</option>
           {% for doc in all_documents %}
-            <option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>
+            <option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>
           {% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Source reference") }}</label>

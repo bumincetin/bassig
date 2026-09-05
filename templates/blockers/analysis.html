@@ -23,7 +23,7 @@
   {{ kpi(t('Incidents'), summary.total) }}
   {{ kpi(t('Lost hours'), summary.lost_hours | num(1)) }}
   {{ kpi(t('Lost man-hours'), summary.lost_man_hours | num(0)) }}
-  {{ kpi(t('Recurring causes'), summary.recurring | length, '3 or more incidents in the period') }}
+  {{ kpi(t('Recurring causes'), summary.recurring | length, t('3 or more incidents in the period')) }}
 </div>
 
 <div class="row g-3">
@@ -33,7 +33,7 @@
         <thead><tr><th>{{ t("Category") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost h") }}</th><th class="num">{{ t("Lost MH") }}</th></tr></thead>
         <tbody>
           {% for row in summary.by_category %}
-          <tr><td>{{ row.category }}{% if row.incidents >= 3 %} <span class="badge bg-warning text-dark badge-sm">RECURRING</span>{% endif %}</td>
+          <tr><td>{{ t(row.category) }}{% if row.incidents >= 3 %} <span class="badge bg-warning text-dark badge-sm">RECURRING</span>{% endif %}</td>
             <td class="num">{{ row.incidents }}</td><td class="num">{{ row.lost_hours | num(1) }}</td>
             <td class="num">{{ row.lost_man_hours | num(0) }}</td></tr>
           {% else %}<tr><td colspan="4">{{ empty(t('No blocker in this period.')) }}</td></tr>{% endfor %}

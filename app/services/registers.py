@@ -10,6 +10,7 @@ from sqlalchemy import func
 
 from app import constants as C
 from app.extensions import db
+from app.i18n import translate as t
 from app.models import (
     AcceptanceGate,
     Blocker,
@@ -171,10 +172,10 @@ def blocker_summary(date_from=None, date_to=None):
         cat["incidents"] += 1
         cat["lost_hours"] += hours
         cat["lost_man_hours"] += row.lost_man_hours
-        area_key = row.area.label if row.area else "Not allocated"
+        area_key = row.area.label if row.area else t("Not allocated")
         by_area[area_key]["incidents"] += 1
         by_area[area_key]["lost_hours"] += hours
-        act_key = row.activity or row.wbs_code or "Unspecified"
+        act_key = row.activity or row.wbs_code or t("Unspecified")
         by_activity[act_key]["incidents"] += 1
         by_activity[act_key]["lost_hours"] += hours
 

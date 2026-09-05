@@ -8,7 +8,7 @@
     <h1>{{ t("Daily site diary") }} &mdash; {{ report.report_date | d }}</h1>
     <div class="sub">
       {{ report.report_number or t('no number') }} &middot; {{ t(report.shift) }} {{ t("shift") }} &middot;
-      {{ report.weather or 'weather not recorded' }}
+      {{ t(report.weather or 'weather not recorded') }}
     </div>
   </div>
   <div class="page-actions day-nav">
@@ -33,7 +33,7 @@
 
 <div class="kpi-grid">
   {{ kpi(t('Progress lines'), report.progress_entries | length) }}
-  {{ kpi(t('Workers'), report.total_workers, report.total_man_hours | num(0) ~ ' man-hours') }}
+  {{ kpi(t('Workers'), report.total_workers, t('{hours} man-hours', hours=report.total_man_hours | num(0))) }}
   {{ kpi(t('Plant lines'), report.equipment_entries | length) }}
   {{ kpi(t('Observations'), report.observations | length) }}
   {{ kpi(t('Blockers raised'), blockers | length, '', 'bad' if blockers else '') }}
@@ -533,7 +533,7 @@
         <tbody>
           {% for entry in report.observations %}
           <tr>
-            <td>{{ entry.category }}</td>
+            <td>{{ t(entry.category) }}</td>
             <td>{{ status_badge(entry.severity, 'sm') }}</td>
             <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
             <td class="mw-260">{{ entry.observation }}</td>
@@ -595,7 +595,7 @@
               {% for blocker in blockers %}
               <tr>
                 <td class="mono"><a href="{{ url_for('blockers.detail', blocker_id=blocker.id) }}">{{ blocker.blocker_number }}</a></td>
-                <td>{{ blocker.category }}</td>
+                <td>{{ t(blocker.category) }}</td>
                 <td class="mw-260 text-tiny">{{ blocker.description or '-' }}</td>
                 <td class="num">{{ blocker.effective_lost_hours | num(1) }}</td>
                 <td>{{ status_badge(blocker.status, 'sm') }}</td>

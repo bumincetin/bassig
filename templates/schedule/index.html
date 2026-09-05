@@ -32,12 +32,12 @@
 
 <div class="kpi-grid">
   {{ kpi(t('Activities'), counts.total, version.schedule_type) }}
-  {{ kpi(t('Critical'), counts.critical, 'variance below the critical threshold', 'bad' if counts.critical else 'good') }}
+  {{ kpi(t('Critical'), counts.critical, t('variance below the critical threshold'), 'bad' if counts.critical else 'good') }}
   {{ kpi(t('At risk'), counts.at_risk, '', 'warn' if counts.at_risk else 'good') }}
-  {{ kpi(t('Overdue'), counts.overdue, 'past planned finish, incomplete', 'bad' if counts.overdue else 'good') }}
-  {{ kpi(t('Late start'), counts.late_start, 'planned start passed, not started', 'warn' if counts.late_start else 'good') }}
+  {{ kpi(t('Overdue'), counts.overdue, t('past planned finish, incomplete'), 'bad' if counts.overdue else 'good') }}
+  {{ kpi(t('Late start'), counts.late_start, t('planned start passed, not started'), 'warn' if counts.late_start else 'good') }}
   {{ kpi(t('Milestones'), counts.milestones) }}
-  {{ kpi(t('Unmatched to baseline'), counts.unmatched, 'no contractual counterpart found', 'warn' if counts.unmatched else 'good') }}
+  {{ kpi(t('Unmatched to baseline'), counts.unmatched, t('no contractual counterpart found'), 'warn' if counts.unmatched else 'good') }}
 </div>
 
 <form class="filter-bar" method="get" data-autosubmit>
@@ -46,7 +46,7 @@
     <select name="version" class="form-select form-select-sm">
       {% for v in versions %}
         <option value="{{ v.id }}" {{ 'selected' if version and v.id == version.id }}>
-          {{ v.label }} [{{ v.schedule_type }}]
+          {{ v.label }} [{{ t(v.schedule_type) }}]
         </option>
       {% endfor %}
     </select>
@@ -60,7 +60,7 @@
     <select name="classification" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.SCHEDULE_CLASSES %}
-        <option value="{{ value }}" {{ 'selected' if filters.classification == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if filters.classification == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select>
   </div>
@@ -79,7 +79,7 @@
     <select name="work_package" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in work_packages %}
-        <option value="{{ value }}" {{ 'selected' if filters.work_package == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if filters.work_package == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select>
   </div>
@@ -88,7 +88,7 @@
     <select name="discipline" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in disciplines %}
-        <option value="{{ value }}" {{ 'selected' if filters.discipline == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if filters.discipline == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select>
   </div>
@@ -130,9 +130,9 @@
               {{ row.name }}
               {% if row.is_milestone %}<span class="badge bg-dark badge-sm">MS</span>{% endif %}
               {% if row.match_kind == 'UNMATCHED' %}
-                <span class="badge bg-warning text-dark badge-sm" title="{{ t('No contractual counterpart found') }}">NO BASELINE</span>
+                <span class="badge bg-warning text-dark badge-sm" title="{{ t('No contractual counterpart found') }}">{{ t('NO BASELINE') }}</span>
               {% elif row.match_kind == 'NAME' %}
-                <span class="badge bg-secondary badge-sm" title="{{ t('Matched to the baseline by activity name because the WBS code changed between revisions') }}">NAME MATCH</span>
+                <span class="badge bg-secondary badge-sm" title="{{ t('Matched to the baseline by activity name because the WBS code changed between revisions') }}">{{ t('NAME MATCH') }}</span>
               {% endif %}
             </td>
             <td class="nowrap">{{ row.baseline_start | d }}</td>

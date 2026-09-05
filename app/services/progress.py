@@ -17,6 +17,7 @@ from sqlalchemy import func
 
 from app import constants as C
 from app.extensions import db
+from app.i18n import translate as t
 from app.models import DailyProgress, ScheduleVersion, WbsActivity
 from app.services import settings
 from app.services.calculations import (
@@ -168,8 +169,9 @@ def weighting_basis_report():
         "approved_weight_count": approved_count,
         "is_approved": basis == "APPROVED WEIGHT" and approved_count > 0,
         "warning": None if (basis == "APPROVED WEIGHT" and approved_count > 0) else (
-            f"{C.DATA_REQUIRED}: approved progress-weight register. Rollup is computed "
-            f"on a {basis.title()} basis and is not a contractual measurement."
+            t("{data_required}: approved progress-weight register. Rollup is computed on a "
+              "{basis} basis and is not a contractual measurement.",
+              data_required=t(C.DATA_REQUIRED), basis=t(basis))
         ),
     }
 

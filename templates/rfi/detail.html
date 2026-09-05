@@ -21,7 +21,7 @@
          'bad' if derived == 'OVERDUE' else ('good' if derived == 'CLOSED' else 'warn')) }}
   {{ kpi(t('Required response'), row.required_response_date | d) }}
   {{ kpi(t('Responded'), row.response_date | d) }}
-  {{ kpi(t('Schedule impact'), 'Yes' if row.schedule_impact else 'No',
+  {{ kpi(t('Schedule impact'), t('Yes') if row.schedule_impact else t('No'),
          (row.estimated_delay_days | num(0) ~ ' days') if row.estimated_delay_days else '',
          'bad' if row.schedule_impact else 'good') }}
 </div>
@@ -63,7 +63,7 @@
           <option value="">{{ t("Not linked") }}</option>
           {% for blocker in blockers %}
             <option value="{{ blocker.id }}" {{ 'selected' if row.blocker_id == blocker.id }}>
-              {{ blocker.blocker_number }} &mdash; {{ blocker.category }}</option>
+              {{ blocker.blocker_number }} &mdash; {{ t(blocker.category) }}</option>
           {% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>

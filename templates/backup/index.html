@@ -77,7 +77,7 @@
       <div class="panel-head"><h2>{{ t("How to restore a backup") }}</h2></div>
       <div class="panel-body">
         <ol class="mb-0 text-tiny">
-          {% for step in restore %}<li class="mb-1">{{ step }}</li>{% endfor %}
+          {% for step in restore %}<li class="mb-1">{{ t(step) }}</li>{% endfor %}
         </ol>
       </div>
     </div>
@@ -87,7 +87,7 @@
       <div class="panel-head"><h2>{{ t("Moving the system to another machine") }}</h2></div>
       <div class="panel-body">
         <ol class="mb-2 text-tiny">
-          {% for step in migration %}<li class="mb-1">{{ step }}</li>{% endfor %}
+          {% for step in migration %}<li class="mb-1">{{ t(step) }}</li>{% endfor %}
         </ol>
         <div class="text-tiny">
           <strong>{{ t("Paths on this machine") }}</strong>

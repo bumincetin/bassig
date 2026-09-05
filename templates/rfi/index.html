@@ -14,7 +14,7 @@
 <div class="kpi-grid">
   {{ kpi(t('Total RFIs'), summary.total) }}
   {{ kpi(t('Open'), summary.open, '', 'warn' if summary.open else 'good') }}
-  {{ kpi(t('Overdue'), summary.overdue, 'past required response date', 'bad' if summary.overdue else 'good') }}
+  {{ kpi(t('Overdue'), summary.overdue, t('past required response date'), 'bad' if summary.overdue else 'good') }}
   {{ kpi(t('Answered'), summary.answered) }}
   {{ kpi(t('Closed'), summary.closed) }}
   {{ kpi(t('With schedule impact'), summary.schedule_impact, '', 'bad' if summary.schedule_impact else 'good') }}
@@ -26,12 +26,12 @@
   <div class="field"><label class="form-label">{{ t("Status") }}</label>
     <select name="status" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.RFI_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.RFI_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("Discipline") }}</label>
     <select name="discipline" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.DISCIPLINES %}<option value="{{ value }}" {{ 'selected' if filters.discipline == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.DISCIPLINES %}<option value="{{ value }}" {{ 'selected' if filters.discipline == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
 </form>
@@ -96,7 +96,7 @@
         <select name="blocker_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
           {% for blocker in blockers %}
-            <option value="{{ blocker.id }}">{{ blocker.blocker_number }} &mdash; {{ blocker.category }}</option>
+            <option value="{{ blocker.id }}">{{ blocker.blocker_number }} &mdash; {{ t(blocker.category) }}</option>
           {% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Attachments") }}</label>

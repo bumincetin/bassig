@@ -23,14 +23,14 @@
 {% else %}
 
 <div class="kpi-grid">
-  {{ pct_kpi(t('Contractual planned'), contractual, 'baseline dates', 'info') }}
-  {{ pct_kpi(t('Current planned'), rollup.overall_planned, 'working plan dates', 'info') }}
-  {{ pct_kpi(t('Actual'), rollup.overall_actual, rollup.leaf_count ~ ' leaf activities', 'good') }}
+  {{ pct_kpi(t('Contractual planned'), contractual, t('baseline dates'), 'info') }}
+  {{ pct_kpi(t('Current planned'), rollup.overall_planned, t('working plan dates'), 'info') }}
+  {{ pct_kpi(t('Actual'), rollup.overall_actual, t('{count} leaf activities', count=rollup.leaf_count), 'good') }}
   {{ kpi(t('Variance vs current plan'),
-         (rollup.variance | signed ~ ' pp') if rollup.variance is not none else 'DATA REQUIRED',
+         (rollup.variance | signed ~ ' ' ~ t('pp')) if rollup.variance is not none else t('DATA REQUIRED'),
          '', 'good' if (rollup.variance is not none and rollup.variance >= 0) else 'bad') }}
   {{ kpi(t('Approved weights'), basis_report.approved_weight_count,
-         'activities carrying an approved weight',
+         t('activities carrying an approved weight'),
          'good' if basis_report.approved_weight_count else 'warn') }}
 </div>
 
@@ -126,7 +126,7 @@
       <select name="method" class="form-select form-select-sm">
         <option value="">{{ t("All methods") }}</option>
         {% for value in C.PROGRESS_METHODS %}
-          <option value="{{ value }}" {{ 'selected' if method == value }}>{{ value }}</option>
+          <option value="{{ value }}" {{ 'selected' if method == value }}>{{ t(value) }}</option>
         {% endfor %}
       </select>
     </form>
@@ -144,7 +144,7 @@
             <td class="mw-260">{{ row.activity.activity_name }}</td>
             <td>
               <span class="badge {{ 'bg-primary' if row.basis == 'QUANTITY' else 'bg-secondary' }} badge-sm">
-                {{ row.activity.progress_method }}</span>
+                {{ t(row.activity.progress_method) }}</span>
               {% if row.activity.manual_pct and row.basis == 'MANUAL' %}
                 <span class="badge bg-warning text-dark badge-sm" title="{{ t('Percentage entered by hand or reported in the source programme') }}">MANUAL</span>
               {% endif %}
@@ -157,7 +157,7 @@
               {% else %}{{ row.actual | pc(1) }}{% endif %}</td>
             <td style="width:110px">{{ bar(row.actual) }}</td>
             <td class="num">{{ row.weight | num(1) }}</td>
-            <td class="text-tiny">{{ row.activity.weight_basis }}</td>
+            <td class="text-tiny">{{ t(row.activity.weight_basis) }}</td>
             <td><a class="btn btn-sm btn-outline-secondary py-0"
                    href="{{ url_for('schedule.activity', activity_id=row.activity.id) }}">{{ t("Edit") }}</a></td>
           </tr>

@@ -11,6 +11,7 @@ from sqlalchemy import func
 
 from app import constants as C
 from app.extensions import db
+from app.i18n import translate as t
 from app.models import Delivery, Material, MaterialTransaction, ProcurementPackage
 from app.services.calculations import available_stock, pct
 from app.services.status_rules import procurement_status, stock_status
@@ -192,7 +193,7 @@ def record_installation(material, quantity, on_date, area_id=None, reference=Non
         db.session.add(MaterialTransaction(
             material_id=material.id, transaction_date=on_date,
             transaction_type="INSTALLED IN WORKS", quantity=opening,
-            reference="Opening balance",
+            reference=t("Opening balance"),
             comments="Installed quantity recorded before daily installation "
                      "tracking began."))
 

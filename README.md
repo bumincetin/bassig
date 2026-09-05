@@ -116,8 +116,8 @@ the session and applies to every screen, including the printed reports.
 | | |
 |---|---|
 | English | source language, and the fallback for anything untranslated |
-| Türkçe | 1500 entries, dates written `04.09.2026` |
-| Italiano | 1500 entries, dates written `04/09/2026` |
+| Türkçe | 1795 entries, dates written `04.09.2026` |
+| Italiano | 1795 entries, dates written `04/09/2026` |
 
 Two things deliberately do **not** change with the language:
 
@@ -748,7 +748,7 @@ must always arrive through Project Setup / Data Import.
 python -m pytest
 ```
 
-539 tests covering:
+548 tests covering:
 
 | Area | Tests |
 |---|---|
@@ -792,6 +792,8 @@ python -m pytest
 | Shared access password: gate, lockout, safe redirects, translated login | `tests/test_access.py` |
 | Relocatable data folders, uploads route, journal mode, platform port | `tests/test_hosting.py` |
 | PythonAnywhere deployer, driven against a stub of their API | `tests/test_deploy_script.py` |
+| No English surviving the language switch, on every page | `tests/test_translation_coverage.py` |
+| Every stored status, category and type carrying a translated label | `tests/test_translation_coverage.py` |
 
 Tests run against an in-memory database and never touch `data/bassignana.db`.
 

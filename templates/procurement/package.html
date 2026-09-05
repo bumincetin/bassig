@@ -7,7 +7,7 @@
 <div class="page-head">
   <div>
     <h1>{{ package.package_code }} &mdash; {{ package.package_name }}</h1>
-    <div class="sub">{{ package.category or t('no category') }} &middot; {{ t("stage") }} {{ package.stage }}</div>
+    <div class="sub">{{ package.category or t('no category') }} &middot; {{ t("stage") }} {{ t(package.stage) }}</div>
   </div>
   <div class="page-actions">
     <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('procurement.index') }}">{{ t("All packages") }}</a>
@@ -30,7 +30,7 @@
   <div class="panel-body">
     <div class="timeline-stage">
       {% for stage in C.PROCUREMENT_STAGES %}
-        <span class="{{ 'current' if stage == package.stage else ('done' if loop.index0 < view.stage_index else '') }}">{{ stage }}</span>
+        <span class="{{ 'current' if stage == package.stage else ('done' if loop.index0 < view.stage_index else '') }}">{{ t(stage) }}</span>
       {% endfor %}
     </div>
   </div>

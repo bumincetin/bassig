@@ -21,8 +21,8 @@
 <div class="kpi-grid">
   {{ kpi(t('Open inspections'), summary.open_inspection, '', 'warn' if summary.open_inspection else 'good') }}
   {{ kpi(t('Open ITP points'), summary.hold_points, 'inspection holds', 'warn' if summary.hold_points else 'good') }}
-  {{ kpi(t('Open NCRs'), summary.open_ncr, summary.overdue_ncr ~ ' overdue', 'bad' if summary.open_ncr else 'good') }}
-  {{ kpi(t('Open punch items'), summary.open_punch, summary.overdue_punch ~ ' overdue', 'warn' if summary.open_punch else 'good') }}
+  {{ kpi(t('Open NCRs'), summary.open_ncr, t('{count} overdue', count=summary.overdue_ncr), 'bad' if summary.open_ncr else 'good') }}
+  {{ kpi(t('Open punch items'), summary.open_punch, t('{count} overdue', count=summary.overdue_punch), 'warn' if summary.open_punch else 'good') }}
   {{ kpi(t('Registered ITP requirements'), requirements | length, '', 'good' if requirements else 'bad') }}
 </div>
 
@@ -30,14 +30,14 @@
   <div class="field"><label class="form-label">{{ t("Record type") }}</label>
     <select name="type" class="form-select form-select-sm">
       <option value="">{{ t("Quality records") }}</option>
-      {% for value in types %}<option value="{{ value }}" {{ 'selected' if filters.type == value }}>{{ value }}</option>{% endfor %}
+      {% for value in types %}<option value="{{ value }}" {{ 'selected' if filters.type == value }}>{{ t(value) }}</option>{% endfor %}
       <option value="NCR" {{ 'selected' if filters.type == 'NCR' }}>NCR</option>
       <option value="PUNCH LIST" {{ 'selected' if filters.type == 'PUNCH LIST' }}>PUNCH LIST</option>
     </select></div>
   <div class="field"><label class="form-label">{{ t("Status") }}</label>
     <select name="status" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.QUALITY_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.QUALITY_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("View") }}</label>
     <select name="view" class="form-select form-select-sm">
@@ -65,7 +65,7 @@
         {% for row in rows %}
         <tr>
           <td class="mono">{{ row.record_number }}</td>
-          <td><span class="badge bg-secondary badge-sm">{{ row.record_type }}</span></td>
+          <td><span class="badge bg-secondary badge-sm">{{ t(row.record_type) }}</span></td>
           <td class="nowrap">{{ row.record_date | d }}</td>
           <td class="mono">{{ row.wbs_code or '-' }}</td>
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
@@ -88,7 +88,7 @@
     <form method="post" action="{{ url_for('quality.create') }}" class="form-grid" enctype="multipart/form-data">
       <div><label class="form-label">{{ t("Record type") }}</label>
         <select name="record_type" class="form-select form-select-lg">
-          {% for value in types %}<option value="{{ value }}">{{ value }} &rarr; {{ next_numbers[value] }}</option>{% endfor %}
+          {% for value in types %}<option value="{{ value }}">{{ t(value) }} &rarr; {{ next_numbers[value] }}</option>{% endfor %}
         </select></div>
       <div><label class="form-label">{{ t("Date") }}</label>
         <input type="date" name="record_date" value="{{ TODAY | iso }}" class="form-control form-control-lg"></div>
@@ -106,7 +106,7 @@
         <select name="inspection_requirement_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
           {% for requirement in requirements %}
-            <option value="{{ requirement.id }}">{{ requirement.itp_reference }} &mdash; {{ requirement.inspection_type or '' }}</option>
+            <option value="{{ requirement.id }}">{{ requirement.itp_reference }} &mdash; {{ t(requirement.inspection_type or '') }}</option>
           {% endfor %}
         </select></div>
       <div><label class="form-label">{{ t("ITP reference") }}</label>

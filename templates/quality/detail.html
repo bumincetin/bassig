@@ -7,7 +7,7 @@
   <div>
     <h1>{{ record.record_number }}</h1>
     <div class="sub">
-      <span class="badge bg-secondary">{{ record.record_type }}</span>
+      <span class="badge bg-secondary">{{ t(record.record_type) }}</span>
       {{ record.title or '' }} &middot; {{ t("raised") }} {{ record.record_date | d }}
     </div>
   </div>
@@ -110,8 +110,8 @@
         {% if record.inspection_requirement %}
           {% set requirement = record.inspection_requirement %}
           <div class="stat-line"><span>{{ t("Reference") }}</span><strong>{{ requirement.itp_reference }}</strong></div>
-          <div class="stat-line"><span>{{ t("Point type") }}</span><strong>{{ requirement.point_type }}</strong></div>
-          <div class="stat-line"><span>{{ t("Inspection type") }}</span><strong>{{ requirement.inspection_type or '-' }}</strong></div>
+          <div class="stat-line"><span>{{ t("Point type") }}</span><strong>{{ t(requirement.point_type) }}</strong></div>
+          <div class="stat-line"><span>{{ t("Inspection type") }}</span><strong>{{ t(requirement.inspection_type or '-') }}</strong></div>
           <div class="stat-line"><span>{{ t("Specification") }}</span><strong>{{ requirement.applicable_specification or '-' }}</strong></div>
           <p class="mt-2 mb-1 text-tiny"><strong>{{ t("Required evidence") }}</strong><br>{{ requirement.required_evidence or '-' }}</p>
           <p class="mb-0 text-tiny"><strong>{{ t("Acceptance criterion") }}</strong><br>{{ requirement.acceptance_criterion or '-' }}</p>

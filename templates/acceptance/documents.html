@@ -24,7 +24,7 @@
   {{ kpi(t('Overdue'), summary.overdue, '', 'bad' if summary.overdue else 'good') }}
   {{ kpi(t('Completeness'),
          summary.completeness_pct | pc(0) if summary.completeness_pct is not none else 'n/a',
-         'mandatory documents accepted') }}
+         t('mandatory documents accepted')) }}
 </div>
 
 <form class="filter-bar" method="get" data-autosubmit>
@@ -40,7 +40,7 @@
     <select name="category" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.DOCUMENT_CATEGORIES %}
-        <option value="{{ value }}" {{ 'selected' if category == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if category == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("View") }}</label>
@@ -66,11 +66,11 @@
           <td class="mono">{{ row.document_number or '-' }}</td>
           <td class="mw-260">{{ row.title }}
             {% if row.folder_path %}<div class="source-note">{{ row.folder_path }}</div>{% endif %}</td>
-          <td class="text-tiny">{{ row.category or '-' }}</td>
+          <td class="text-tiny">{{ t(row.category or '-') }}</td>
           <td class="text-tiny">{{ row.discipline or '-' }}</td>
           <td class="mono">{{ row.revision or '-' }}</td>
           <td>{{ row.gate_code or '-' }}</td>
-          <td>{{ 'Yes' if row.mandatory else 'No' }}</td>
+          <td>{{ t('Yes') if row.mandatory else t('No') }}</td>
           <td class="nowrap {{ 'text-danger fw-bold' if derived == 'OVERDUE' }}">{{ row.required_date | d }}</td>
           <td class="nowrap">{{ row.submitted_date | d }}</td>
           <td class="nowrap">{{ row.accepted_date | d }}</td>

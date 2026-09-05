@@ -105,7 +105,7 @@
           {% for row in equipment_rows %}
           <tr><td>{{ row.equipment_type }}</td>
             <td>{{ row.owner or (row.contractor.name if row.contractor else '-') }}</td>
-            <td>{{ row.status }}</td><td class="num">{{ row.quantity }}</td>
+            <td>{{ t(row.status) }}</td><td class="num">{{ row.quantity }}</td>
             <td class="num">{{ row.working_hours | num(1) }}</td>
             <td class="num">{{ row.idle_hours | num(1) }}</td>
             <td class="num">{{ row.breakdown_hours | num(1) }}</td>
@@ -173,11 +173,11 @@
   <div class="report-section">
     <h3>{{ t("Cumulative project progress") }}</h3>
     <div class="report-meta-grid">
-      <div><span>{{ t("Contractual planned") }}</span><br><strong>{{ contractual_planned_pct | pc(1) if contractual_planned_pct is not none else 'DATA REQUIRED' }}</strong></div>
-      <div><span>{{ t("Current plan") }}</span><br><strong>{{ rollup.overall_planned | pc(1) if rollup.overall_planned is not none else 'DATA REQUIRED' }}</strong></div>
-      <div><span>{{ t("Actual") }}</span><br><strong>{{ cumulative_actual_pct | pc(1) if cumulative_actual_pct is not none else 'DATA REQUIRED' }}</strong></div>
+      <div><span>{{ t("Contractual planned") }}</span><br><strong>{{ contractual_planned_pct | pc(1) if contractual_planned_pct is not none else t('DATA REQUIRED') }}</strong></div>
+      <div><span>{{ t("Current plan") }}</span><br><strong>{{ rollup.overall_planned | pc(1) if rollup.overall_planned is not none else t('DATA REQUIRED') }}</strong></div>
+      <div><span>{{ t("Actual") }}</span><br><strong>{{ cumulative_actual_pct | pc(1) if cumulative_actual_pct is not none else t('DATA REQUIRED') }}</strong></div>
       <div><span>{{ t("Variance vs current plan") }}</span><br><strong>{{ rollup.variance | signed ~ ' pp' if rollup.variance is not none else '-' }}</strong></div>
-      <div><span>{{ t("Weighting basis") }}</span><br><strong>{{ rollup.basis.basis }}</strong></div>
+      <div><span>{{ t("Weighting basis") }}</span><br><strong>{{ t(rollup.basis.basis) }}</strong></div>
     </div>
     {% if rollup.basis.warning %}<p class="source-note mt-1">{{ rollup.basis.warning }}</p>{% endif %}
   </div>
@@ -196,7 +196,7 @@
             <td>{{ row.delivery_note_reference or '-' }}</td>
             <td class="num">{{ row.quantity | qty }}</td>
             <td class="num">{{ row.accepted_quantity | qty }}</td>
-            <td>{{ row.status }}</td></tr>
+            <td>{{ t(row.status) }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -227,9 +227,9 @@
         <thead><tr><th>{{ t("Number") }}</th><th>{{ t("Type") }}</th><th>{{ t("WBS") }}</th><th>{{ t("Title") }}</th><th>{{ t("Result") }}</th><th>{{ t("Status") }}</th></tr></thead>
         <tbody>
           {% for row in inspection_rows %}
-          <tr><td class="mono">{{ row.record_number }}</td><td>{{ row.record_type }}</td>
+          <tr><td class="mono">{{ row.record_number }}</td><td>{{ t(row.record_type) }}</td>
             <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.title or '-' }}</td>
-            <td>{{ row.inspection_result or '-' }}</td><td>{{ row.status }}</td></tr>
+            <td>{{ row.inspection_result or '-' }}</td><td>{{ t(row.status) }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -252,12 +252,12 @@
           <th class="num">{{ t("Lost h") }}</th><th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Lost MH") }}</th><th>{{ t("Status") }}</th></tr></thead>
         <tbody>
           {% for row in blocker_rows %}
-          <tr><td class="mono">{{ row.blocker_number }}</td><td>{{ row.category }}</td>
+          <tr><td class="mono">{{ row.blocker_number }}</td><td>{{ t(row.category) }}</td>
             <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.description or '-' }}</td>
             <td class="num">{{ row.effective_lost_hours | num(1) }}</td>
             <td class="num">{{ row.workers_affected }}</td>
             <td class="num">{{ row.lost_man_hours | num(1) }}</td>
-            <td>{{ row.status }}</td></tr>
+            <td>{{ t(row.status) }}</td></tr>
           {% endfor %}
           <tr><td colspan="4"><strong>{{ t("Total lost hours") }}</strong></td>
             <td class="num"><strong>{{ lost_hours | num(1) }}</strong></td><td colspan="3"></td></tr>
@@ -291,7 +291,7 @@
           <th>{{ t("Action required") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th></tr></thead>
         <tbody>
           {% for row in observation_rows %}
-          <tr><td>{{ row.category }}</td><td>{{ row.severity }}</td>
+          <tr><td>{{ t(row.category) }}</td><td>{{ t(row.severity) }}</td>
             <td>{{ row.area.area_code if row.area else '-' }}</td>
             <td>{{ row.observation }}</td><td>{{ row.action_required or '-' }}</td>
             <td>{{ row.responsible_party or '-' }}</td><td>{{ row.target_date | d }}</td></tr>
@@ -334,7 +334,7 @@
           {% for row in lookahead %}
           <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
             <td>{{ row.plan_start | d }}</td><td>{{ row.plan_finish | d }}</td>
-            <td>{{ row.classification }}</td></tr>
+            <td>{{ t(row.classification) }}</td></tr>
           {% endfor %}
         </tbody>
       </table>

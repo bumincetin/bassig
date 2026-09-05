@@ -21,7 +21,7 @@
 
 {% if reconciliation %}
   <div class="alert alert-warning py-2 no-print">
-    <strong>SOURCE RECONCILIATION REQUIRED</strong>
+    <strong>{{ t('SOURCE RECONCILIATION REQUIRED') }}</strong>
     <ul class="mb-0 mt-1 text-tiny">
       {% for item in reconciliation %}<li>{{ item.message }}</li>{% endfor %}
     </ul>
@@ -35,19 +35,19 @@
 
 <!-- ===================== PROGRESS POSITION ===================== -->
 <div class="kpi-grid">
-  {{ pct_kpi(t('Contractual planned'), contractual_planned_pct, 'Schedule 03 baseline dates', 'info') }}
-  {{ pct_kpi(t('Current plan'), current_planned_pct, 'Governing working programme', 'info') }}
-  {{ pct_kpi(t('Actual'), actual_pct, rollup.basis.basis | title ~ ' weighting', 'good') }}
+  {{ pct_kpi(t('Contractual planned'), contractual_planned_pct, t('Schedule 03 baseline dates'), 'info') }}
+  {{ pct_kpi(t('Current plan'), current_planned_pct, t('Governing working programme'), 'info') }}
+  {{ pct_kpi(t('Actual'), actual_pct, t('{basis} weighting', basis=t(rollup.basis.basis)), 'good') }}
   {{ kpi(t('vs contractual'),
-         (variance_vs_contractual | signed ~ ' pp') if variance_vs_contractual is not none else 'DATA REQUIRED',
-         'Actual minus contractual planned',
+         (variance_vs_contractual | signed ~ ' ' ~ t('pp')) if variance_vs_contractual is not none else t('DATA REQUIRED'),
+         t('Actual minus contractual planned'),
          'good' if (variance_vs_contractual is not none and variance_vs_contractual >= 0) else 'bad') }}
   {{ kpi(t('vs current plan'),
-         (variance_vs_current | signed ~ ' pp') if variance_vs_current is not none else 'DATA REQUIRED',
-         'Actual minus current planned',
+         (variance_vs_current | signed ~ ' ' ~ t('pp')) if variance_vs_current is not none else t('DATA REQUIRED'),
+         t('Actual minus current planned'),
          'good' if (variance_vs_current is not none and variance_vs_current >= 0) else 'bad') }}
   {{ pct_kpi(t('Acceptance readiness'), acceptance.percent,
-             acceptance.satisfied ~ ' of ' ~ acceptance.considered ~ ' gate items accepted', 'info') }}
+             t('{done} of {total} gate items accepted', done=acceptance.satisfied, total=acceptance.considered), 'info') }}
 </div>
 
 {% if rollup.basis.warning %}
@@ -56,34 +56,34 @@
 
 <!-- ===================== TODAY ON SITE ===================== -->
 <div class="kpi-grid">
-  {{ kpi(t("Today's planned qty"), today.planned | qty, today.entries ~ ' progress line(s)') }}
+  {{ kpi(t("Today's planned qty"), today.planned | qty, t('{count} progress line(s)', count=today.entries)) }}
   {{ kpi(t("Today's actual qty"), today.actual | qty) }}
   {{ kpi(t("Today's achievement"),
-         today.achievement | pc if today.achievement is not none else 'n/a',
-         'actual / planned',
+         today.achievement | pc if today.achievement is not none else t('n/a'),
+         t('actual / planned'),
          'good' if (today.achievement is not none and today.achievement >= 100)
          else ('warn' if today.achievement is not none else '')) }}
-  {{ kpi(t('Workforce today'), workforce.total, workforce.man_hours | num(0) ~ ' man-hours') }}
+  {{ kpi(t('Workforce today'), workforce.total, t('{hours} man-hours', hours=workforce.man_hours | num(0))) }}
   {{ kpi(t('Active equipment'), equipment.active,
-         (equipment.utilisation | pc ~ ' utilisation') if equipment.utilisation is not none else 'no plant hours logged') }}
-  {{ kpi(t('Lost hours today'), lost_hours_today | num(1), 'from blockers', 'bad' if lost_hours_today else '') }}
+         t('{percent} utilisation', percent=equipment.utilisation | pc) if equipment.utilisation is not none else t('no plant hours logged')) }}
+  {{ kpi(t('Lost hours today'), lost_hours_today | num(1), t('from blockers'), 'bad' if lost_hours_today else '') }}
 </div>
 
 <!-- ===================== OPEN ITEMS ===================== -->
 <div class="kpi-grid">
-  {{ kpi(t('Open blockers'), open_blocker_count, blockers.lost_hours | num(0) ~ ' h lost to date', 'bad' if open_blocker_count else 'good') }}
-  {{ kpi(t('Open issues'), issues.open, issues.overdue ~ ' overdue', 'warn' if issues.open else 'good') }}
-  {{ kpi(t('Open NCRs'), quality.open_ncr, quality.overdue_ncr ~ ' overdue', 'bad' if quality.open_ncr else 'good') }}
-  {{ kpi(t('Open punch items'), quality.open_punch, quality.overdue_punch ~ ' overdue', 'warn' if quality.open_punch else 'good') }}
-  {{ kpi(t('Overdue actions'), overdue_actions, 'issues + NCR + punch + RFI + permits', 'bad' if overdue_actions else 'good') }}
-  {{ kpi(t('Open RFIs'), rfi.open, rfi.overdue ~ ' overdue', 'warn' if rfi.open else 'good') }}
-  {{ kpi(t('Quality / inspection holds'), quality.hold_points, 'open ITP points', 'warn' if quality.hold_points else 'good') }}
+  {{ kpi(t('Open blockers'), open_blocker_count, t('{hours} h lost to date', hours=blockers.lost_hours | num(0)), 'bad' if open_blocker_count else 'good') }}
+  {{ kpi(t('Open issues'), issues.open, t('{count} overdue', count=issues.overdue), 'warn' if issues.open else 'good') }}
+  {{ kpi(t('Open NCRs'), quality.open_ncr, t('{count} overdue', count=quality.overdue_ncr), 'bad' if quality.open_ncr else 'good') }}
+  {{ kpi(t('Open punch items'), quality.open_punch, t('{count} overdue', count=quality.overdue_punch), 'warn' if quality.open_punch else 'good') }}
+  {{ kpi(t('Overdue actions'), overdue_actions, t('issues + NCR + punch + RFI + permits'), 'bad' if overdue_actions else 'good') }}
+  {{ kpi(t('Open RFIs'), rfi.open, t('{count} overdue', count=rfi.overdue), 'warn' if rfi.open else 'good') }}
+  {{ kpi(t('Quality / inspection holds'), quality.hold_points, t('open ITP points'), 'warn' if quality.hold_points else 'good') }}
   {{ kpi(t('Procurement warnings'), procurement.warning_count,
-         procurement.late_count ~ ' late package(s)', 'bad' if procurement.late_count else 'warn' if procurement.warning_count else 'good') }}
-  {{ kpi(t('Critical activities'), critical | length, at_risk | length ~ ' at risk', 'bad' if critical else 'good') }}
-  {{ kpi(t('Overdue activities'), overdue | length, 'past planned finish, incomplete', 'bad' if overdue else 'good') }}
-  {{ kpi(t('Overdue milestones'), overdue_milestones | length, 'classified CRITICAL', 'bad' if overdue_milestones else 'good') }}
-  {{ kpi(t('Permits outstanding'), permits.open, permits.overdue ~ ' past required-by date', 'warn' if permits.open else 'good') }}
+         t('{count} late package(s)', count=procurement.late_count), 'bad' if procurement.late_count else 'warn' if procurement.warning_count else 'good') }}
+  {{ kpi(t('Critical activities'), critical | length, t('{count} at risk', count=at_risk | length), 'bad' if critical else 'good') }}
+  {{ kpi(t('Overdue activities'), overdue | length, t('past planned finish, incomplete'), 'bad' if overdue else 'good') }}
+  {{ kpi(t('Overdue milestones'), overdue_milestones | length, t('classified CRITICAL'), 'bad' if overdue_milestones else 'good') }}
+  {{ kpi(t('Permits outstanding'), permits.open, t('{count} past required-by date', count=permits.overdue), 'warn' if permits.open else 'good') }}
 </div>
 
 <!-- ===================== CHARTS ===================== -->
@@ -212,7 +212,7 @@
             <div class="stat-line"><span>{{ material.item }} &mdash; {{ t("vendor not on the approved list") }}</span><span class="badge bg-warning text-dark badge-sm">VENDOR</span></div>
           {% endfor %}
           {% for package in procurement.fat_issues[:5] %}
-            <div class="stat-line"><span>{{ package.package_code }} FAT {{ package.fat_status }}</span><span class="badge bg-warning text-dark badge-sm">FAT</span></div>
+            <div class="stat-line"><span>{{ package.package_code }} FAT {{ t(package.fat_status) }}</span><span class="badge bg-warning text-dark badge-sm">FAT</span></div>
           {% endfor %}
         {% else %}{{ empty(t('No procurement warning is open.')) }}{% endif %}
       </div>
@@ -228,7 +228,7 @@
           <div class="stat-line">
             <span>{{ t("Gate") }} {{ view.gate.gate_code }} &mdash; {{ view.gate.name }}</span>
             <strong>
-              {% if view.readiness_pct is none %}<span class="data-required">DATA REQUIRED</span>
+              {% if view.readiness_pct is none %}<span class="data-required">{{ t('DATA REQUIRED') }}</span>
               {% else %}{{ view.readiness_pct | pc(0) }} &nbsp;{{ status_badge(view.derived_state, 'sm') }}{% endif %}
             </strong>
           </div>

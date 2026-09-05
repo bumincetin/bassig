@@ -86,10 +86,10 @@
 </div>
 
 <div class="kpi-grid">
-  {{ kpi(t('Open actions'), summary.open, summary.overdue ~ ' overdue', 'warn' if summary.open else 'good') }}
-  {{ kpi(t('Open NCRs'), quality_summary.open_ncr, quality_summary.overdue_ncr ~ ' overdue', 'bad' if quality_summary.open_ncr else 'good') }}
-  {{ kpi(t('Open punch items'), quality_summary.open_punch, quality_summary.overdue_punch ~ ' overdue', 'warn' if quality_summary.open_punch else 'good') }}
-  {{ kpi(t('Overdue observations'), observations | length, 'from the daily diary', 'warn' if observations else 'good') }}
+  {{ kpi(t('Open actions'), summary.open, t('{count} overdue', count=summary.overdue), 'warn' if summary.open else 'good') }}
+  {{ kpi(t('Open NCRs'), quality_summary.open_ncr, t('{count} overdue', count=quality_summary.overdue_ncr), 'bad' if quality_summary.open_ncr else 'good') }}
+  {{ kpi(t('Open punch items'), quality_summary.open_punch, t('{count} overdue', count=quality_summary.overdue_punch), 'warn' if quality_summary.open_punch else 'good') }}
+  {{ kpi(t('Overdue observations'), observations | length, t('from the daily diary'), 'warn' if observations else 'good') }}
 </div>
 
 <ul class="nav nav-tabs no-print mb-3" role="tablist">
@@ -106,12 +106,12 @@
       <div class="field"><label class="form-label">{{ t("Status") }}</label>
         <select name="status" class="form-select form-select-sm">
           <option value="">{{ t("All") }}</option>
-          {% for value in C.ACTION_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ value }}</option>{% endfor %}
+          {% for value in C.ACTION_STATUS %}<option value="{{ value }}" {{ 'selected' if filters.status == value }}>{{ t(value) }}</option>{% endfor %}
         </select></div>
       <div class="field"><label class="form-label">{{ t("Category") }}</label>
         <select name="category" class="form-select form-select-sm">
           <option value="">{{ t("All") }}</option>
-          {% for value in C.ISSUE_CATEGORIES %}<option value="{{ value }}" {{ 'selected' if filters.category == value }}>{{ value }}</option>{% endfor %}
+          {% for value in C.ISSUE_CATEGORIES %}<option value="{{ value }}" {{ 'selected' if filters.category == value }}>{{ t(value) }}</option>{% endfor %}
         </select></div>
       <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
     </form>
@@ -128,7 +128,7 @@
               <td class="mono">{{ row.issue_number }}</td>
               <td class="nowrap">{{ row.date_raised | d }}</td>
               <td class="mw-260">{{ row.title }}</td>
-              <td>{{ row.category or '-' }}</td>
+              <td>{{ t(row.category or '-') }}</td>
               <td>{{ status_badge(row.priority, 'sm') }}</td>
               <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
               <td class="nowrap">{{ row.target_date | d }}</td>
@@ -169,7 +169,7 @@
 
   <!-- NCR -->
   <div class="tab-pane fade" id="tab-ncr">
-    {{ quality_table(ncrs, ncr_derived, 'Non-conformance reports', 'NCR') }}
+    {{ quality_table(ncrs, ncr_derived, t('Non-conformance reports'), 'NCR') }}
     <div class="panel">
       <div class="panel-head"><h2>{{ t("Raise an NCR") }}</h2></div>
       <div class="panel-body">{{ quality_form(url_for('issues.create_ncr'), 'NCR', next_ncr) }}</div>
@@ -196,7 +196,7 @@
             <th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th></tr></thead>
           <tbody>
             {% for row in observations %}
-            <tr><td class="nowrap">{{ row.entry_date | d }}</td><td>{{ row.category }}</td>
+            <tr><td class="nowrap">{{ row.entry_date | d }}</td><td>{{ t(row.category) }}</td>
               <td>{{ status_badge(row.severity, 'sm') }}</td>
               <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
               <td class="mw-260">{{ row.observation }}</td>

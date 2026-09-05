@@ -6,7 +6,7 @@
 <div class="page-head">
   <div>
     <h1>{{ t("Testing &amp; contractual acceptance") }}</h1>
-    <div class="sub">{{ note }}</div>
+    <div class="sub">{{ t(note) }}</div>
   </div>
   <div class="page-actions">
     <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('acceptance.documents') }}">{{ t("Document register") }}</a>
@@ -16,12 +16,12 @@
 
 <div class="kpi-grid">
   {{ kpi(t('Overall acceptance readiness'),
-         overall.percent | pc(1) if overall.percent is not none else 'DATA REQUIRED',
-         overall.satisfied ~ ' of ' ~ overall.considered ~ ' items accepted',
+         overall.percent | pc(1) if overall.percent is not none else t('DATA REQUIRED'),
+         t('{done} of {total} items accepted', done=overall.satisfied, total=overall.considered),
          'good' if (overall.percent or 0) >= 100 else 'info') }}
   {% for view in overall.gates %}
     {{ kpi(t('Gate') ~ view.gate.gate_code,
-           view.readiness_pct | pc(0) if view.readiness_pct is not none else 'DATA REQUIRED',
+           view.readiness_pct | pc(0) if view.readiness_pct is not none else t('DATA REQUIRED'),
            view.gate.name,
            'good' if (view.readiness_pct or 0) >= 100 else ('warn' if view.readiness_pct else 'bad')) }}
   {% endfor %}
@@ -39,7 +39,7 @@
       <div class="source-note mb-2">{{ view.gate.contract_reference }}</div>
       {{ bar(view.readiness_pct, 'good' if (view.readiness_pct or 0) >= 100 else '') }}
       <div class="stat-line"><span>{{ t("Readiness") }}</span>
-        <strong>{{ view.readiness_pct | pc(0) if view.readiness_pct is not none else 'DATA REQUIRED' }}</strong></div>
+        <strong>{{ view.readiness_pct | pc(0) if view.readiness_pct is not none else t('DATA REQUIRED') }}</strong></div>
       <div class="stat-line"><span>{{ t("Items accepted") }}</span><strong>{{ view.satisfied }} / {{ view.considered }}</strong></div>
       <div class="stat-line"><span>{{ t("Open items") }}</span><strong>{{ view.open_items | length }}</strong></div>
       <div class="stat-line"><span>{{ t("Rejected items") }}</span>

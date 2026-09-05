@@ -12,6 +12,7 @@ from sqlalchemy import func
 
 from app import constants as C
 from app.extensions import db
+from app.i18n import translate as t
 from app.models import (
     Blocker,
     DailyProgress,
@@ -72,12 +73,13 @@ def daily_report(report_date):
 
     by_contractor = defaultdict(int)
     for row in workforce_rows:
-        name = row.contractor.name if row.contractor else (row.contractor_name or "Unspecified")
+        name = (row.contractor.name if row.contractor
+                else (row.contractor_name or t("Unspecified")))
         by_contractor[name] += row.workers or 0
 
     by_area = defaultdict(lambda: {"planned": 0.0, "actual": 0.0, "entries": 0})
     for row in progress_rows:
-        key = row.area.label if row.area else "Not allocated to an area"
+        key = row.area.label if row.area else t("Not allocated to an area")
         bucket = by_area[key]
         bucket["planned"] += row.planned_quantity or 0.0
         bucket["actual"] += row.actual_quantity or 0.0
@@ -106,29 +108,32 @@ def daily_report(report_date):
 
     # Deterministic summary: counted facts only.
     summary = []
-    summary.append(f"Active workfronts reporting progress: {len(by_area)}.")
+    summary.append(t("Active workfronts reporting progress: {count}.", count=len(by_area)))
     achievement = pct(actual, planned)
     if achievement is None:
-        summary.append("Daily achievement: no planned quantity was recorded for this date.")
+        summary.append(t("Daily achievement: no planned quantity was recorded for this date."))
     else:
-        summary.append(f"Daily achievement: {achievement:.1f}% "
-                       f"({actual:g} actual against {planned:g} planned).")
-    summary.append(f"Activities below the daily target: {len(below_target)} of {len(progress_rows)}.")
-    summary.append(f"Open critical blockers (4 or more lost hours): {len(open_critical_blockers)}.")
-    summary.append(f"Late procurement packages: {procurement['late_count']}; "
-                   f"material shortages: {len(shortages)}.")
-    summary.append(f"Overdue NCR / Punch List items: {len(overdue_quality)}.")
+        summary.append(t("Daily achievement: {percent}% ({actual} actual against {planned} planned).",
+                         percent=f"{achievement:.1f}", actual=f"{actual:g}", planned=f"{planned:g}"))
+    summary.append(t("Activities below the daily target: {below} of {total}.",
+                     below=len(below_target), total=len(progress_rows)))
+    summary.append(t("Open critical blockers (4 or more lost hours): {count}.",
+                     count=len(open_critical_blockers)))
+    summary.append(t("Late procurement packages: {late}; material shortages: {short}.",
+                     late=procurement["late_count"], short=len(shortages)))
+    summary.append(t("Overdue NCR / Punch List items: {count}.", count=len(overdue_quality)))
     if largest_cause:
-        summary.append(f"Largest cause of lost hours today: {largest_cause[0]} "
-                       f"({largest_cause[1]:g} h).")
+        summary.append(t("Largest cause of lost hours today: {cause} ({hours} h).",
+                         cause=t(largest_cause[0]), hours=f"{largest_cause[1]:g}"))
     else:
-        summary.append("No lost hours were recorded against a blocker today.")
+        summary.append(t("No lost hours were recorded against a blocker today."))
     if milestones:
         next_ms = milestones[0]
-        summary.append(f"Next schedule milestone: {next_ms['name']} "
-                       f"({next_ms['plan_finish'] or next_ms['plan_start'] or 'date not set'}).")
+        summary.append(t("Next schedule milestone: {name} ({date}).", name=next_ms["name"],
+                         date=(next_ms["plan_finish"] or next_ms["plan_start"]
+                               or t("date not set"))))
     else:
-        summary.append("No incomplete milestone is registered in the governing programme.")
+        summary.append(t("No incomplete milestone is registered in the governing programme."))
 
     return {
         "project": Project.query.first(),

@@ -46,22 +46,22 @@
 </div>
 
 <div class="kpi-grid">
-  {{ kpi(short_weeks ~ '-week lookahead', short | length) }}
-  {{ kpi(long_weeks ~ '-week lookahead', long | length) }}
-  {{ kpi(t('Overdue'), overdue | length, 'past planned finish', 'bad' if overdue else 'good') }}
-  {{ kpi(t('Starting in') ~ window ~ ' days', starting | length) }}
+  {{ kpi(t('{weeks}-week lookahead', weeks=short_weeks), short | length) }}
+  {{ kpi(t('{weeks}-week lookahead', weeks=long_weeks), long | length) }}
+  {{ kpi(t('Overdue'), overdue | length, t('past planned finish'), 'bad' if overdue else 'good') }}
+  {{ kpi(t('Starting in {days} days', days=window), starting | length) }}
   {{ kpi(t('Finishing in') ~ window ~ ' days', finishing | length) }}
   {{ kpi(t('Late start'), late_start | length, '', 'warn' if late_start else 'good') }}
   {{ kpi(t('Critical'), critical | length, '', 'bad' if critical else 'good') }}
   {{ kpi(t('Overdue milestones'), overdue_milestones | length, '', 'bad' if overdue_milestones else 'good') }}
 </div>
 
-{{ rows_table(overdue, 'Overdue activities') }}
-{{ rows_table(late_start, 'Late-start activities') }}
-{{ rows_table(starting, 'Starting within ' ~ window ~ ' days') }}
-{{ rows_table(finishing, 'Finishing within ' ~ window ~ ' days') }}
-{{ rows_table(short, short_weeks ~ '-week lookahead') }}
-{{ rows_table(long, long_weeks ~ '-week lookahead') }}
+{{ rows_table(overdue, t('Overdue activities')) }}
+{{ rows_table(late_start, t('Late-start activities')) }}
+{{ rows_table(starting, t('Starting within {days} days', days=window)) }}
+{{ rows_table(finishing, t('Finishing within {days} days', days=window)) }}
+{{ rows_table(short, t('{weeks}-week lookahead', weeks=short_weeks)) }}
+{{ rows_table(long, t('{weeks}-week lookahead', weeks=long_weeks)) }}
 {{ rows_table(milestones, 'Upcoming milestones', show_start=false) }}
 
 <div class="panel">

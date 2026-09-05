@@ -10,7 +10,7 @@
 {% endmacro %}
 
 {% macro pct_kpi(label, value, note='', tone='') %}
-{{ kpi(label, value | pc if value is not none else 'DATA REQUIRED', note, tone if value is not none else 'bad') }}
+{{ kpi(label, value | pc if value is not none else t("DATA REQUIRED"), note, tone if value is not none else 'bad') }}
 {% endmacro %}
 
 {# The stored value drives the colour and stays English in the database;
@@ -21,7 +21,7 @@
 
 {% macro bar(value, tone='') %}
 {% if value is none %}
-  <span class="data-required">DATA REQUIRED</span>
+  <span class="data-required">{{ t("DATA REQUIRED") }}</span>
 {% else %}
   <div class="progress-mini" title="{{ value | pc }}">
     <span class="{{ tone }}" style="width: {{ [[value, 0] | max, 100] | min }}%"></span>
@@ -36,7 +36,7 @@
 
 {% macro data_required(what) %}
 <div class="alert alert-danger py-2 my-2">
-  <strong>DATA REQUIRED:</strong> {{ what }}
+  <strong>{{ t("DATA REQUIRED") }}:</strong> {{ what }}
 </div>
 {% endmacro %}
 
@@ -70,16 +70,16 @@
 
 {% macro select(name, options, selected=none, blank='', classes='form-select form-select-sm') %}
 <select name="{{ name }}" class="{{ classes }}">
-  {% if blank %}<option value="">{{ blank }}</option>{% endif %}
+  {% if blank %}<option value="">{{ t(blank) }}</option>{% endif %}
   {% for option in options %}
-    <option value="{{ option }}" {{ 'selected' if option == selected }}>{{ option }}</option>
+    <option value="{{ option }}" {{ 'selected' if option == selected }}>{{ t(option) }}</option>
   {% endfor %}
 </select>
 {% endmacro %}
 
 {% macro area_select(name, areas, selected=none, blank='Area / workfront', classes='form-select form-select-sm') %}
 <select name="{{ name }}" class="{{ classes }}">
-  <option value="">{{ blank }}</option>
+  <option value="">{{ t(blank) }}</option>
   {% for area in areas %}
     <option value="{{ area.id }}" {{ 'selected' if selected and area.id == selected }}>{{ area.label }}</option>
   {% endfor %}
@@ -87,6 +87,7 @@
 {% endmacro %}
 
 {% macro photos(items, title='Photographs') %}
+{% set title = t(title) %}
 {% if items %}
 <div class="report-section">
   <h3>{{ title }} ({{ items | length }})</h3>

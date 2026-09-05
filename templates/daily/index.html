@@ -72,8 +72,8 @@
           <tr>
             <td class="nowrap"><strong>{{ report.report_date | d }}</strong></td>
             <td class="mono">{{ report.report_number or '-' }}</td>
-            <td>{{ report.weather or '-' }}</td>
-            <td>{{ report.shift }}</td>
+            <td>{{ t(report.weather or '-') }}</td>
+            <td>{{ t(report.shift) }}</td>
             <td class="text-tiny">{{ report.prepared_by or '-' }}</td>
             <td class="num">{{ report.total_workers }}</td>
             <td class="num">{{ report.total_man_hours | num(0) }}</td>

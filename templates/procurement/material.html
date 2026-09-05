@@ -124,7 +124,7 @@
           <tbody>
             {% for row in transactions %}
             <tr><td class="nowrap">{{ row.transaction_date | d }}</td>
-              <td>{{ row.transaction_type }}</td>
+              <td>{{ t(row.transaction_type) }}</td>
               <td class="num">{{ row.quantity | qty }}</td>
               <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
               <td class="text-tiny">{{ row.reference or '-' }}</td>

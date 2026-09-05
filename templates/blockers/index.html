@@ -17,12 +17,12 @@
 <div class="kpi-grid">
   {{ kpi(t('Incidents'), summary.total) }}
   {{ kpi(t('Open'), summary.open, '', 'bad' if summary.open else 'good') }}
-  {{ kpi(t('Lost hours'), summary.lost_hours | num(1), 'actual where recorded, else estimated', 'bad' if summary.lost_hours else 'good') }}
+  {{ kpi(t('Lost hours'), summary.lost_hours | num(1), t('actual where recorded, else estimated'), 'bad' if summary.lost_hours else 'good') }}
   {{ kpi(t('Lost man-hours'), summary.lost_man_hours | num(0)) }}
-  {{ kpi(t('Top cause'), summary.top_cause.category if summary.top_cause else 'none',
-         (summary.top_cause.lost_hours | num(1) ~ ' h') if summary.top_cause else '',
+  {{ kpi(t('Top cause'), t(summary.top_cause.category) if summary.top_cause else t('none'),
+         t('{hours} h', hours=summary.top_cause.lost_hours | num(1)) if summary.top_cause else '',
          'bad' if summary.top_cause else 'good') }}
-  {{ kpi(t('Recurring causes'), summary.recurring | length, '3 or more incidents', 'warn' if summary.recurring else 'good') }}
+  {{ kpi(t('Recurring causes'), summary.recurring | length, t('3 or more incidents'), 'warn' if summary.recurring else 'good') }}
 </div>
 
 <form class="filter-bar" method="get" data-autosubmit>
@@ -33,12 +33,12 @@
   <div class="field"><label class="form-label">{{ t("Category") }}</label>
     <select name="category" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.BLOCKER_CATEGORIES %}<option value="{{ value }}" {{ 'selected' if category == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.BLOCKER_CATEGORIES %}<option value="{{ value }}" {{ 'selected' if category == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("Status") }}</label>
     <select name="status" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
-      {% for value in C.ACTION_STATUS %}<option value="{{ value }}" {{ 'selected' if status == value }}>{{ value }}</option>{% endfor %}
+      {% for value in C.ACTION_STATUS %}<option value="{{ value }}" {{ 'selected' if status == value }}>{{ t(value) }}</option>{% endfor %}
     </select></div>
   <button class="btn btn-sm btn-primary">{{ t("Apply") }}</button>
 </form>

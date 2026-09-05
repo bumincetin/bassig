@@ -35,8 +35,8 @@
           <td class="mono">{{ row.parent.area_code if row.parent else '-' }}</td>
           <td class="text-tiny">{{ row.drawing_reference or '-' }}</td>
           <td class="mono">{{ row.ifc_revision or '-' }}</td>
-          <td class="text-tiny">{{ row.source_document.label if row.source_document else 'not linked' }}</td>
-          <td>{{ 'Yes' if row.active else 'No' }}</td>
+          <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
+          <td>{{ t('Yes') if row.active else t('No') }}</td>
           <td>
             <details class="inline-form"><summary>{{ t("Edit") }}</summary>
               <form method="post" action="{{ url_for('setup.update_area', area_id=row.id) }}" class="mt-1">
@@ -103,7 +103,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked (the workfront will show no provenance)") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Notes") }}</label>
         <textarea name="notes" rows="2" class="form-control form-control-sm"></textarea></div>

@@ -60,6 +60,32 @@ DEFAULT_SETTINGS = {
 }
 
 
+#: A readable name for each setting. The key itself is a database column name;
+#: showing "Variance At Risk Pp" to a site engineer is not good enough in any
+#: language, so every setting carries a proper label that the catalogues translate.
+SETTING_LABELS = {
+    "variance_at_risk_pp": "Variance threshold: AT RISK",
+    "variance_critical_pp": "Variance threshold: CRITICAL",
+    "lookahead_short_weeks": "Short lookahead window (weeks)",
+    "lookahead_long_weeks": "Long lookahead window (weeks)",
+    "imminent_window_days": "Starting/finishing soon window (days)",
+    "procurement_at_risk_days": "Procurement AT RISK window (days)",
+    "stock_low_pct": "LOW STOCK threshold (%)",
+    "forecast_window_short_days": "Short forecast window (days)",
+    "forecast_window_long_days": "Long forecast window (days)",
+    "forecast_min_working_days": "Minimum working days before a forecast",
+    "progress_weight_basis": "Progress weighting basis",
+    "governing_schedule": "Governing schedule version",
+    "report_number_prefix": "Daily report number prefix",
+    "standard_working_hours": "Standard working hours per shift",
+}
+
+
+def label_for(key):
+    """Readable name of a setting, falling back to the key itself."""
+    return SETTING_LABELS.get(key, key.replace("_", " ").title())
+
+
 def ensure_defaults():
     """Create any missing setting rows. Existing values are left untouched."""
     existing = {s.key for s in ProjectSetting.query.all()}

@@ -21,12 +21,12 @@
 <form method="post">
   {% for category, rows in grouped.items() %}
   <div class="panel">
-    <div class="panel-head"><h2>{{ category }}</h2></div>
+    <div class="panel-head"><h2>{{ t(category) }}</h2></div>
     <div class="panel-body">
       <div class="form-grid">
         {% for row in rows %}
         <div class="full">
-          <label class="form-label">{{ row.key.replace('_', ' ') | title }}</label>
+          <label class="form-label">{{ t(setting_label(row.key)) }}</label>
           <div class="d-flex gap-2 align-items-center flex-wrap">
             <input name="{{ row.key }}" value="{{ row.value or '' }}"
                    class="form-control form-control-lg" style="max-width:220px">
@@ -34,7 +34,7 @@
               {{ t("default") }} {{ defaults[row.key][0] if row.key in defaults else '-' }} &middot; {{ row.value_type }}
             </span>
           </div>
-          <div class="text-tiny text-muted mt-1">{{ row.description }}</div>
+          <div class="text-tiny text-muted mt-1">{{ t(row.description) }}</div>
         </div>
         {% endfor %}
       </div>

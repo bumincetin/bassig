@@ -25,7 +25,7 @@
 
 <div class="kpi-grid">
   {{ kpi(t('Workforce entries'), workforce | length) }}
-  {{ kpi(t('Total workers logged'), total_workers, 'sum across all days') }}
+  {{ kpi(t('Total workers logged'), total_workers, t('sum across all days')) }}
   {{ kpi(t('Man-hours'), total_man_hours | num(0)) }}
   {{ kpi(t('Plant working hours'), equipment_totals.working | num(0)) }}
   {{ kpi(t('Plant lost hours'), equipment_totals.lost | num(0), 'idle + breakdown',

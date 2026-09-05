@@ -18,17 +18,17 @@
 </div>
 
 <div class="kpi-grid">
-  {{ kpi(t('Readiness'), view.readiness_pct | pc(1) if view.readiness_pct is not none else 'DATA REQUIRED',
-         view.satisfied ~ ' of ' ~ view.considered ~ ' accepted',
+  {{ kpi(t('Readiness'), view.readiness_pct | pc(1) if view.readiness_pct is not none else t('DATA REQUIRED'),
+         t('{done} of {total} accepted', done=view.satisfied, total=view.considered),
          'good' if (view.readiness_pct or 0) >= 100 else 'info') }}
-  {{ kpi(t('Recorded gate status'), gate.status) }}
-  {{ kpi(t('Derived state'), view.derived_state, 'calculated, not a decision') }}
+  {{ kpi(t('Recorded gate status'), t(gate.status)) }}
+  {{ kpi(t('Derived state'), t(view.derived_state), t('calculated, not a decision')) }}
   {{ kpi(t('Open items'), view.open_items | length, '', 'warn' if view.open_items else 'good') }}
   {{ kpi(t('Rejected items'), view.rejected_items | length, '', 'bad' if view.rejected_items else 'good') }}
   {{ kpi(t('Missing mandatory documents'), documents.missing_count, '', 'bad' if documents.missing_count else 'good') }}
 </div>
 
-<div class="alert alert-secondary py-2 text-tiny">{{ note }}</div>
+<div class="alert alert-secondary py-2 text-tiny">{{ t(note) }}</div>
 
 <div class="row g-3">
   <div class="col-12 col-lg-8">
@@ -52,7 +52,7 @@
               <td class="mw-260"><strong>{{ item.item_name }}</strong>
                 {% if item.description %}<div class="text-tiny text-muted">{{ item.description }}</div>{% endif %}
                 {% if item.contract_reference %}<div class="source-note">{{ item.contract_reference }}</div>{% endif %}</td>
-              <td class="text-tiny">{{ item.category or '-' }}</td>
+              <td class="text-tiny">{{ t(item.category or '-') }}</td>
               <td class="text-tiny">{{ item.responsible_party or '-' }}</td>
               <td class="nowrap">{{ item.target_date | d }}</td>
               <td class="nowrap">{{ item.actual_date | d }}</td>

@@ -7,7 +7,7 @@
   <div>
     <h1>{{ row.wbs_code }} &mdash; {{ row.activity_name }}</h1>
     <div class="sub">
-      {{ version.label }} [{{ version.schedule_type }}] &middot;
+      {{ version.label }} [{{ t(version.schedule_type) }}] &middot;
       {{ row.work_package or 'no work package' }} &middot; {{ row.discipline or 'no discipline' }}
     </div>
   </div>
@@ -17,13 +17,13 @@
 </div>
 
 <div class="kpi-grid">
-  {{ kpi(t('Actual %'), actual_pct | pc if actual_pct is not none else 'DATA REQUIRED',
+  {{ kpi(t('Actual %'), actual_pct | pc if actual_pct is not none else t('DATA REQUIRED'),
          'basis: ' ~ actual_basis, 'good' if actual_pct else '') }}
-  {{ kpi(t('Completed quantity'), completed_quantity | qty(row.unit or ''), 'from daily records') }}
-  {{ kpi(t('Total required'), row.total_required_quantity | qty(row.unit or '') if row.total_required_quantity else 'DATA REQUIRED') }}
+  {{ kpi(t('Completed quantity'), completed_quantity | qty(row.unit or ''), t('from daily records')) }}
+  {{ kpi(t('Total required'), row.total_required_quantity | qty(row.unit or '') if row.total_required_quantity else t('DATA REQUIRED')) }}
   {{ kpi(t('Progress method'), row.progress_method or 'MANUAL') }}
-  {{ kpi(t('Weight'), row.progress_weight | num(2) if row.progress_weight else '-', row.weight_basis) }}
-  {{ kpi(t('Milestone'), 'Yes' if row.is_milestone else 'No') }}
+  {{ kpi(t('Weight'), row.progress_weight | num(2) if row.progress_weight else '-', t(row.weight_basis)) }}
+  {{ kpi(t('Milestone'), t('Yes') if row.is_milestone else t('No')) }}
 </div>
 
 <div class="row g-3">

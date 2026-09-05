@@ -206,7 +206,13 @@ def register_template_helpers(app):
 
     @app.template_filter("yn")
     def _yes_no(value):
-        return "Yes" if value else "No"
+        from app.i18n import translate
+        return translate("Yes") if value else translate("No")
+
+    @app.template_global("setting_label")
+    def _setting_label(key):
+        from app.services import settings as settings_service
+        return settings_service.label_for(key)
 
     @app.template_global("badge")
     def _badge(value):

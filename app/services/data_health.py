@@ -7,6 +7,7 @@ document would supply it.
 from __future__ import annotations
 
 from app import constants as C
+from app.i18n import translate as t
 from app.models import (
     AcceptanceGate,
     Area,
@@ -187,8 +188,12 @@ def report():
         satisfied = _satisfied(check["key"], counts)
         checks.append({
             **check,
+            "label": t(check["label"]),
+            "required_input": t(check["required_input"]),
             "satisfied": satisfied,
-            "message": None if satisfied else f"{C.DATA_REQUIRED}: {check['required_input']}",
+            "message": None if satisfied else t(
+                "{data_required}: {input}", data_required=t(C.DATA_REQUIRED),
+                input=t(check["required_input"])),
         })
     missing_mandatory = [i for i in checks if i["mandatory"] and not i["satisfied"]]
     missing_optional = [i for i in checks if not i["mandatory"] and not i["satisfied"]]
@@ -210,9 +215,10 @@ def reconciliation_flags():
     ).order_by(SourceDocument.title).all()
     return [{
         "document": d,
-        "message": f"{C.SOURCE_RECONCILIATION_REQUIRED}: {d.title}"
+        "message": t("{flag}: {title}", flag=t(C.SOURCE_RECONCILIATION_REQUIRED), title=d.title)
                    if d.status == "REQUIRES RECONCILIATION"
-                   else f"{d.title} is registered as {d.status} and must not govern execution data.",
+                   else t("{title} is registered as {status} and must not govern execution data.",
+                          title=d.title, status=t(d.status)),
     } for d in docs]
 
 
@@ -222,17 +228,17 @@ def schedule_health():
     baseline = progress.baseline_version()
     current = progress.current_version()
     if baseline is None:
-        warnings.append(f"{C.DATA_REQUIRED}: contractual baseline programme (Schedule 03).")
+        warnings.append(t("{data_required}: contractual baseline programme (Schedule 03).",
+                          data_required=t(C.DATA_REQUIRED)))
     if current is None:
-        warnings.append(f"{C.DATA_REQUIRED}: current working programme.")
+        warnings.append(t("{data_required}: current working programme.",
+                          data_required=t(C.DATA_REQUIRED)))
     if baseline is not None and current is not None and baseline.id == current.id:
-        warnings.append(
+        warnings.append(t(
             "No separate current working programme is registered. The contractual baseline "
-            "is being shown for operational planning as well."
-        )
+            "is being shown for operational planning as well."))
     if baseline is not None and not baseline.locked:
-        warnings.append(
+        warnings.append(t(
             "The contractual baseline is not locked. Lock it in Schedule & WBS to protect "
-            "contractual dates from being edited."
-        )
+            "contractual dates from being edited."))
     return warnings

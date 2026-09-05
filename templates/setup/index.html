@@ -52,7 +52,7 @@
   {{ kpi(t('Source documents'), health.counts.source_documents, health.counts.contractual_docs ~ ' contractual',
          'good' if health.counts.source_documents else 'bad') }}
   {{ kpi(t('Schedule versions'), versions | length,
-         health.counts.activities ~ ' activities', 'good' if versions else 'bad') }}
+         t('{count} activities', count=health.counts.activities), 'good' if versions else 'bad') }}
   {{ kpi(t('Areas / workfronts'), health.counts.areas, '', 'good' if health.counts.areas else 'bad') }}
   {{ kpi(t('BOQ quantities'), health.counts.quantities, '', 'good' if health.counts.quantities else 'bad') }}
   {{ kpi(t('Procurement packages'), health.counts.packages, '', 'good' if health.counts.packages else 'bad') }}
@@ -71,7 +71,7 @@
         <div class="step-num {{ 'done' if item and item.satisfied else ('todo' if item and item.mandatory else '') }}">{{ number }}</div>
         <div class="flex-grow-1">
           <div class="d-flex justify-content-between gap-2 flex-wrap align-items-center">
-            <strong>{{ label }}</strong>
+            <strong>{{ t(label) }}</strong>
             <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for(endpoint) }}">{{ t("Open") }}</a>
           </div>
           {% for check in health.checks if check.step == number %}
@@ -97,7 +97,7 @@
           <thead><tr><th>{{ t("Title") }}</th><th>{{ t("Type") }}</th><th>{{ t("Rev") }}</th><th>{{ t("Status") }}</th></tr></thead>
           <tbody>
             {% for doc in documents %}
-            <tr><td class="mw-260">{{ doc.title }}</td><td class="text-tiny">{{ doc.document_type }}</td>
+            <tr><td class="mw-260">{{ doc.title }}</td><td class="text-tiny">{{ t(doc.document_type) }}</td>
               <td class="mono">{{ doc.revision or '-' }}</td><td>{{ status_badge(doc.status, 'sm') }}</td></tr>
             {% else %}<tr><td colspan="4">{{ empty(t('No source document registered yet.')) }}</td></tr>{% endfor %}
           </tbody></table></div>
@@ -113,7 +113,7 @@
           <thead><tr><th>{{ t("When") }}</th><th>{{ t("Type") }}</th><th class="num">{{ t("Created") }}</th><th class="num">{{ t("Updated") }}</th></tr></thead>
           <tbody>
             {% for batch in batches %}
-            <tr><td class="nowrap">{{ batch.created_at | d }}</td><td>{{ batch.import_type }}</td>
+            <tr><td class="nowrap">{{ batch.created_at | d }}</td><td>{{ t(batch.import_type) }}</td>
               <td class="num">{{ batch.created_count }}</td><td class="num">{{ batch.updated_count }}</td></tr>
             {% else %}<tr><td colspan="4">{{ empty(t('No import committed yet.')) }}</td></tr>{% endfor %}
           </tbody></table></div>

@@ -37,15 +37,15 @@
           <td class="mono">{{ row.wbs_code or '-' }}</td>
           <td class="text-tiny">{{ row.work_package or '-' }}</td>
           <td class="mono">{{ row.itp_reference }}</td>
-          <td>{{ row.inspection_type or '-' }}</td>
+          <td>{{ t(row.inspection_type or '-') }}</td>
           <td>
             <span class="badge {{ 'bg-danger' if row.point_type == 'HOLD' else ('bg-warning text-dark' if row.point_type == 'WITNESS' else 'bg-secondary') }} badge-sm">
-              {{ row.point_type }}</span></td>
+              {{ t(row.point_type) }}</span></td>
           <td class="mw-260 text-tiny">{{ row.required_evidence or '-' }}</td>
           <td class="mw-260 text-tiny">{{ row.acceptance_criterion or '-' }}</td>
           <td class="text-tiny">{{ row.applicable_specification or '-' }}</td>
-          <td class="text-tiny">{{ row.source_document.label if row.source_document else 'not linked' }}</td>
-          <td>{{ 'Yes' if row.active else 'No' }}</td>
+          <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
+          <td>{{ t('Yes') if row.active else t('No') }}</td>
           <td class="nowrap">
             <form method="post" action="{{ url_for('quality.update_requirement', requirement_id=row.id) }}" class="d-inline">
               <input type="hidden" name="action" value="raise">
@@ -90,7 +90,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ doc.status }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><button class="btn btn-primary">{{ t("Register requirement") }}</button></div>
     </form>

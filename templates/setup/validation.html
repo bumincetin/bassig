@@ -49,10 +49,10 @@
         <tr class="{{ 'row-critical' if item.mandatory and not item.satisfied }}">
           <td class="num">{{ item.step }}</td>
           <td><strong>{{ item.label }}</strong></td>
-          <td>{{ 'Yes' if item.mandatory else 'No' }}</td>
+          <td>{{ t('Yes') if item.mandatory else t('No') }}</td>
           <td>
             {% if item.satisfied %}<span class="badge bg-success badge-sm">SATISFIED</span>
-            {% elif item.mandatory %}<span class="badge bg-danger badge-sm">DATA REQUIRED</span>
+            {% elif item.mandatory %}<span class="badge bg-danger badge-sm">{{ t('DATA REQUIRED') }}</span>
             {% else %}<span class="badge bg-warning text-dark badge-sm">OPTIONAL, MISSING</span>{% endif %}
           </td>
           <td class="text-tiny">{{ item.required_input }}</td>
@@ -92,7 +92,7 @@
   <div class="panel-body">
     {% for item in reconciliation %}
       <div class="stat-line"><span>{{ item.message }}</span>
-        <span class="badge {{ badge(item.document.status) }} badge-sm">{{ item.document.status }}</span></div>
+        <span class="badge {{ badge(item.document.status) }} badge-sm">{{ t(item.document.status) }}</span></div>
     {% endfor %}
   </div>
 </div>
@@ -110,7 +110,7 @@
 <div class="panel">
   <div class="panel-head"><h2>{{ t("Progress weighting") }}</h2></div>
   <div class="panel-body">
-    <div class="stat-line"><span>{{ t("Basis in force") }}</span><strong>{{ basis.basis }}</strong></div>
+    <div class="stat-line"><span>{{ t("Basis in force") }}</span><strong>{{ t(basis.basis) }}</strong></div>
     <div class="stat-line"><span>{{ t("Activities carrying an approved weight") }}</span><strong>{{ basis.approved_weight_count }}</strong></div>
     {% if basis.warning %}<p class="text-tiny text-danger mt-2 mb-0">{{ basis.warning }}</p>{% endif %}
   </div>

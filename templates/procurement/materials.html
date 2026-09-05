@@ -23,7 +23,7 @@
     <select name="stock" class="form-select form-select-sm">
       <option value="">{{ t("All") }}</option>
       {% for value in C.STOCK_STATUS %}
-        <option value="{{ value }}" {{ 'selected' if stock_filter == value }}>{{ value }}</option>
+        <option value="{{ value }}" {{ 'selected' if stock_filter == value }}>{{ t(value) }}</option>
       {% endfor %}
     </select></div>
   <div class="field flex-grow-1"><label class="form-label">{{ t("Find") }}</label>

@@ -13,6 +13,7 @@ from sqlalchemy import func
 
 from app import constants as C
 from app.extensions import db
+from app.i18n import translate as t
 from app.models import DailyProgress, WbsActivity
 from app.services import progress, settings
 from app.services.calculations import forecast_finish_date, forecast_remaining, production_rate
@@ -61,7 +62,8 @@ def forecast_for_activity(activity, as_of=None, window_days=None):
     }
 
     if not total_required:
-        result["message"] = f"{C.DATA_REQUIRED}: total required quantity for {activity.wbs_code}."
+        result["message"] = t("{data_required}: total required quantity for {code}.",
+                              data_required=t(C.DATA_REQUIRED), code=activity.wbs_code)
         return result
 
     since = as_of - timedelta(days=window_days - 1)
