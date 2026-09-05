@@ -195,9 +195,10 @@ def check_checkout(api, project_dir, log):
     if status == 404:
         raise DeployError(
             f"{project_dir} does not contain the application yet.\n"
-            "Open Consoles -> Bash on pythonanywhere.com and paste this one line first:\n\n"
-            "  bash <(curl -fsSL https://raw.githubusercontent.com/bumincetin/bassig/"
-            "main/deploy/pythonanywhere_setup.sh)\n\n"
+            "Open Consoles -> Bash on pythonanywhere.com and paste these two lines first:\n\n"
+            "  curl -fsSL -o ~/bassignana_setup.sh https://raw.githubusercontent.com/"
+            "bumincetin/bassig/main/deploy/pythonanywhere_setup.sh\n"
+            "  bash ~/bassignana_setup.sh\n\n"
             "It clones the repository and installs the requirements into a virtualenv. "
             "The API cannot do it: it can create a console but only a browser can start one.")
     log(f"    checkout found at {project_dir}")

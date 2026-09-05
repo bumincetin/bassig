@@ -46,14 +46,21 @@ click on the Web tab (a reminder e-mail arrives before it expires).
 1. Create the account at <https://www.pythonanywhere.com> (Beginner plan).
    The username becomes the address, so choose something like
    `bassignana` or the company name.
-2. **Consoles → Bash**, then paste and run:
+2. **Consoles → Bash**, then paste these two lines and press Enter:
 
    ```bash
-   bash <(curl -fsSL https://raw.githubusercontent.com/bumincetin/bassig/main/deploy/pythonanywhere_setup.sh)
+   curl -fsSL -o ~/bassignana_setup.sh https://raw.githubusercontent.com/bumincetin/bassig/main/deploy/pythonanywhere_setup.sh
+   bash ~/bassignana_setup.sh
    ```
 
    This clones the repository into `~/bassignana`, creates a virtualenv and
    installs the requirements. It prints the remaining steps at the end.
+
+   Download first and run second, rather than the shorter
+   `bash <(curl ...)`: browser terminals often drop the leading word of a
+   pasted line, and losing the `bash` there produces the confusing
+   `/dev/fd/15: Permission denied`. This form fails safely instead, and lets
+   you read the script with `cat ~/bassignana_setup.sh` before running it.
 3. Everything from here can be done **for you by a script**, or by hand.
 
 ### 3a. The scripted way (recommended)
