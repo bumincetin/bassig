@@ -58,6 +58,18 @@ first deployment rather than assuming three months.
    This clones the repository into `~/bassignana`, creates a virtualenv and
    installs the requirements. It prints the remaining steps at the end.
 
+   **If the repository is private**, the clone needs a credential. Create a
+   fine-grained GitHub personal access token with read access to the
+   repository, and run the second line as
+
+   ```bash
+   BASSIGNANA_REPO=https://<token>@github.com/bumincetin/bassig.git bash ~/bassignana_setup.sh
+   ```
+
+   The token is then stored in `~/bassignana/.git/config` on the server, so
+   later `git pull` calls work without repeating it. Revoke it if the server
+   is ever decommissioned.
+
    Download first and run second, rather than the shorter
    `bash <(curl ...)`: browser terminals often drop the leading word of a
    pasted line, and losing the `bash` there produces the confusing
