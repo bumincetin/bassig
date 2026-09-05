@@ -215,14 +215,35 @@ def check_virtualenv(api, virtualenv, log):
     return True
 
 
+def normalise_python_version(value):
+    """PythonAnywhere wants 'python313' here, not '3.13'.
+
+    Their API rejects the dotted form with "No such Python version: 3.13",
+    which reads like the interpreter is missing rather than like a format
+    error, so both spellings are accepted from the caller.
+    """
+    text = str(value).strip().lower().replace("python", "").replace(".", "")
+    if not text.isdigit():
+        raise DeployError(
+            f"--python-version {value!r} is not a version number. "
+            "Use the form 3.13 (or python313).")
+    return f"python{text}"
+
+
 def ensure_webapp(api, domain, python_version, log):
-    status, payload = api.request("GET", f"webapps/{domain}/", expect=(200, 404))
-    if status == 200:
+    # The list endpoint is used rather than GET webapps/{domain}/, because
+    # PythonAnywhere answers 403 -- not 404 -- for a web app that does not
+    # exist yet, which is indistinguishable from a real permission problem.
+    _, payload = api.request("GET", "webapps/", expect=(200,))
+    existing = ({row.get("domain_name") for row in payload}
+                if isinstance(payload, list) else set())
+    if domain in existing:
         log(f"    web app {domain} already exists, updating it")
         return False
-    log(f"    creating web app {domain} on Python {python_version}")
+    wanted = normalise_python_version(python_version)
+    log(f"    creating web app {domain} on {wanted}")
     api.request("POST", "webapps/",
-                data={"domain_name": domain, "python_version": python_version})
+                data={"domain_name": domain, "python_version": wanted})
     return True
 
 
@@ -248,7 +269,8 @@ def write_wsgi(api, domain, project_dir, password, log):
 
 
 def set_static_files(api, domain, project_dir, log):
-    status, existing = api.request("GET", f"webapps/{domain}/static_files/", expect=(200, 404))
+    _, existing = api.request("GET", f"webapps/{domain}/static_files/",
+                              expect=(200, 403, 404))
     already = {row.get("url") for row in existing} if isinstance(existing, list) else set()
     for url_prefix, relative in STATIC_MAPPINGS:
         if url_prefix in already:
@@ -415,7 +437,8 @@ def build_parser():
     parser.add_argument("--virtualenv", default="",
                         help="Virtualenv on the server. Default <project-dir>/venv.")
     parser.add_argument("--python-version", default="3.10",
-                        help="Python version for the web app (default 3.10).")
+                        help="Python version for the web app, e.g. 3.13. Must match the "
+                             "virtualenv: check venv/pyvenv.cfg on the server.")
     parser.add_argument("--api-base", help=argparse.SUPPRESS)  # tests point this at a stub
     parser.add_argument("--dry-run", action="store_true",
                         help="Say what would happen without changing anything.")

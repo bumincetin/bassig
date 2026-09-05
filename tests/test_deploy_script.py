@@ -84,10 +84,14 @@ class Stub(http.server.BaseHTTPRequestHandler):
             return self._send(404, {"detail": "not found"})
         if path.startswith("webapps/") and path.endswith("/static_files/"):
             return self._send(200, self.state["static"])
+        if path == "webapps/":
+            return self._send(200, [self.state["webapp"]] if self.state.get("webapp") else [])
         if path.startswith("webapps/"):
+            # PythonAnywhere answers 403, not 404, for a web app that does not
+            # exist. The deployer must never depend on this call.
             if self.state.get("webapp"):
                 return self._send(200, self.state["webapp"])
-            return self._send(404, {"detail": "no web app"})
+            return self._send(403, {"detail": "You do not have permission to perform this action."})
         return self._send(404, {"detail": "unknown"})
 
     def do_POST(self):
@@ -101,6 +105,15 @@ class Stub(http.server.BaseHTTPRequestHandler):
             self.state["files"][target] = self._uploaded_content(body)
             return self._send(200, {"ok": True})
         if path == "webapps/":
+            from urllib.parse import unquote_plus
+            fields = dict(pair.split("=", 1) for pair in body.decode().split("&"))
+            version = unquote_plus(fields.get("python_version", ""))
+            # The real API rejects the dotted form outright.
+            if "." in version:
+                return self._send(400, {"status": "ERROR",
+                                        "error_type": "invalid_python_version",
+                                        "error_message": f"No such Python version: {version}"})
+            self.state["created_with"] = version
             self.state["webapp"] = {"domain_name": f"{USERNAME}.pythonanywhere.com"}
             return self._send(201, self.state["webapp"])
         if path.endswith("/static_files/"):
@@ -193,6 +206,30 @@ class TestAFreshDeployment:
         assert state["reloaded"] == 2
         assert sum(1 for method, path in state["calls"]
                    if method == "POST" and path == "webapps/") == 1
+
+
+class TestThePythonVersionFormat:
+    """PythonAnywhere wants python313, not 3.13.
+
+    Sending the dotted form is answered with "No such Python version: 3.13",
+    which reads as though the interpreter were missing rather than as a format
+    error, and cost a deployment its first attempt.
+    """
+
+    @pytest.mark.parametrize("given", ["3.13", "python313", "3.13 ", "Python3.13", "313"])
+    def test_every_spelling_becomes_the_one_the_api_accepts(self, given):
+        assert pa.normalise_python_version(given) == "python313"
+
+    @pytest.mark.parametrize("given", ["", "three", "3.x", "python"])
+    def test_nonsense_is_rejected_with_an_explanation(self, given):
+        with pytest.raises(pa.DeployError, match="not a version number"):
+            pa.normalise_python_version(given)
+
+    def test_the_create_call_sends_the_undotted_form(self, stub):
+        state, base = stub
+        checkout_present(state)
+        run(base, extra=["--python-version", "3.13"])
+        assert state["created_with"] == "python313"
 
 
 class TestItRefusesToDoHarm:

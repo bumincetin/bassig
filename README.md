@@ -748,7 +748,7 @@ must always arrive through Project Setup / Data Import.
 python -m pytest
 ```
 
-529 tests covering:
+539 tests covering:
 
 | Area | Tests |
 |---|---|

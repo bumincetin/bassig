@@ -40,8 +40,10 @@ app at `https://<username>.pythonanywhere.com` with HTTPS, a persistent 512 MB
 disk and no credit card. The database, photographs and backups stay on that
 disk across reloads. Limits that matter: one web app per account, a daily
 CPU allowance (the site slows down rather than stopping if it is exceeded)
-and a **"Run until" date that must be extended every three months** with one
-click on the Web tab (a reminder e-mail arrives before it expires).
+and an **expiry date that must be extended periodically** with one click on
+the Web tab. The date is shown there and in the API; a reminder e-mail arrives
+before it passes, and the site stops serving if it does. Check it after the
+first deployment rather than assuming three months.
 
 1. Create the account at <https://www.pythonanywhere.com> (Beginner plan).
    The username becomes the address, so choose something like
@@ -83,6 +85,29 @@ and finally checks `/healthz` and confirms that the dashboard redirects to the
 login screen. Add `--dry-run` first if you want to see the steps without
 changing anything, `--host eu` if you registered on eu.pythonanywhere.com, and
 leave `--database` out to start with an empty record.
+
+**`--python-version` must match the virtualenv.** The setup script prints the
+right value, and `venv/pyvenv.cfg` on the server records it. A web app whose
+Python differs from the virtualenv's cannot import the packages installed in
+it, because compiled wheels are built for one version only. Two related traps:
+
+* PythonAnywhere's API wants the version written `python313`, not `3.13`. The
+  dotted form is refused with *"No such Python version: 3.13"*, which reads as
+  though the interpreter were missing. The deployer accepts either spelling and
+  sends the one the API wants.
+* The versions offered for **web apps** are not the same set as the
+  interpreters available in a **console**. If the version you need is refused,
+  rebuild the virtualenv against one that is accepted:
+  `cd ~/bassignana && rm -rf venv && python3.X -m venv venv && ./venv/bin/python -m pip install -r requirements.txt`.
+
+**The database must not be in WAL mode.** PythonAnywhere stores files on a
+network file system that cannot support it, and the journal mode is recorded
+inside the database file, so converting it after the upload is too late.
+Convert a copy before uploading:
+
+```
+python -c "import sqlite3; c=sqlite3.connect('copy.db'); print(c.execute('pragma journal_mode=DELETE').fetchone())"
+```
 
 It refuses to publish without a password, and refuses to upload over a
 database that already exists on the server, so it is safe to re-run after an
