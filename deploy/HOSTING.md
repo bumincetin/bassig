@@ -54,6 +54,36 @@ click on the Web tab (a reminder e-mail arrives before it expires).
 
    This clones the repository into `~/bassignana`, creates a virtualenv and
    installs the requirements. It prints the remaining steps at the end.
+3. Everything from here can be done **for you by a script**, or by hand.
+
+### 3a. The scripted way (recommended)
+
+Go to **Account → API token** and press *Create a new API token*. Then, on
+your own PC, in the project folder:
+
+```
+python deploy/pythonanywhere_deploy.py \
+    --username YOURNAME \
+    --token    THE_API_TOKEN \
+    --password 'the shared password for the site' \
+    --database data/bassignana.db
+```
+
+It creates the web app, writes the WSGI file with your password, sets the
+source directory and virtualenv, adds exactly the three safe static mappings,
+turns on Force HTTPS, uploads the current project record, reloads the site,
+and finally checks `/healthz` and confirms that the dashboard redirects to the
+login screen. Add `--dry-run` first if you want to see the steps without
+changing anything, `--host eu` if you registered on eu.pythonanywhere.com, and
+leave `--database` out to start with an empty record.
+
+It refuses to publish without a password, and refuses to upload over a
+database that already exists on the server, so it is safe to re-run after an
+update (`git pull` in a Bash console, then the same command without
+`--database`).
+
+### 3b. The manual way
+
 3. **Web → Add a new web app → Manual configuration**, and pick the Python
    version the script reported (3.10 or newer).
 4. On the Web tab fill in:
@@ -73,6 +103,15 @@ click on the Web tab (a reminder e-mail arrives before it expires).
    `https://<username>.pythonanywhere.com`. The login screen appears; the
    EN / TR / IT switch is on it too.
 6. Move the current project record across (section 6), then Reload again.
+
+### What cannot be automated, and why
+
+The account itself has to be created by a person: signing up needs an e-mail
+confirmation and a CAPTCHA. And the requirements have to be installed from a
+Bash console in the browser once, because the PythonAnywhere API can create a
+console but cannot start one - their documentation says "only connecting to
+the console in a browser will do that". Those are steps 1 and 2 above;
+everything after them is scripted.
 
 **Updating later:** Consoles → Bash, `cd ~/bassignana && git pull`, then
 Reload on the Web tab. Nothing under `data/`, `backups/` or

@@ -159,7 +159,9 @@ differ. **`deploy/HOSTING.md`** is the step-by-step guide. In short:
 * **The host needs a persistent disk.** The free tiers of Render, Railway, Koyeb,
   Hugging Face Spaces, Vercel and Netlify wipe their file system on every deploy or
   restart and would discard the project record. The guide recommends
-  **PythonAnywhere** (free, no card, persistent disk, HTTPS) for a zero-cost host,
+  **PythonAnywhere** (free, no card, persistent disk, HTTPS) for a zero-cost host --
+  `deploy/pythonanywhere_deploy.py` performs the whole deployment over their API
+  once the account exists --
   **Docker on any server** (`Dockerfile`, `docker-compose.yml`; an always-free
   cloud VM works) for a custom domain, or a **Cloudflare Tunnel** from the office
   PC if it stays on anyway.
@@ -195,7 +197,7 @@ Bassignana/
 ├── START.bat                    Windows: double-click to start (backs up first)
 ├── wsgi.py                      WSGI entry point for hosting platforms
 ├── Dockerfile, docker-compose.yml   container image with all live data under /data
-├── deploy/                      HOSTING.md, PythonAnywhere WSGI/setup, Caddyfile
+├── deploy/                      HOSTING.md, PythonAnywhere deployer/WSGI/setup, Caddyfile
 ├── .github/workflows/tests.yml  pytest on 3.10 and 3.12, Docker build, on every push
 ├── start.sh                     Linux / macOS launcher
 ├── run.py                       launcher: binds 0.0.0.0, prints localhost + LAN URLs
@@ -746,7 +748,7 @@ must always arrive through Project Setup / Data Import.
 python -m pytest
 ```
 
-512 tests covering:
+529 tests covering:
 
 | Area | Tests |
 |---|---|
@@ -789,6 +791,7 @@ python -m pytest
 | No template text or confirmation dialog escaping translation | `tests/test_translations.py` |
 | Shared access password: gate, lockout, safe redirects, translated login | `tests/test_access.py` |
 | Relocatable data folders, uploads route, journal mode, platform port | `tests/test_hosting.py` |
+| PythonAnywhere deployer, driven against a stub of their API | `tests/test_deploy_script.py` |
 
 Tests run against an in-memory database and never touch `data/bassignana.db`.
 
