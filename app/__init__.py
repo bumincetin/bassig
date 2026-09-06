@@ -36,7 +36,7 @@ def create_app(config_object=Config):
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
-    from app import auth, i18n, logging_setup, security
+    from app import auth, content_i18n, i18n, logging_setup, security
     logging_setup.init_app(app)
 
     if not app.config.get("TESTING"):
@@ -62,6 +62,7 @@ def create_app(config_object=Config):
 
     security.init_app(app)
     i18n.init_app(app)
+    content_i18n.init_app(app)
     auth.init_app(app)
     register_blueprints(app)
     register_uploads(app)

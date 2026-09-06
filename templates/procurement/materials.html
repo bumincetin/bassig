@@ -45,7 +45,7 @@
         {% set material = view.material %}
         <tr>
           <td class="mono">{{ material.package.package_code if material.package else '-' }}</td>
-          <td>{{ material.item }}</td>
+          <td>{{ material.item | tc }}</td>
           <td class="text-tiny">{{ material.vendor or '-' }}
             {% if material.vendor and not material.approved_vendor %}
               <span class="badge bg-warning text-dark badge-sm">NOT APPROVED</span>{% endif %}</td>

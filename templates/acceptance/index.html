@@ -35,7 +35,7 @@
       {{ status_badge(view.gate.status, 'sm') }}
     </div>
     <div class="panel-body">
-      <div class="fw-bold mb-1">{{ view.gate.name }}</div>
+      <div class="fw-bold mb-1">{{ view.gate.name | tc }}</div>
       <div class="source-note mb-2">{{ view.gate.contract_reference }}</div>
       {{ bar(view.readiness_pct, 'good' if (view.readiness_pct or 0) >= 100 else '') }}
       <div class="stat-line"><span>{{ t("Readiness") }}</span>
@@ -69,7 +69,7 @@
           <tbody>
             {% for row in punch %}
             <tr><td class="mono"><a href="{{ url_for('quality.detail', record_id=row.id) }}">{{ row.record_number }}</a></td>
-              <td class="mw-260">{{ row.title or '-' }}</td>
+              <td class="mw-260">{{ row.title or '-' | tc }}</td>
               <td>{{ row.gate_code or '-' }}</td>
               <td class="nowrap">{{ row.target_closure_date | d }}</td>
               <td>{{ status_badge(row.status, 'sm') }}</td></tr>
@@ -89,7 +89,7 @@
             {% for row in tests %}
             <tr><td class="mono"><a href="{{ url_for('quality.detail', record_id=row.id) }}">{{ row.record_number }}</a></td>
               <td class="nowrap">{{ row.record_date | d }}</td>
-              <td class="mw-260">{{ row.title or '-' }}</td>
+              <td class="mw-260">{{ row.title or '-' | tc }}</td>
               <td>{% if row.inspection_result %}{{ status_badge(row.inspection_result, 'sm') }}{% else %}-{% endif %}</td>
               <td>{{ status_badge(row.status, 'sm') }}</td></tr>
             {% else %}<tr><td colspan="5">{{ empty(t('No test record registered. Raise test records from the Quality module as tests are completed.')) }}</td></tr>{% endfor %}

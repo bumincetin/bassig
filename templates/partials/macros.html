@@ -46,7 +46,7 @@
 
 {% macro source_of(record) %}
 {% if record and record.source_document %}
-  <span class="source-note">{{ t("Source:") }} {{ record.source_document.label }}
+  <span class="source-note">{{ t("Source:") }} {{ record.source_document.label | tc }}
     ({{ t(record.source_document.status) }})</span>
 {% else %}
   <span class="source-note">{{ t("Source: not recorded") }}</span>
@@ -81,7 +81,7 @@
 <select name="{{ name }}" class="{{ classes }}">
   <option value="">{{ t(blank) }}</option>
   {% for area in areas %}
-    <option value="{{ area.id }}" {{ 'selected' if selected and area.id == selected }}>{{ area.label }}</option>
+    <option value="{{ area.id }}" {{ 'selected' if selected and area.id == selected }}>{{ area.label | tc }}</option>
   {% endfor %}
 </select>
 {% endmacro %}

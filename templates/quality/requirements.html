@@ -35,14 +35,14 @@
         {% for row in rows %}
         <tr class="{{ 'text-muted' if not row.active }}">
           <td class="mono">{{ row.wbs_code or '-' }}</td>
-          <td class="text-tiny">{{ row.work_package or '-' }}</td>
+          <td class="text-tiny">{{ row.work_package or '-' | tc }}</td>
           <td class="mono">{{ row.itp_reference }}</td>
-          <td>{{ t(row.inspection_type or '-') }}</td>
+          <td>{{ tc(row.inspection_type or '-') }}</td>
           <td>
             <span class="badge {{ 'bg-danger' if row.point_type == 'HOLD' else ('bg-warning text-dark' if row.point_type == 'WITNESS' else 'bg-secondary') }} badge-sm">
               {{ t(row.point_type) }}</span></td>
-          <td class="mw-260 text-tiny">{{ row.required_evidence or '-' }}</td>
-          <td class="mw-260 text-tiny">{{ row.acceptance_criterion or '-' }}</td>
+          <td class="mw-260 text-tiny">{{ row.required_evidence or '-' | tc }}</td>
+          <td class="mw-260 text-tiny">{{ row.acceptance_criterion or '-' | tc }}</td>
           <td class="text-tiny">{{ row.applicable_specification or '-' }}</td>
           <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
           <td>{{ t('Yes') if row.active else t('No') }}</td>
@@ -90,7 +90,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><button class="btn btn-primary">{{ t("Register requirement") }}</button></div>
     </form>

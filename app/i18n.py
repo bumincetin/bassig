@@ -134,6 +134,20 @@ def translate(text, language=None, **kwargs):
     return result
 
 
+def lookup(text, language):
+    """A translation if the catalogue has one, else None. Records no miss.
+
+    Used by the content layer, which consults this before falling back to the
+    source wording: a project field that happens to hold a word the interface
+    already knows should read the same way in both places.
+    """
+    if text is None or language == DEFAULT_LANGUAGE:
+        return None
+    catalogue = _CATALOGUES.get(language) or {}
+    source = str(text)
+    return catalogue.get(source) or catalogue.get(source.strip())
+
+
 def missing_report():
     """Source strings seen at runtime with no translation, per language."""
     return {code: sorted(values) for code, values in _MISSING.items()

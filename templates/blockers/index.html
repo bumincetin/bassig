@@ -19,7 +19,7 @@
   {{ kpi(t('Open'), summary.open, '', 'bad' if summary.open else 'good') }}
   {{ kpi(t('Lost hours'), summary.lost_hours | num(1), t('actual where recorded, else estimated'), 'bad' if summary.lost_hours else 'good') }}
   {{ kpi(t('Lost man-hours'), summary.lost_man_hours | num(0)) }}
-  {{ kpi(t('Top cause'), t(summary.top_cause.category) if summary.top_cause else t('none'),
+  {{ kpi(t('Top cause'), tc(summary.top_cause.category) if summary.top_cause else t('none'),
          t('{hours} h', hours=summary.top_cause.lost_hours | num(1)) if summary.top_cause else '',
          'bad' if summary.top_cause else 'good') }}
   {{ kpi(t('Recurring causes'), summary.recurring | length, t('3 or more incidents'), 'warn' if summary.recurring else 'good') }}
@@ -65,7 +65,7 @@
           <td>{{ status_badge(row.category, 'sm') }}</td>
           <td class="mono">{{ row.wbs_code or '-' }}</td>
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
-          <td class="mw-260">{{ row.description or '-' }}</td>
+          <td class="mw-260">{{ row.description or '-' | tc }}</td>
           <td class="num">{{ row.estimated_lost_hours | num(1) }}</td>
           <td class="num">{{ row.actual_lost_hours | num(1) if row.actual_lost_hours is not none else '-' }}</td>
           <td class="num">{{ row.workers_affected }}</td>

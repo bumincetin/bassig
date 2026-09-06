@@ -46,7 +46,7 @@
     <select name="version" class="form-select form-select-sm">
       {% for v in versions %}
         <option value="{{ v.id }}" {{ 'selected' if version and v.id == version.id }}>
-          {{ v.label }} [{{ t(v.schedule_type) }}]
+          {{ v.label | tc }} [{{ t(v.schedule_type) }}]
         </option>
       {% endfor %}
     </select>
@@ -127,7 +127,7 @@
                      {{ 'milestone' if row.is_milestone }}">
             <td class="mono">{{ row.wbs_code }}</td>
             <td>
-              {{ row.name }}
+              <span title="{{ row.name | tc_title }}">{{ row.name | tc }}</span>
               {% if row.is_milestone %}<span class="badge bg-dark badge-sm">MS</span>{% endif %}
               {% if row.match_kind == 'UNMATCHED' %}
                 <span class="badge bg-warning text-dark badge-sm" title="{{ t('No contractual counterpart found') }}">{{ t('NO BASELINE') }}</span>

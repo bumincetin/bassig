@@ -131,7 +131,7 @@
               {% for row in critical[:15] %}
               <tr class="row-critical">
                 <td class="mono">{{ row.wbs_code }}</td>
-                <td>{{ row.name }}</td>
+                <td>{{ row.name | tc }}</td>
                 <td class="nowrap">{{ row.plan_finish | d }}</td>
                 <td class="num">{{ row.actual_pct | pc }}</td>
                 <td class="num">{{ variance(row.variance) }}</td>
@@ -155,7 +155,7 @@
             <tbody>
               {% for row in critical_workfronts %}
               <tr>
-                <td>{{ row.work_package }}</td>
+                <td>{{ row.work_package | tc }}</td>
                 <td class="num">{{ row.count }}</td>
                 <td class="num">{{ row.critical }}</td>
                 <td class="num">{{ variance(row.average_variance) }}</td>
@@ -180,7 +180,7 @@
             <tbody>
               {% for row in milestones %}
               <tr class="milestone">
-                <td>{{ row.name }}</td>
+                <td>{{ row.name | tc }}</td>
                 <td class="nowrap">{{ (row.plan_finish or row.plan_start) | d }}</td>
                 <td>{{ status_badge(row.classification, 'sm') }}</td>
               </tr>
@@ -200,16 +200,16 @@
       <div class="panel-body">
         {% if procurement.warning_count %}
           {% for package in procurement.late_packages %}
-            <div class="stat-line"><span>{{ package.package_code }} {{ package.package_name }}</span>{{ status_badge('LATE', 'sm') }}</div>
+            <div class="stat-line"><span>{{ package.package_code }} {{ package.package_name | tc }}</span>{{ status_badge('LATE', 'sm') }}</div>
           {% endfor %}
           {% for package in procurement.at_risk_packages %}
-            <div class="stat-line"><span>{{ package.package_code }} {{ package.package_name }}</span>{{ status_badge('AT RISK', 'sm') }}</div>
+            <div class="stat-line"><span>{{ package.package_code }} {{ package.package_name | tc }}</span>{{ status_badge('AT RISK', 'sm') }}</div>
           {% endfor %}
           {% for view in procurement.shortages[:8] %}
-            <div class="stat-line"><span>{{ view.material.item }}</span>{{ status_badge(view.stock_status, 'sm') }}</div>
+            <div class="stat-line"><span>{{ view.material.item | tc }}</span>{{ status_badge(view.stock_status, 'sm') }}</div>
           {% endfor %}
           {% for material in procurement.unapproved_vendors[:5] %}
-            <div class="stat-line"><span>{{ material.item }} &mdash; {{ t("vendor not on the approved list") }}</span><span class="badge bg-warning text-dark badge-sm">VENDOR</span></div>
+            <div class="stat-line"><span>{{ material.item | tc }} &mdash; {{ t("vendor not on the approved list") }}</span><span class="badge bg-warning text-dark badge-sm">VENDOR</span></div>
           {% endfor %}
           {% for package in procurement.fat_issues[:5] %}
             <div class="stat-line"><span>{{ package.package_code }} FAT {{ t(package.fat_status) }}</span><span class="badge bg-warning text-dark badge-sm">FAT</span></div>
@@ -226,7 +226,7 @@
       <div class="panel-body">
         {% for view in acceptance.gates %}
           <div class="stat-line">
-            <span>{{ t("Gate") }} {{ view.gate.gate_code }} &mdash; {{ view.gate.name }}</span>
+            <span>{{ t("Gate") }} {{ view.gate.gate_code }} &mdash; {{ view.gate.name | tc }}</span>
             <strong>
               {% if view.readiness_pct is none %}<span class="data-required">{{ t('DATA REQUIRED') }}</span>
               {% else %}{{ view.readiness_pct | pc(0) }} &nbsp;{{ status_badge(view.derived_state, 'sm') }}{% endif %}

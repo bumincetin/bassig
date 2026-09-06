@@ -6,7 +6,7 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>{{ package.package_code }} &mdash; {{ package.package_name }}</h1>
+    <h1>{{ package.package_code }} &mdash; {{ package.package_name | tc }}</h1>
     <div class="sub">{{ package.category or t('no category') }} &middot; {{ t("stage") }} {{ t(package.stage) }}</div>
   </div>
   <div class="page-actions">
@@ -73,11 +73,11 @@
             <select name="source_document_id" class="form-select form-select-sm">
               <option value="">{{ t("Not linked") }}</option>
               {% for doc in documents %}
-                <option value="{{ doc.id }}" {{ 'selected' if package.source_document_id == doc.id }}>{{ doc.label }}</option>
+                <option value="{{ doc.id }}" {{ 'selected' if package.source_document_id == doc.id }}>{{ doc.label | tc }}</option>
               {% endfor %}
             </select></div>
           <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ package.comments or '' }}</textarea></div>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ package.comments or '' | tc }}</textarea></div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save package") }}</button></div>
         </form>
       </div>
@@ -96,7 +96,7 @@
             {% for line in view.materials %}
             {% set material = line.material %}
             <tr>
-              <td>{{ material.item }}
+              <td>{{ material.item | tc }}
                 {% if material.manufacturer %}<div class="text-tiny text-muted">{{ material.manufacturer }}</div>{% endif %}</td>
               <td class="text-tiny">{{ material.vendor or '-' }}
                 {% if material.vendor and not material.approved_vendor %}

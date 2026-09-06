@@ -119,29 +119,54 @@ the session and applies to every screen, including the printed reports.
 | Türkçe | 1795 entries, dates written `04.09.2026` |
 | Italiano | 1795 entries, dates written `04/09/2026` |
 
-Two things deliberately do **not** change with the language:
+There are **two** catalogues, because two different kinds of text appear on a
+page and they change for different reasons.
 
-* **Project data.** Activity names from Schedule 03, document titles, contractor
-  names and observation text are contractual content and read exactly as their
-  source document does.
-* **Stored values.** `IN PROGRESS`, `ACCEPTED`, `NCR` and every other status is
-  stored, compared and exported in English; only the on-screen label changes.
-  Switching language can therefore never alter what the database holds or what a
-  CSV export contains — `tests/test_translations.py` asserts this.
+| Catalogue | What it translates | Entries |
+|---|---|---|
+| `translations/*.json` | the **interface**: menus, headings, buttons, messages, and every stored status such as `IN PROGRESS` | 1795 per language |
+| `translations/content/*.json` | the **project's own words**: activity names from Schedule 03, acceptance-gate prerequisites, the permit register, quality criteria, document titles | 936 per language |
+
+The second one matters more than it sounds. Most of what fills a screen is the
+project's own text, so a Turkish menu around an English programme is still an
+English screen. Every activity name, gate item, permit entry, payment
+milestone, quantity note, site observation and document title in the current
+Bassignana data set is translated.
+
+**What never changes with the language, whatever is on screen:**
+
+* **The stored value.** What was imported from Schedule 03 stays in
+  `wbs_activity.activity_name`, is what the baseline comparison matches on, and
+  is what a CSV export contains. Only the label on screen changes, exactly as it
+  already did for a status like `IN PROGRESS`.
+* **The contractual wording stays reachable.** A translated activity name
+  carries the source wording in its tooltip, and English remains the source
+  language: switch to EN and you see the contract's own words.
+* A string with no entry degrades to the source wording, never to a blank.
+
+`tests/test_translations.py`, `tests/test_translation_coverage.py` and
+`tests/test_content_translation.py` assert all of this, including that no
+interface text survives the switch from English to Turkish untranslated.
 
 ### Editing or extending a translation
 
 Catalogues are plain JSON keyed by the English source string, so a missing entry
 degrades to readable English rather than to a raw identifier such as
-`nav.dashboard`. Edit the parts under `translations/_parts/` and rebuild:
+`nav.dashboard`. Edit the parts under `translations/_parts/` for the interface,
+or `translations/content/_parts/` for the project's own words, and rebuild:
 
 ```
 python translations/build.py
 ```
 
-The build merges the parts, reports any key translated two different ways, and
-writes `translations/tr.json` and `translations/it.json`. Restart the server to
-load them. No Babel, no `.mo` compilation and no Node.js is involved.
+The build merges both sets of parts, reports any key translated two different
+ways, and writes `translations/{tr,it}.json` and
+`translations/content/{tr,it}.json`. Restart the server to load them. No Babel,
+no `.mo` compilation and no Node.js is involved.
+
+When a new programme or register is imported, its new wording will read in its
+source language until it is added to the content catalogue. Nothing breaks in
+the meantime.
 
 `tests/test_translations.py` fails the build if a template gains user-facing text
 that never passes through `t()`, if a placeholder such as `{count}` is lost in
@@ -212,6 +237,7 @@ Bassignana/
 │   ├── constants.py             every status list and classification, defined once
 │   ├── security.py              persisted secret key, CSRF protection, headers
 │   ├── auth.py                  optional shared access password (hosted copies)
+│   ├── content_i18n.py          the project's own words in TR / IT, display only
 │   ├── logging_setup.py         rotating file log in data/logs/
 │   ├── extensions.py
 │   ├── models/
@@ -748,7 +774,7 @@ must always arrive through Project Setup / Data Import.
 python -m pytest
 ```
 
-548 tests covering:
+568 tests covering:
 
 | Area | Tests |
 |---|---|
@@ -794,6 +820,7 @@ python -m pytest
 | PythonAnywhere deployer, driven against a stub of their API | `tests/test_deploy_script.py` |
 | No English surviving the language switch, on every page | `tests/test_translation_coverage.py` |
 | Every stored status, category and type carrying a translated label | `tests/test_translation_coverage.py` |
+| The project's own words read in the reader's language, stored value untouched | `tests/test_content_translation.py` |
 
 Tests run against an in-memory database and never touch `data/bassignana.db`.
 

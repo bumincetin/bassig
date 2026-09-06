@@ -43,13 +43,13 @@
                   <select name="version_id" class="form-select form-select-sm" style="max-width:280px" required>
                     <option value="">{{ t("Choose the schedule version") }}</option>
                     {% for version in versions %}
-                      <option value="{{ version.id }}">{{ version.label }} [{{ t(version.schedule_type) }}]{{ ' - LOCKED' if version.locked }}</option>
+                      <option value="{{ version.id }}">{{ version.label | tc }} [{{ t(version.schedule_type) }}]{{ ' - LOCKED' if version.locked }}</option>
                     {% endfor %}
                   </select>
                 {% endif %}
                 <select name="source_document_id" class="form-select form-select-sm" style="max-width:260px">
                   <option value="">{{ t("Source document (optional)") }}</option>
-                  {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+                  {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
                 </select>
                 <button class="btn btn-sm btn-primary">{{ t("Validate") }}</button>
               </form>
@@ -101,7 +101,7 @@
           <select name="version_id" class="form-select form-select-sm" required>
             <option value="">{{ t("Choose the version") }}</option>
             {% for version in versions %}
-              <option value="{{ version.id }}">{{ version.label }} [{{ t(version.schedule_type) }}]{{ ' - LOCKED' if version.locked }}</option>
+              <option value="{{ version.id }}">{{ version.label | tc }} [{{ t(version.schedule_type) }}]{{ ' - LOCKED' if version.locked }}</option>
             {% endfor %}
           </select>
         </div>
@@ -110,7 +110,7 @@
           <label class="form-label">{{ t("Source document") }}</label>
           <select name="source_document_id" class="form-select form-select-sm">
             <option value="">{{ t("Optional") }}</option>
-            {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+            {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
           </select>
         </div>
         <button class="btn btn-sm btn-primary">{{ t("Validate and preview") }}</button>

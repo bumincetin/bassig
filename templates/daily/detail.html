@@ -141,8 +141,8 @@
           {% for entry in report.progress_entries %}
           <tr>
             <td class="mono">{{ entry.wbs_code }}</td>
-            <td class="mw-260">{{ entry.activity_name or '-' }}
-              {% if entry.comments %}<div class="text-tiny text-muted">{{ entry.comments }}</div>{% endif %}</td>
+            <td class="mw-260">{{ entry.activity_name or '-' | tc }}
+              {% if entry.comments %}<div class="text-tiny text-muted">{{ entry.comments | tc }}</div>{% endif %}</td>
             <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
             <td class="num">{{ entry.planned_quantity | qty }}</td>
             <td class="num"><strong>{{ entry.actual_quantity | qty }}</strong> {{ entry.unit or '' }}</td>
@@ -188,7 +188,7 @@
                         data-work-package="{{ activity.work_package or '' }}"
                         data-unit="{{ activity.unit or '' }}"
                         data-total-required-quantity="{{ activity.total_required_quantity or '' }}">
-                  {{ activity.wbs_code }} &mdash; {{ activity.activity_name }}
+                  {{ activity.wbs_code }} &mdash; {{ activity.activity_name | tc }}
                 </option>
               {% endfor %}
             </select>
@@ -252,7 +252,7 @@
               {% for entry in report.workforce_entries %}
               <tr>
                 <td>{{ entry.contractor.name if entry.contractor else (entry.contractor_name or '-') }}</td>
-                <td>{{ entry.discipline }}</td>
+                <td>{{ entry.discipline | tc }}</td>
                 <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
                 <td class="num">{{ entry.workers }}</td>
                 <td class="num">{{ entry.hours | num(1) }}</td>
@@ -444,7 +444,7 @@
                   {% for material in materials %}
                     <option value="{{ material.id }}">
                       {{ material.package.package_code if material.package else '' }} &mdash;
-                      {{ material.item }}
+                      {{ material.item | tc }}
                       {%- if material.total_required %} ({{ t("required") }} {{ material.total_required | qty }} {{ material.unit or '' }}){% endif %}
                     </option>
                   {% endfor %}
@@ -487,7 +487,7 @@
                   {% for material in materials %}
                     {% set view = material_views.get(material.id) %}
                     <option value="{{ material.id }}">
-                      {{ material.item }} &mdash; {{ t("in store") }} {{ view.available | qty if view else '?' }}
+                      {{ material.item | tc }} &mdash; {{ t("in store") }} {{ view.available | qty if view else '?' }}
                       {{ material.unit or '' }}, {{ t("installed") }} {{ material.installed | qty }}
                       {%- if material.total_required %} {{ t("of") }} {{ material.total_required | qty }}{% endif %}
                     </option>
@@ -533,12 +533,12 @@
         <tbody>
           {% for entry in report.observations %}
           <tr>
-            <td>{{ t(entry.category) }}</td>
+            <td>{{ tc(entry.category) }}</td>
             <td>{{ status_badge(entry.severity, 'sm') }}</td>
             <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
-            <td class="mw-260">{{ entry.observation }}</td>
-            <td class="text-tiny">{{ entry.action_required or '-' }}</td>
-            <td class="text-tiny">{{ entry.responsible_party or '-' }}</td>
+            <td class="mw-260">{{ entry.observation | tc }}</td>
+            <td class="text-tiny">{{ entry.action_required or '-' | tc }}</td>
+            <td class="text-tiny">{{ entry.responsible_party or '-' | tc }}</td>
             <td class="nowrap">{{ entry.target_date | d }}</td>
             <td>{{ status_badge(entry.status, 'sm') }}</td>
             <td class="nowrap">
@@ -595,8 +595,8 @@
               {% for blocker in blockers %}
               <tr>
                 <td class="mono"><a href="{{ url_for('blockers.detail', blocker_id=blocker.id) }}">{{ blocker.blocker_number }}</a></td>
-                <td>{{ t(blocker.category) }}</td>
-                <td class="mw-260 text-tiny">{{ blocker.description or '-' }}</td>
+                <td>{{ tc(blocker.category) }}</td>
+                <td class="mw-260 text-tiny">{{ blocker.description or '-' | tc }}</td>
                 <td class="num">{{ blocker.effective_lost_hours | num(1) }}</td>
                 <td>{{ status_badge(blocker.status, 'sm') }}</td>
               </tr>

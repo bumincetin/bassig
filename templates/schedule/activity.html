@@ -5,10 +5,10 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>{{ row.wbs_code }} &mdash; {{ row.activity_name }}</h1>
+    <h1>{{ row.wbs_code }} &mdash; {{ row.activity_name | tc }}</h1>
     <div class="sub">
-      {{ version.label }} [{{ t(version.schedule_type) }}] &middot;
-      {{ row.work_package or 'no work package' }} &middot; {{ row.discipline or 'no discipline' }}
+      {{ version.label | tc }} [{{ t(version.schedule_type) }}] &middot;
+      {{ row.work_package or 'no work package' | tc }} &middot; {{ row.discipline or 'no discipline' | tc }}
     </div>
   </div>
   <div class="page-actions">
@@ -115,7 +115,7 @@
           </div>
           <div class="full">
             <label class="form-label">{{ t("Notes / source") }}</label>
-            <textarea name="notes" rows="2" class="form-control form-control-sm">{{ row.notes or '' }}</textarea>
+            <textarea name="notes" rows="2" class="form-control form-control-sm">{{ row.notes or '' | tc }}</textarea>
           </div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save activity") }}</button></div>
         </form>
@@ -134,7 +134,7 @@
         {% elif matched %}
           <div class="stat-line"><span>{{ t("Matched by") }}</span><strong>{{ match_kind }}</strong></div>
           <div class="stat-line"><span>{{ t("Baseline WBS") }}</span><strong class="font-monospace">{{ matched.wbs_code }}</strong></div>
-          <div class="stat-line"><span>{{ t("Baseline activity") }}</span><strong>{{ matched.activity_name }}</strong></div>
+          <div class="stat-line"><span>{{ t("Baseline activity") }}</span><strong>{{ matched.activity_name | tc }}</strong></div>
           <div class="stat-line"><span>{{ t("Baseline start") }}</span><strong>{{ (matched.baseline_start or matched.plan_start) | d }}</strong></div>
           <div class="stat-line"><span>{{ t("Baseline finish") }}</span><strong>{{ (matched.baseline_finish or matched.plan_finish) | d }}</strong></div>
           <div class="stat-line"><span>{{ t("Baseline duration") }}</span><strong>{{ matched.duration_days | num(0) }} {{ t("days") }}</strong></div>

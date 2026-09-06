@@ -121,8 +121,8 @@
         <tr class="{{ 'row-critical' if view.overdue }}">
           <td class="num">{{ row.sequence }}</td>
           <td class="mono">{{ row.milestone_code or '-' }}</td>
-          <td class="mw-260">{{ row.description }}
-            {% if row.comments %}<div class="text-tiny text-muted">{{ row.comments }}</div>{% endif %}</td>
+          <td class="mw-260">{{ row.description | tc }}
+            {% if row.comments %}<div class="text-tiny text-muted">{{ row.comments | tc }}</div>{% endif %}</td>
           <td class="num">{{ row.percentage | num(2) }}</td>
           <td class="num">{{ view.amount | money(summary.currency) if view.amount is not none else '-' }}</td>
           <td>{{ row.gate_code or '-' }}</td>
@@ -162,7 +162,7 @@
                 <input type="date" name="paid_date" value="{{ row.paid_date | iso }}" class="form-control form-control-sm mb-1">
                 {{ select('status', statuses, row.status, none, 'form-select form-select-sm mb-1') }}
                 <input name="evidence_reference" value="{{ row.evidence_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Evidence') }}">
-                <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ row.comments or '' }}</textarea>
+                <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ row.comments or '' | tc }}</textarea>
                 <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
               </form>
               <form method="post" action="{{ url_for('commercial.update', milestone_id=row.id) }}"
@@ -218,7 +218,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
         <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>

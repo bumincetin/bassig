@@ -6,7 +6,7 @@
 <div class="page-head">
   <div>
     <h1>{{ blocker.blocker_number }}</h1>
-    <div class="sub">{{ t(blocker.category) }} &middot; {{ blocker.entry_date | d }}</div>
+    <div class="sub">{{ tc(blocker.category) }} &middot; {{ blocker.entry_date | d }}</div>
   </div>
   <div class="page-actions">
     <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('blockers.index') }}">{{ t("Back") }}</a>
@@ -41,7 +41,7 @@
           <div class="full"><label class="form-label">{{ t("Activity affected") }}</label>
             <input name="activity" value="{{ blocker.activity or '' }}" class="form-control form-control-sm"></div>
           <div class="full"><label class="form-label">{{ t("Description") }}</label>
-            <textarea name="description" rows="3" class="form-control form-control-sm">{{ blocker.description or '' }}</textarea></div>
+            <textarea name="description" rows="3" class="form-control form-control-sm">{{ blocker.description or '' | tc }}</textarea></div>
           <div><label class="form-label">{{ t("Start") }}</label>
             <input type="datetime-local" name="start_datetime"
                    value="{{ blocker.start_datetime.strftime('%Y-%m-%dT%H:%M') if blocker.start_datetime else '' }}"
@@ -64,7 +64,7 @@
           <div class="full"><label class="form-label">{{ t("Action") }}</label>
             <textarea name="action" rows="2" class="form-control form-control-sm">{{ blocker.action or '' }}</textarea></div>
           <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ blocker.comments or '' }}</textarea></div>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ blocker.comments or '' | tc }}</textarea></div>
           <div class="full"><label class="form-label">{{ t("Add photographs") }}</label>
             <input type="file" name="photos" multiple accept="image/*" capture="environment" class="form-control form-control-lg"></div>
           <div class="full"><button class="btn btn-primary">{{ t("Save blocker") }}</button></div>

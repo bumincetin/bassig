@@ -71,7 +71,7 @@
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
           <td class="mw-260">{{ row.title or (row.description or '')[:80] }}</td>
           <td class="text-tiny">{{ row.itp_reference or '-' }}</td>
-          <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+          <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
           <td class="nowrap">{{ row.target_closure_date | d }}</td>
           <td>{% if row.inspection_result %}{{ status_badge(row.inspection_result, 'sm') }}{% else %}-{% endif %}</td>
           <td>{{ status_badge(derived.get(row.id, row.status), 'sm') }}</td>
@@ -106,7 +106,7 @@
         <select name="inspection_requirement_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
           {% for requirement in requirements %}
-            <option value="{{ requirement.id }}">{{ requirement.itp_reference }} &mdash; {{ t(requirement.inspection_type or '') }}</option>
+            <option value="{{ requirement.id }}">{{ requirement.itp_reference }} &mdash; {{ tc(requirement.inspection_type or '') }}</option>
           {% endfor %}
         </select></div>
       <div><label class="form-label">{{ t("ITP reference") }}</label>

@@ -69,7 +69,7 @@
             <thead><tr><th>{{ t("Work package") }}</th><th class="num">{{ t("Activities") }}</th><th class="num">{{ t("Progress") }}</th><th></th></tr></thead>
             <tbody>
               {% for row in rollup.by_work_package %}
-              <tr><td>{{ row.name }}</td><td class="num">{{ row.count }}</td>
+              <tr><td>{{ row.name | tc }}</td><td class="num">{{ row.count }}</td>
                 <td class="num">{{ row.progress | pc(1) if row.progress is not none else '-' }}</td>
                 <td style="width:120px">{{ bar(row.progress) }}</td></tr>
               {% else %}<tr><td colspan="4">{{ empty(t('No measured activity yet.')) }}</td></tr>{% endfor %}
@@ -88,7 +88,7 @@
             <thead><tr><th>{{ t("Discipline") }}</th><th class="num">{{ t("Activities") }}</th><th class="num">{{ t("Progress") }}</th><th></th></tr></thead>
             <tbody>
               {% for row in rollup.by_discipline %}
-              <tr><td>{{ row.name }}</td><td class="num">{{ row.count }}</td>
+              <tr><td>{{ row.name | tc }}</td><td class="num">{{ row.count }}</td>
                 <td class="num">{{ row.progress | pc(1) if row.progress is not none else '-' }}</td>
                 <td style="width:120px">{{ bar(row.progress) }}</td></tr>
               {% else %}<tr><td colspan="4">{{ empty(t('No measured activity yet.')) }}</td></tr>{% endfor %}
@@ -141,7 +141,7 @@
           {% for row in rows %}
           <tr>
             <td class="mono">{{ row.activity.wbs_code }}</td>
-            <td class="mw-260">{{ row.activity.activity_name }}</td>
+            <td class="mw-260">{{ row.activity.activity_name | tc }}</td>
             <td>
               <span class="badge {{ 'bg-primary' if row.basis == 'QUANTITY' else 'bg-secondary' }} badge-sm">
                 {{ t(row.activity.progress_method) }}</span>

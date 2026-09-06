@@ -6,7 +6,7 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>{{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name }}</h1>
+    <h1>{{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name | tc }}</h1>
     <div class="sub">{{ gate.contract_reference }}</div>
   </div>
   <div class="page-actions">
@@ -49,11 +49,11 @@
             {% for item in gate.items %}
             <tr>
               <td class="mono">{{ item.item_code or loop.index }}</td>
-              <td class="mw-260"><strong>{{ item.item_name }}</strong>
-                {% if item.description %}<div class="text-tiny text-muted">{{ item.description }}</div>{% endif %}
+              <td class="mw-260"><strong>{{ item.item_name | tc }}</strong>
+                {% if item.description %}<div class="text-tiny text-muted">{{ item.description | tc }}</div>{% endif %}
                 {% if item.contract_reference %}<div class="source-note">{{ item.contract_reference }}</div>{% endif %}</td>
-              <td class="text-tiny">{{ t(item.category or '-') }}</td>
-              <td class="text-tiny">{{ item.responsible_party or '-' }}</td>
+              <td class="text-tiny">{{ tc(item.category or '-') }}</td>
+              <td class="text-tiny">{{ item.responsible_party or '-' | tc }}</td>
               <td class="nowrap">{{ item.target_date | d }}</td>
               <td class="nowrap">{{ item.actual_date | d }}</td>
               <td class="text-tiny">{{ item.evidence_reference or '-' }}</td>
@@ -69,8 +69,8 @@
                     <input type="date" name="actual_date" value="{{ item.actual_date | iso }}" class="form-control form-control-sm mb-1">
                     <input name="evidence_reference" value="{{ item.evidence_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Evidence reference') }}">
                     <input name="contract_reference" value="{{ item.contract_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Contract reference') }}">
-                    <textarea name="description" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Description') }}">{{ item.description or '' }}</textarea>
-                    <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ item.comments or '' }}</textarea>
+                    <textarea name="description" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Description') }}">{{ item.description or '' | tc }}</textarea>
+                    <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ item.comments or '' | tc }}</textarea>
                     {{ select('status', C.GATE_ITEM_STATUS, item.status, none, 'form-select form-select-lg mb-1') }}
                     <button class="btn btn-sm btn-primary">{{ t("Save item") }}</button>
                   </form>
@@ -106,7 +106,7 @@
               <div class="full"><label class="form-label">{{ t("Source document") }}</label>
                 <select name="source_document_id" class="form-select form-select-sm">
                   <option value="">{{ t("Not linked") }}</option>
-                  {% for doc in sources %}<option value="{{ doc.id }}">{{ doc.label }}</option>{% endfor %}
+                  {% for doc in sources %}<option value="{{ doc.id }}">{{ doc.label | tc }}</option>{% endfor %}
                 </select></div>
               <div class="full"><button class="btn btn-primary btn-sm">{{ t("Add item") }}</button></div>
             </form>
@@ -133,7 +133,7 @@
           <div class="full"><label class="form-label">{{ t("Accepted by (required to record ACCEPTED)") }}</label>
             <input name="accepted_by" value="{{ gate.accepted_by or '' }}" class="form-control form-control-sm"></div>
           <div class="full"><label class="form-label">{{ t("Notes") }}</label>
-            <textarea name="notes" rows="3" class="form-control form-control-sm">{{ gate.notes or '' }}</textarea></div>
+            <textarea name="notes" rows="3" class="form-control form-control-sm">{{ gate.notes or '' | tc }}</textarea></div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save gate") }}</button></div>
         </form>
       </div>
@@ -145,7 +145,7 @@
       <div class="panel-body">
         {% if documents.missing_mandatory %}
           {% for row in documents.missing_mandatory %}
-            <div class="stat-line"><span>{{ row.title }}</span>{{ status_badge(row.status, 'sm') }}</div>
+            <div class="stat-line"><span>{{ row.title | tc }}</span>{{ status_badge(row.status, 'sm') }}</div>
           {% endfor %}
         {% else %}{{ empty(t('No mandatory document is outstanding for this gate.')) }}{% endif %}
       </div>
@@ -157,7 +157,7 @@
         {% for row in punch %}
           <div class="stat-line">
             <span><a href="{{ url_for('quality.detail', record_id=row.id) }}">{{ row.record_number }}</a>
-              {{ row.title or '' }}</span>
+              {{ row.title or '' | tc }}</span>
             {{ status_badge(row.status, 'sm') }}
           </div>
         {% else %}{{ empty(t('No punch item registered.')) }}{% endfor %}

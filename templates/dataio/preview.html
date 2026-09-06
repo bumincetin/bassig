@@ -8,8 +8,8 @@
     <h1>{{ t("Import preview") }} &mdash; {{ t(spec.label) }}</h1>
     <div class="sub">
       {{ state.filename }}
-      {% if version %} &middot; {{ t("into") }} <strong>{{ version.label }}</strong> [{{ t(version.schedule_type) }}]{% endif %}
-      {% if document %} &middot; {{ t("source:") }} <strong>{{ document.label }}</strong> [{{ t(document.status) }}]{% endif %}
+      {% if version %} &middot; {{ t("into") }} <strong>{{ version.label | tc }}</strong> [{{ t(version.schedule_type) }}]{% endif %}
+      {% if document %} &middot; {{ t("source:") }} <strong>{{ document.label | tc }}</strong> [{{ t(document.status) }}]{% endif %}
     </div>
   </div>
   <div class="page-actions">

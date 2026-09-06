@@ -33,7 +33,7 @@
       <option value="">{{ t("All gates") }}</option>
       {% for gate in gates %}
         <option value="{{ gate.gate_code }}" {{ 'selected' if gate_code == gate.gate_code }}>
-          {{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name }}</option>
+          {{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name | tc }}</option>
       {% endfor %}
     </select></div>
   <div class="field"><label class="form-label">{{ t("Category") }}</label>
@@ -64,10 +64,10 @@
         {% for row, derived in rows %}
         <tr>
           <td class="mono">{{ row.document_number or '-' }}</td>
-          <td class="mw-260">{{ row.title }}
-            {% if row.folder_path %}<div class="source-note">{{ row.folder_path }}</div>{% endif %}</td>
-          <td class="text-tiny">{{ t(row.category or '-') }}</td>
-          <td class="text-tiny">{{ row.discipline or '-' }}</td>
+          <td class="mw-260">{{ row.title | tc }}
+            {% if row.folder_path %}<div class="source-note">{{ row.folder_path | tc }}</div>{% endif %}</td>
+          <td class="text-tiny">{{ tc(row.category or '-') }}</td>
+          <td class="text-tiny">{{ row.discipline or '-' | tc }}</td>
           <td class="mono">{{ row.revision or '-' }}</td>
           <td>{{ row.gate_code or '-' }}</td>
           <td>{{ t('Yes') if row.mandatory else t('No') }}</td>
@@ -93,7 +93,7 @@
                 <input name="source_path" value="{{ row.source_path or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Path') }}">
                 <div class="form-check mb-1"><input type="checkbox" class="form-check-input" name="mandatory"
                        value="1" {{ 'checked' if row.mandatory }}> <span class="text-tiny">{{ t("Mandatory") }}</span></div>
-                <textarea name="remarks" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Remarks') }}">{{ row.remarks or '' }}</textarea>
+                <textarea name="remarks" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Remarks') }}">{{ row.remarks or '' | tc }}</textarea>
                 <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
               </form>
               <form method="post" action="{{ url_for('acceptance.update_document', doc_id=row.id) }}"
@@ -129,7 +129,7 @@
       <div><label class="form-label">{{ t("Acceptance gate") }}</label>
         <select name="gate_code" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for gate in gates %}<option value="{{ gate.gate_code }}">{{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name }}</option>{% endfor %}
+          {% for gate in gates %}<option value="{{ gate.gate_code }}">{{ t("Gate") }} {{ gate.gate_code }} &mdash; {{ gate.name | tc }}</option>{% endfor %}
         </select></div>
       <div><label class="form-label">{{ t("Mandatory") }}</label>
         <div class="form-check mt-1"><input type="checkbox" class="form-check-input" name="mandatory" value="1" checked></div></div>

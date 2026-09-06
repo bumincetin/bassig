@@ -61,7 +61,7 @@
         {% for view in views %}
         <tr>
           <td class="mono">{{ view.package.package_code }}</td>
-          <td>{{ view.package.package_name }}
+          <td>{{ view.package.package_name | tc }}
             {% if view.package.equipment %}<div class="text-tiny text-muted">{{ view.package.equipment }}</div>{% endif %}</td>
           <td>
             <div class="timeline-stage">
@@ -118,7 +118,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }}</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }}</option>{% endfor %}
         </select></div>
       <div class="full"><button class="btn btn-primary">{{ t("Create package") }}</button></div>
     </form>

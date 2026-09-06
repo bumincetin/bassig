@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% from 'partials/macros.html' import kpi, status_badge, empty, select, area_select %}
 {% set material = view.material %}
-{% block title %}{{ material.item }}{% endblock %}
+{% block title %}{{ material.item | tc }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>{{ material.item }}</h1>
+    <h1>{{ material.item | tc }}</h1>
     <div class="sub">
       {{ material.package.package_code if material.package else '' }}
       {{ material.package.package_name if material.package else '' }} &middot;
@@ -86,7 +86,7 @@
           <div><label class="form-label">{{ t("Low-stock threshold %") }}</label>
             <input name="low_stock_threshold_pct" value="{{ material.low_stock_threshold_pct or '' }}" class="form-control form-control-sm"></div>
           <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ material.comments or '' }}</textarea></div>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ material.comments or '' | tc }}</textarea></div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save material") }}</button></div>
         </form>
       </div>

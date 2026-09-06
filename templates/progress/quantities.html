@@ -31,13 +31,13 @@
           {% for row in rows %}
           <tr>
             <td class="mono">{{ row.wbs_code or '-' }}</td>
-            <td>{{ row.item }}{% if row.notes %}<div class="text-tiny text-muted">{{ row.notes }}</div>{% endif %}</td>
-            <td class="text-tiny">{{ row.activity_name or '-' }}</td>
+            <td>{{ row.item | tc }}{% if row.notes %}<div class="text-tiny text-muted">{{ row.notes | tc }}</div>{% endif %}</td>
+            <td class="text-tiny">{{ row.activity_name or '-' | tc }}</td>
             <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
             <td class="num"><strong>{{ row.total_quantity | qty }}</strong></td>
             <td>{{ row.unit or '-' }}</td>
             <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
-            <td class="text-tiny">{{ row.source_reference or '-' }}</td>
+            <td class="text-tiny">{{ row.source_reference or '-' | tc }}</td>
             <td class="mono">{{ row.revision or '-' }}</td>
             <td><form method="post" action="{{ url_for('progress.delete_quantity', row_id=row.id) }}"
                       data-confirm="{{ t('Remove this quantity register entry?') }}">
@@ -68,7 +68,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked (the entry will show no provenance)") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div><label class="form-label">{{ t("Source reference") }}</label>
         <input name="source_reference" class="form-control form-control-sm" placeholder="{{ t('clause / sheet / table') }}"></div>

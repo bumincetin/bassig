@@ -26,7 +26,7 @@
         <tbody>
           {% for version in versions %}
           <tr>
-            <td>{{ version.name }}</td>
+            <td>{{ version.name | tc }}</td>
             <td>{{ status_badge(version.schedule_type, 'sm') }}</td>
             <td class="mono">{{ version.revision or '-' }}</td>
             <td class="nowrap">{{ version.issue_date | d }}</td>
@@ -125,7 +125,7 @@
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked to a registered source document") }}</option>
           {% for doc in documents %}
-            <option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>
+            <option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>
           {% endfor %}
         </select>
       </div>

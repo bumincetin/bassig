@@ -28,7 +28,7 @@
   {{ t("The following mandatory inputs are not registered:") }}
   <ul class="mb-0 mt-1">
     {% for item in health.missing_mandatory %}
-      <li><strong>{{ item.label }}</strong> &mdash; {{ item.required_input }}</li>
+      <li><strong>{{ item.label | tc }}</strong> &mdash; {{ item.required_input }}</li>
     {% endfor %}
   </ul>
 </div>
@@ -48,7 +48,7 @@
         {% for item in health.checks %}
         <tr class="{{ 'row-critical' if item.mandatory and not item.satisfied }}">
           <td class="num">{{ item.step }}</td>
-          <td><strong>{{ item.label }}</strong></td>
+          <td><strong>{{ item.label | tc }}</strong></td>
           <td>{{ t('Yes') if item.mandatory else t('No') }}</td>
           <td>
             {% if item.satisfied %}<span class="badge bg-success badge-sm">SATISFIED</span>

@@ -30,8 +30,8 @@
         {% for row in rows %}
         <tr class="{{ 'text-muted' if not row.active }}">
           <td class="mono"><strong>{{ row.area_code }}</strong></td>
-          <td>{{ row.area_name }}
-            {% if row.description %}<div class="text-tiny text-muted">{{ row.description }}</div>{% endif %}</td>
+          <td>{{ row.area_name | tc }}
+            {% if row.description %}<div class="text-tiny text-muted">{{ row.description | tc }}</div>{% endif %}</td>
           <td class="mono">{{ row.parent.area_code if row.parent else '-' }}</td>
           <td class="text-tiny">{{ row.drawing_reference or '-' }}</td>
           <td class="mono">{{ row.ifc_revision or '-' }}</td>
@@ -41,7 +41,7 @@
             <details class="inline-form"><summary>{{ t("Edit") }}</summary>
               <form method="post" action="{{ url_for('setup.update_area', area_id=row.id) }}" class="mt-1">
                 <input name="area_name" value="{{ row.area_name }}" class="form-control form-control-sm mb-1">
-                <textarea name="description" rows="2" class="form-control form-control-sm mb-1">{{ row.description or '' }}</textarea>
+                <textarea name="description" rows="2" class="form-control form-control-sm mb-1">{{ row.description or '' | tc }}</textarea>
                 <select name="parent_area_id" class="form-select form-select-sm mb-1">
                   <option value="">{{ t("No parent") }}</option>
                   {% for other in rows if other.id != row.id %}
@@ -55,7 +55,7 @@
                 <select name="source_document_id" class="form-select form-select-sm mb-1">
                   <option value="">{{ t("Not linked") }}</option>
                   {% for doc in documents %}
-                    <option value="{{ doc.id }}" {{ 'selected' if row.source_document_id == doc.id }}>{{ doc.label }}</option>
+                    <option value="{{ doc.id }}" {{ 'selected' if row.source_document_id == doc.id }}>{{ doc.label | tc }}</option>
                   {% endfor %}
                 </select>
                 <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
@@ -93,7 +93,7 @@
       <div><label class="form-label">{{ t("Parent area") }}</label>
         <select name="parent_area_id" class="form-select form-select-sm">
           <option value="">{{ t("No parent") }}</option>
-          {% for row in rows %}<option value="{{ row.id }}">{{ row.label }}</option>{% endfor %}
+          {% for row in rows %}<option value="{{ row.id }}">{{ row.label | tc }}</option>{% endfor %}
         </select></div>
       <div><label class="form-label">{{ t("Drawing reference") }}</label>
         <input name="drawing_reference" class="form-control form-control-sm"
@@ -103,7 +103,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked (the workfront will show no provenance)") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Notes") }}</label>
         <textarea name="notes" rows="2" class="form-control form-control-sm"></textarea></div>

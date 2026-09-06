@@ -16,8 +16,8 @@
           {% for row in rows %}
           <tr class="{{ 'row-critical' if row.classification == 'CRITICAL' }}{{ 'row-atrisk' if row.classification == 'AT RISK' }}">
             <td class="mono">{{ row.wbs_code }}</td>
-            <td>{{ row.name }}{% if row.is_milestone %} <span class="badge bg-dark badge-sm">MS</span>{% endif %}</td>
-            <td class="text-tiny">{{ row.work_package or '-' }}</td>
+            <td><span title="{{ row.name | tc_title }}">{{ row.name | tc }}</span>{% if row.is_milestone %} <span class="badge bg-dark badge-sm">MS</span>{% endif %}</td>
+            <td class="text-tiny">{{ row.work_package or '-' | tc }}</td>
             {% if show_start %}<td class="nowrap">{{ row.plan_start | d }}</td>{% endif %}
             <td class="nowrap">{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
@@ -74,7 +74,7 @@
           <th class="num">{{ t("Critical") }}</th><th class="num">{{ t("Average variance") }}</th></tr></thead>
         <tbody>
           {% for row in workfronts %}
-          <tr><td>{{ row.work_package }}</td><td class="num">{{ row.count }}</td>
+          <tr><td>{{ row.work_package | tc }}</td><td class="num">{{ row.count }}</td>
             <td class="num">{{ row.critical }}</td><td class="num">{{ variance(row.average_variance) }}</td></tr>
           {% endfor %}
         </tbody>

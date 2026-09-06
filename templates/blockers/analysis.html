@@ -33,7 +33,7 @@
         <thead><tr><th>{{ t("Category") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost h") }}</th><th class="num">{{ t("Lost MH") }}</th></tr></thead>
         <tbody>
           {% for row in summary.by_category %}
-          <tr><td>{{ t(row.category) }}{% if row.incidents >= 3 %} <span class="badge bg-warning text-dark badge-sm">RECURRING</span>{% endif %}</td>
+          <tr><td>{{ tc(row.category) }}{% if row.incidents >= 3 %} <span class="badge bg-warning text-dark badge-sm">RECURRING</span>{% endif %}</td>
             <td class="num">{{ row.incidents }}</td><td class="num">{{ row.lost_hours | num(1) }}</td>
             <td class="num">{{ row.lost_man_hours | num(0) }}</td></tr>
           {% else %}<tr><td colspan="4">{{ empty(t('No blocker in this period.')) }}</td></tr>{% endfor %}
@@ -58,7 +58,7 @@
         <thead><tr><th>{{ t("Activity") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost h") }}</th></tr></thead>
         <tbody>
           {% for row in summary.by_activity %}
-          <tr><td class="mw-260">{{ row.activity }}</td><td class="num">{{ row.incidents }}</td>
+          <tr><td class="mw-260">{{ row.activity | tc }}</td><td class="num">{{ row.incidents }}</td>
             <td class="num">{{ row.lost_hours | num(1) }}</td></tr>
           {% else %}<tr><td colspan="3">{{ empty(t('Nothing recorded.')) }}</td></tr>{% endfor %}
         </tbody></table></div></div>

@@ -171,7 +171,7 @@
             {% for row in workforce %}
             <tr><td class="nowrap">{{ row.entry_date | d }}</td>
               <td>{{ row.contractor.name if row.contractor else (row.contractor_name or '-') }}</td>
-              <td>{{ row.discipline }}</td><td class="num">{{ row.workers }}</td>
+              <td>{{ row.discipline | tc }}</td><td class="num">{{ row.workers }}</td>
               <td class="num">{{ row.hours | num(1) }}</td><td class="num">{{ row.man_hours | num(1) }}</td>
               <td><form method="post" action="{{ url_for('workforce.delete_workforce', entry_id=row.id) }}">
                 <button class="btn btn-sm btn-outline-danger py-0">&times;</button></form></td></tr>

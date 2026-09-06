@@ -63,11 +63,11 @@
           <option value="">{{ t("Not linked") }}</option>
           {% for blocker in blockers %}
             <option value="{{ blocker.id }}" {{ 'selected' if row.blocker_id == blocker.id }}>
-              {{ blocker.blocker_number }} &mdash; {{ t(blocker.category) }}</option>
+              {{ blocker.blocker_number }} &mdash; {{ tc(blocker.category) }}</option>
           {% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-        <textarea name="comments" rows="2" class="form-control form-control-sm">{{ row.comments or '' }}</textarea></div>
+        <textarea name="comments" rows="2" class="form-control form-control-sm">{{ row.comments or '' | tc }}</textarea></div>
       <div class="full"><label class="form-label">{{ t("Add attachments") }}</label>
         <input type="file" name="photos" multiple accept="image/*" class="form-control form-control-lg"></div>
       <div class="full"><button class="btn btn-primary">{{ t("Save RFI") }}</button></div>

@@ -33,7 +33,7 @@
           <option value="">{{ t("Select the material") }}</option>
           {% for material in materials %}
             <option value="{{ material.id }}">
-              {{ material.package.package_code if material.package else '' }} &mdash; {{ material.item }}
+              {{ material.package.package_code if material.package else '' }} &mdash; {{ material.item | tc }}
             </option>
           {% endfor %}
         </select></div>

@@ -33,7 +33,7 @@
         <tbody>
           {% for row in comparisons %}
           <tr>
-            <td>{{ row.version.label }}</td>
+            <td>{{ row.version.label | tc }}</td>
             <td>{{ status_badge(row.version.schedule_type, 'sm') }}</td>
             <td class="nowrap">{{ row.version.effective_date | d }}</td>
             <td class="num">{{ row.activities }}</td>

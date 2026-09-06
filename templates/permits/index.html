@@ -47,11 +47,11 @@
       <tbody>
         {% for row, derived in rows %}
         <tr>
-          <td class="mw-260"><strong>{{ row.item_name }}</strong>
-            {% if row.blocker_impact %}<div class="text-tiny text-danger">{{ row.blocker_impact }}</div>{% endif %}</td>
-          <td class="text-tiny">{{ row.authority or '-' }}</td>
-          <td class="text-tiny">{{ row.responsibility or '-' }}</td>
-          <td class="text-tiny">{{ row.required_for or '-' }}</td>
+          <td class="mw-260"><strong>{{ row.item_name | tc }}</strong>
+            {% if row.blocker_impact %}<div class="text-tiny text-danger">{{ row.blocker_impact | tc }}</div>{% endif %}</td>
+          <td class="text-tiny">{{ row.authority or '-' | tc }}</td>
+          <td class="text-tiny">{{ row.responsibility or '-' | tc }}</td>
+          <td class="text-tiny">{{ row.required_for or '-' | tc }}</td>
           <td class="nowrap {{ 'text-danger fw-bold' if derived == 'OVERDUE' }}">{{ row.required_by_date | d }}</td>
           <td class="nowrap">{{ row.issued_date | d }}</td>
           <td class="nowrap {{ 'text-danger fw-bold' if derived == 'EXPIRED' }}">{{ row.expiry_date | d }}</td>
@@ -96,7 +96,7 @@
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
-          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label }} [{{ t(doc.status) }}]</option>{% endfor %}
+          {% for doc in documents %}<option value="{{ doc.id }}">{{ doc.label | tc }} [{{ t(doc.status) }}]</option>{% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
         <textarea name="comments" rows="2" class="form-control form-control-sm"></textarea></div>

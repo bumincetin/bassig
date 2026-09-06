@@ -102,7 +102,7 @@
           <th class="num">{{ t("Actual %") }}</th><th class="num">{{ t("Variance") }}</th><th>{{ t("Classification") }}</th></tr></thead>
         <tbody>
           {% for row in (critical + overdue)[:25] %}
-          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name | tc }}</td>
             <td>{{ row.plan_start | d }}</td><td>{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
             <td class="num">{{ row.variance | signed if row.variance is not none else '-' }}</td>
@@ -122,8 +122,8 @@
           <th class="num">{{ t("Actual %") }}</th><th>{{ t("Status") }}</th></tr></thead>
         <tbody>
           {% for row in lookahead %}
-          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
-            <td>{{ row.work_package or '-' }}</td><td>{{ row.plan_start | d }}</td>
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name | tc }}</td>
+            <td>{{ row.work_package or '-' | tc }}</td><td>{{ row.plan_start | d }}</td>
             <td>{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
             <td>{{ t(row.classification) }}</td></tr>
@@ -141,7 +141,7 @@
         <thead><tr><th>{{ t("Milestone") }}</th><th>{{ t("Date") }}</th><th class="num">{{ t("Actual %") }}</th><th>{{ t("Status") }}</th></tr></thead>
         <tbody>
           {% for row in milestones %}
-          <tr><td>{{ row.name }}</td><td>{{ (row.plan_finish or row.plan_start) | d }}</td>
+          <tr><td>{{ row.name | tc }}</td><td>{{ (row.plan_finish or row.plan_start) | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
             <td>{{ t(row.classification) }}</td></tr>
           {% endfor %}
@@ -163,7 +163,7 @@
     </div>
     {% if procurement.late_packages %}
       <p class="mt-1 mb-0"><strong>{{ t("Late:") }}</strong>
-        {% for package in procurement.late_packages %}{{ package.package_code }} {{ package.package_name }}{{ '; ' if not loop.last }}{% endfor %}</p>
+        {% for package in procurement.late_packages %}{{ package.package_code }} {{ package.package_name | tc }}{{ '; ' if not loop.last }}{% endfor %}</p>
     {% endif %}
   </div>
 
@@ -203,7 +203,7 @@
         <thead><tr><th>{{ t("Cause") }}</th><th class="num">{{ t("Incidents") }}</th><th class="num">{{ t("Lost hours") }}</th><th class="num">{{ t("Lost man-hours") }}</th></tr></thead>
         <tbody>
           {% for row in blockers.by_category %}
-          <tr><td>{{ t(row.category) }}</td><td class="num">{{ row.incidents }}</td>
+          <tr><td>{{ tc(row.category) }}</td><td class="num">{{ row.incidents }}</td>
             <td class="num">{{ row.lost_hours | num(1) }}</td>
             <td class="num">{{ row.lost_man_hours | num(0) }}</td></tr>
           {% endfor %}
@@ -233,7 +233,7 @@
         <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Start") }}</th><th>{{ t("Finish") }}</th></tr></thead>
         <tbody>
           {% for row in upcoming_tests %}
-          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name | tc }}</td>
             <td>{{ row.plan_start | d }}</td><td>{{ row.plan_finish | d }}</td></tr>
           {% endfor %}
         </tbody>
@@ -249,7 +249,7 @@
         <th class="num">{{ t("Items accepted") }}</th><th class="num">{{ t("Missing documents") }}</th><th>{{ t("Recorded status") }}</th></tr></thead>
       <tbody>
         {% for view in acceptance.gates %}
-        <tr><td>{{ view.gate.gate_code }}</td><td>{{ view.gate.name }}</td>
+        <tr><td>{{ view.gate.gate_code }}</td><td>{{ view.gate.name | tc }}</td>
           <td class="num">{{ view.readiness_pct | pc(0) if view.readiness_pct is not none else t('DATA REQUIRED') }}</td>
           <td class="num">{{ view.satisfied }} / {{ view.considered }}</td>
           <td class="num">{{ view.documents.missing_count }}</td>

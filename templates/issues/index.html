@@ -25,7 +25,7 @@
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
           <td class="mw-260">{{ row.title or (row.description or '')[:80] }}</td>
           <td>{{ status_badge(row.severity, 'sm') }}</td>
-          <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+          <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
           <td class="nowrap">{{ row.target_closure_date | d }}</td>
           <td>{{ status_badge(derived_map.get(row.id, row.status), 'sm') }}</td>
           <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('quality.detail', record_id=row.id) }}">{{ t("Open") }}</a></td>
@@ -127,10 +127,10 @@
             <tr>
               <td class="mono">{{ row.issue_number }}</td>
               <td class="nowrap">{{ row.date_raised | d }}</td>
-              <td class="mw-260">{{ row.title }}</td>
-              <td>{{ t(row.category or '-') }}</td>
+              <td class="mw-260">{{ row.title | tc }}</td>
+              <td>{{ tc(row.category or '-') }}</td>
               <td>{{ status_badge(row.priority, 'sm') }}</td>
-              <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+              <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
               <td class="nowrap">{{ row.target_date | d }}</td>
               <td>{{ status_badge(derived.get(row.id, row.status), 'sm') }}</td>
               <td><a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('issues.detail', issue_id=row.id) }}">{{ t("Open") }}</a></td>
@@ -196,11 +196,11 @@
             <th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th></tr></thead>
           <tbody>
             {% for row in observations %}
-            <tr><td class="nowrap">{{ row.entry_date | d }}</td><td>{{ t(row.category) }}</td>
+            <tr><td class="nowrap">{{ row.entry_date | d }}</td><td>{{ tc(row.category) }}</td>
               <td>{{ status_badge(row.severity, 'sm') }}</td>
               <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
-              <td class="mw-260">{{ row.observation }}</td>
-              <td class="text-tiny">{{ row.responsible_party or '-' }}</td>
+              <td class="mw-260">{{ row.observation | tc }}</td>
+              <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
               <td class="nowrap text-danger fw-bold">{{ row.target_date | d }}</td></tr>
             {% else %}<tr><td colspan="7">{{ empty(t('No overdue observation.')) }}</td></tr>{% endfor %}
           </tbody></table></div>

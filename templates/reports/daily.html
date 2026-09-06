@@ -130,7 +130,7 @@
           {% for row in progress_rows %}
           <tr>
             <td class="mono">{{ row.wbs_code }}</td>
-            <td>{{ row.activity_name or '-' }}</td>
+            <td>{{ row.activity_name or '-' | tc }}</td>
             <td>{{ row.area.area_code if row.area else '-' }}</td>
             <td>{{ row.unit or '-' }}</td>
             <td class="num">{{ row.planned_quantity | qty }}</td>
@@ -206,7 +206,7 @@
       {% if shortages %}
         <ul class="summary-list">
           {% for view in shortages %}
-            <li>{{ view.material.item }} &mdash; {{ t("available") }} {{ view.available | qty }},
+            <li>{{ view.material.item | tc }} &mdash; {{ t("available") }} {{ view.available | qty }},
               {{ t("remaining requirement") }} {{ view.remaining_requirement | qty }}</li>
           {% endfor %}
         </ul>
@@ -228,7 +228,7 @@
         <tbody>
           {% for row in inspection_rows %}
           <tr><td class="mono">{{ row.record_number }}</td><td>{{ t(row.record_type) }}</td>
-            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.title or '-' }}</td>
+            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.title or '-' | tc }}</td>
             <td>{{ row.inspection_result or '-' }}</td><td>{{ t(row.status) }}</td></tr>
           {% endfor %}
         </tbody>
@@ -252,8 +252,8 @@
           <th class="num">{{ t("Lost h") }}</th><th class="num">{{ t("Workers") }}</th><th class="num">{{ t("Lost MH") }}</th><th>{{ t("Status") }}</th></tr></thead>
         <tbody>
           {% for row in blocker_rows %}
-          <tr><td class="mono">{{ row.blocker_number }}</td><td>{{ t(row.category) }}</td>
-            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.description or '-' }}</td>
+          <tr><td class="mono">{{ row.blocker_number }}</td><td>{{ tc(row.category) }}</td>
+            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.description or '-' | tc }}</td>
             <td class="num">{{ row.effective_lost_hours | num(1) }}</td>
             <td class="num">{{ row.workers_affected }}</td>
             <td class="num">{{ row.lost_man_hours | num(1) }}</td>
@@ -291,10 +291,10 @@
           <th>{{ t("Action required") }}</th><th>{{ t("Responsible") }}</th><th>{{ t("Target") }}</th></tr></thead>
         <tbody>
           {% for row in observation_rows %}
-          <tr><td>{{ t(row.category) }}</td><td>{{ t(row.severity) }}</td>
+          <tr><td>{{ tc(row.category) }}</td><td>{{ t(row.severity) }}</td>
             <td>{{ row.area.area_code if row.area else '-' }}</td>
-            <td>{{ row.observation }}</td><td>{{ row.action_required or '-' }}</td>
-            <td>{{ row.responsible_party or '-' }}</td><td>{{ row.target_date | d }}</td></tr>
+            <td>{{ row.observation | tc }}</td><td>{{ row.action_required or '-' | tc }}</td>
+            <td>{{ row.responsible_party or '-' | tc }}</td><td>{{ row.target_date | d }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -310,7 +310,7 @@
           <th class="num">{{ t("Variance") }}</th><th>{{ t("Reason") }}</th></tr></thead>
         <tbody>
           {% for row in critical_activities %}
-          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name | tc }}</td>
             <td>{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
             <td class="num">{{ row.variance | signed if row.variance is not none else '-' }}</td>
@@ -332,7 +332,7 @@
         <thead><tr><th>{{ t("WBS") }}</th><th>{{ t("Activity") }}</th><th>{{ t("Start") }}</th><th>{{ t("Finish") }}</th><th>{{ t("Status") }}</th></tr></thead>
         <tbody>
           {% for row in lookahead %}
-          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name }}</td>
+          <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name | tc }}</td>
             <td>{{ row.plan_start | d }}</td><td>{{ row.plan_finish | d }}</td>
             <td>{{ t(row.classification) }}</td></tr>
           {% endfor %}
@@ -342,7 +342,7 @@
 
     {% if milestones %}
       <p class="mt-2 mb-0"><strong>{{ t("Next milestones:") }}</strong>
-        {% for row in milestones %}{{ row.name }} ({{ (row.plan_finish or row.plan_start) | d }}){{ '; ' if not loop.last }}{% endfor %}</p>
+        {% for row in milestones %}{{ row.name | tc }} ({{ (row.plan_finish or row.plan_start) | d }}){{ '; ' if not loop.last }}{% endfor %}</p>
     {% endif %}
   </div>
 

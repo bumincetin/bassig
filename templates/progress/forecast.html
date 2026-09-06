@@ -41,7 +41,7 @@
           {% for row in rows %}
           <tr>
             <td class="mono">{{ row.activity.wbs_code }}</td>
-            <td class="mw-260">{{ row.activity.activity_name }}</td>
+            <td class="mw-260">{{ row.activity.activity_name | tc }}</td>
             <td>{{ row.unit or '-' }}</td>
             <td class="num">{{ row.total_required | qty if row.total_required else '-' }}</td>
             <td class="num">{{ row.completed | qty }}</td>
