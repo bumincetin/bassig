@@ -8,8 +8,8 @@
     <h1>{{ t("Dashboard") }}</h1>
     <div class="sub">
       {{ t("Position as at") }} {{ as_of | d }} &middot;
-      {{ t("Baseline:") }} {{ BASELINE_VERSION.label if BASELINE_VERSION else t(C.DATA_REQUIRED) }} &middot;
-      {{ t("Working plan:") }} {{ CURRENT_VERSION.label if CURRENT_VERSION else t(C.DATA_REQUIRED) }}
+      {{ t("Baseline:") }} {{ BASELINE_VERSION.label | tc if BASELINE_VERSION else t(C.DATA_REQUIRED) }} &middot;
+      {{ t("Working plan:") }} {{ CURRENT_VERSION.label | tc if CURRENT_VERSION else t(C.DATA_REQUIRED) }}
     </div>
   </div>
   <form class="page-actions" method="get" data-autosubmit>

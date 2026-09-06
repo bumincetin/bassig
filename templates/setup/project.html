@@ -65,7 +65,7 @@
         <input name="cadastral_reference" value="{{ row.cadastral_reference or '' }}"
                class="form-control form-control-sm" placeholder="{{ t('foglio / mappali') }}"></div>
       <div class="full"><label class="form-label">{{ t("Notes") }}</label>
-        <textarea name="notes" rows="3" class="form-control form-control-sm">{{ row.notes or '' | tc }}</textarea></div>
+        <textarea name="notes" rows="3" class="form-control form-control-sm">{{ (row.notes or '') | tc }}</textarea></div>
       <div class="full"><button class="btn btn-primary btn-lg">{{ t("Save project identity") }}</button></div>
     </form>
   </div>

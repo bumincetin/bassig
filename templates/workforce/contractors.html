@@ -23,7 +23,7 @@
           <td><strong>{{ row.name }}</strong></td>
           <td>{{ row.short_name or '-' }}</td>
           <td>{{ row.role }}</td>
-          <td>{{ row.discipline or '-' | tc }}</td>
+          <td>{{ (row.discipline or '-') | tc }}</td>
           <td class="text-tiny">{{ row.contact or '-' }}</td>
           <td>{{ t('Yes') if row.active else t('No') }}</td>
           <td class="nowrap">

@@ -8,7 +8,7 @@
     <h1>{{ row.wbs_code }} &mdash; {{ row.activity_name | tc }}</h1>
     <div class="sub">
       {{ version.label | tc }} [{{ t(version.schedule_type) }}] &middot;
-      {{ row.work_package or 'no work package' | tc }} &middot; {{ row.discipline or 'no discipline' | tc }}
+      {{ (row.work_package or 'no work package') | tc }} &middot; {{ (row.discipline or 'no discipline') | tc }}
     </div>
   </div>
   <div class="page-actions">
@@ -115,7 +115,7 @@
           </div>
           <div class="full">
             <label class="form-label">{{ t("Notes / source") }}</label>
-            <textarea name="notes" rows="2" class="form-control form-control-sm">{{ row.notes or '' | tc }}</textarea>
+            <textarea name="notes" rows="2" class="form-control form-control-sm">{{ (row.notes or '') | tc }}</textarea>
           </div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save activity") }}</button></div>
         </form>

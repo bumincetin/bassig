@@ -71,7 +71,7 @@
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
           <td class="mw-260">{{ row.title or (row.description or '')[:80] }}</td>
           <td class="text-tiny">{{ row.itp_reference or '-' }}</td>
-          <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
+          <td class="text-tiny">{{ (row.responsible_party or '-') | tc }}</td>
           <td class="nowrap">{{ row.target_closure_date | d }}</td>
           <td>{% if row.inspection_result %}{{ status_badge(row.inspection_result, 'sm') }}{% else %}-{% endif %}</td>
           <td>{{ status_badge(derived.get(row.id, row.status), 'sm') }}</td>

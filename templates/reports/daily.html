@@ -130,7 +130,7 @@
           {% for row in progress_rows %}
           <tr>
             <td class="mono">{{ row.wbs_code }}</td>
-            <td>{{ row.activity_name or '-' | tc }}</td>
+            <td>{{ (row.activity_name or '-') | tc }}</td>
             <td>{{ row.area.area_code if row.area else '-' }}</td>
             <td>{{ row.unit or '-' }}</td>
             <td class="num">{{ row.planned_quantity | qty }}</td>
@@ -228,7 +228,7 @@
         <tbody>
           {% for row in inspection_rows %}
           <tr><td class="mono">{{ row.record_number }}</td><td>{{ t(row.record_type) }}</td>
-            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.title or '-' | tc }}</td>
+            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ (row.title or '-') | tc }}</td>
             <td>{{ row.inspection_result or '-' }}</td><td>{{ t(row.status) }}</td></tr>
           {% endfor %}
         </tbody>
@@ -253,7 +253,7 @@
         <tbody>
           {% for row in blocker_rows %}
           <tr><td class="mono">{{ row.blocker_number }}</td><td>{{ tc(row.category) }}</td>
-            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ row.description or '-' | tc }}</td>
+            <td class="mono">{{ row.wbs_code or '-' }}</td><td>{{ (row.description or '-') | tc }}</td>
             <td class="num">{{ row.effective_lost_hours | num(1) }}</td>
             <td class="num">{{ row.workers_affected }}</td>
             <td class="num">{{ row.lost_man_hours | num(1) }}</td>
@@ -293,8 +293,8 @@
           {% for row in observation_rows %}
           <tr><td>{{ tc(row.category) }}</td><td>{{ t(row.severity) }}</td>
             <td>{{ row.area.area_code if row.area else '-' }}</td>
-            <td>{{ row.observation | tc }}</td><td>{{ row.action_required or '-' | tc }}</td>
-            <td>{{ row.responsible_party or '-' | tc }}</td><td>{{ row.target_date | d }}</td></tr>
+            <td>{{ row.observation | tc }}</td><td>{{ (row.action_required or '-') | tc }}</td>
+            <td>{{ (row.responsible_party or '-') | tc }}</td><td>{{ row.target_date | d }}</td></tr>
           {% endfor %}
         </tbody>
       </table>

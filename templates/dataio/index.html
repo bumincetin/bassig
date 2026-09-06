@@ -147,7 +147,7 @@
           <td class="nowrap">{{ batch.created_at | d }}</td>
           <td>{{ t(specs[batch.import_type].label) if batch.import_type in specs else t(batch.import_type) }}</td>
           <td class="text-tiny">{{ batch.filename or '-' }}</td>
-          <td class="text-tiny">{{ batch.source_document.label if batch.source_document else '-' }}</td>
+          <td class="text-tiny">{{ batch.source_document.label | tc if batch.source_document else '-' }}</td>
           <td class="num">{{ batch.row_count }}</td>
           <td class="num text-success">{{ batch.created_count }}</td>
           <td class="num">{{ batch.updated_count }}</td>

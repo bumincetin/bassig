@@ -35,13 +35,13 @@
           <td class="mono">{{ row.parent.area_code if row.parent else '-' }}</td>
           <td class="text-tiny">{{ row.drawing_reference or '-' }}</td>
           <td class="mono">{{ row.ifc_revision or '-' }}</td>
-          <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
+          <td class="text-tiny">{{ row.source_document.label | tc if row.source_document else t('not linked') }}</td>
           <td>{{ t('Yes') if row.active else t('No') }}</td>
           <td>
             <details class="inline-form"><summary>{{ t("Edit") }}</summary>
               <form method="post" action="{{ url_for('setup.update_area', area_id=row.id) }}" class="mt-1">
                 <input name="area_name" value="{{ row.area_name }}" class="form-control form-control-sm mb-1">
-                <textarea name="description" rows="2" class="form-control form-control-sm mb-1">{{ row.description or '' | tc }}</textarea>
+                <textarea name="description" rows="2" class="form-control form-control-sm mb-1">{{ (row.description or '') | tc }}</textarea>
                 <select name="parent_area_id" class="form-select form-select-sm mb-1">
                   <option value="">{{ t("No parent") }}</option>
                   {% for other in rows if other.id != row.id %}

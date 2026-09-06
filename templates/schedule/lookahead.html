@@ -17,7 +17,7 @@
           <tr class="{{ 'row-critical' if row.classification == 'CRITICAL' }}{{ 'row-atrisk' if row.classification == 'AT RISK' }}">
             <td class="mono">{{ row.wbs_code }}</td>
             <td><span title="{{ row.name | tc_title }}">{{ row.name | tc }}</span>{% if row.is_milestone %} <span class="badge bg-dark badge-sm">MS</span>{% endif %}</td>
-            <td class="text-tiny">{{ row.work_package or '-' | tc }}</td>
+            <td class="text-tiny">{{ (row.work_package or '-') | tc }}</td>
             {% if show_start %}<td class="nowrap">{{ row.plan_start | d }}</td>{% endif %}
             <td class="nowrap">{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>

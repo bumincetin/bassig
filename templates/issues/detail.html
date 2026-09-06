@@ -31,7 +31,7 @@
       <div class="full"><label class="form-label">{{ t("Title") }}</label>
         <input name="title" value="{{ issue.title }}" class="form-control form-control-sm"></div>
       <div class="full"><label class="form-label">{{ t("Description") }}</label>
-        <textarea name="description" rows="3" class="form-control form-control-sm">{{ issue.description or '' | tc }}</textarea></div>
+        <textarea name="description" rows="3" class="form-control form-control-sm">{{ (issue.description or '') | tc }}</textarea></div>
       <div><label class="form-label">{{ t("Category") }}</label>{{ select('category', C.ISSUE_CATEGORIES, issue.category) }}</div>
       <div><label class="form-label">{{ t("Priority") }}</label>{{ select('priority', C.PRIORITIES, issue.priority) }}</div>
       <div><label class="form-label">{{ t("Status") }}</label>{{ select('status', C.ACTION_STATUS, issue.status, none, 'form-select form-select-lg') }}</div>
@@ -47,7 +47,7 @@
       <div class="full"><label class="form-label">{{ t("Action taken") }}</label>
         <textarea name="action" rows="3" class="form-control form-control-sm">{{ issue.action or '' }}</textarea></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-        <textarea name="comments" rows="2" class="form-control form-control-sm">{{ issue.comments or '' | tc }}</textarea></div>
+        <textarea name="comments" rows="2" class="form-control form-control-sm">{{ (issue.comments or '') | tc }}</textarea></div>
       <div class="full"><button class="btn btn-primary">{{ t("Save action") }}</button></div>
     </form>
   </div>

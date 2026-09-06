@@ -116,8 +116,8 @@ the session and applies to every screen, including the printed reports.
 | | |
 |---|---|
 | English | source language, and the fallback for anything untranslated |
-| Türkçe | 1795 entries, dates written `04.09.2026` |
-| Italiano | 1795 entries, dates written `04/09/2026` |
+| Türkçe | 1795 interface + 978 content entries, dates written `04.09.2026` |
+| Italiano | 1795 interface + 978 content entries, dates written `04/09/2026` |
 
 There are **two** catalogues, because two different kinds of text appear on a
 page and they change for different reasons.
@@ -125,7 +125,7 @@ page and they change for different reasons.
 | Catalogue | What it translates | Entries |
 |---|---|---|
 | `translations/*.json` | the **interface**: menus, headings, buttons, messages, and every stored status such as `IN PROGRESS` | 1795 per language |
-| `translations/content/*.json` | the **project's own words**: activity names from Schedule 03, acceptance-gate prerequisites, the permit register, quality criteria, document titles | 936 per language |
+| `translations/content/*.json` | the **project's own words**: activity names from Schedule 03, acceptance-gate prerequisites, the permit register, quality criteria, document titles | 978 per language |
 
 The second one matters more than it sounds. Most of what fills a screen is the
 project's own text, so a Turkish menu around an English programme is still an
@@ -774,7 +774,7 @@ must always arrive through Project Setup / Data Import.
 python -m pytest
 ```
 
-568 tests covering:
+569 tests covering:
 
 | Area | Tests |
 |---|---|

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 from datetime import date
 
 import pytest
@@ -55,6 +56,29 @@ class TestTheCatalogues:
                      "Development of Executive Design", "Mechanical Completion"):
             assert name in entries, f"{code}: {name} has no translation"
             assert entries[name] != name
+
+
+class TestTheFilterIsAppliedToTheFieldNotTheFallback:
+    """`{{ x or '-' | tc }}` translates the dash, not x.
+
+    A Jinja filter binds tighter than `or`, so that expression parses as
+    `x or ('-' | tc)` and the field itself is never translated. It read
+    correctly, it passed every page-renders test, and it silently left 59
+    fields in English. The parentheses are the whole fix.
+    """
+
+    PATTERN = re.compile(r"\{\{\s*[A-Za-z_][A-Za-z0-9_.\[\]']*\s+or\s+"
+                         r"(?:'[^']*'|\"[^\"]*\")\s*\|\s*tc?\s*\}\}")
+
+    def test_no_template_filters_only_the_fallback(self):
+        findings = []
+        for path in sorted((ROOT / "templates").rglob("*.html")):
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if self.PATTERN.search(line):
+                    findings.append(f"{path.name}:{lineno} {line.strip()[:80]}")
+        assert findings == [], (
+            "the filter binds to the fallback, not the field; wrap it in "
+            "parentheses:\n" + "\n".join(findings[:8]))
 
 
 class TestTranslatingContent:

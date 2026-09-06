@@ -7,9 +7,9 @@
   <div>
     <h1>{{ t("Schedule &amp; WBS") }}</h1>
     <div class="sub">
-      {{ t("Showing") }} <strong>{{ version.label if version else t('no programme') }}</strong>
+      {{ t("Showing") }} <strong>{{ version.label | tc if version else t('no programme') }}</strong>
       {{ t("compared against contractual baseline") }}
-      <strong>{{ baseline.label if baseline else t(C.DATA_REQUIRED) }}</strong> {{ t("as at") }} {{ as_of | d }}
+      <strong>{{ baseline.label | tc if baseline else t(C.DATA_REQUIRED) }}</strong> {{ t("as at") }} {{ as_of | d }}
     </div>
   </div>
   <div class="page-actions">

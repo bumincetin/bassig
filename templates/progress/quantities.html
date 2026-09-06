@@ -32,12 +32,12 @@
           <tr>
             <td class="mono">{{ row.wbs_code or '-' }}</td>
             <td>{{ row.item | tc }}{% if row.notes %}<div class="text-tiny text-muted">{{ row.notes | tc }}</div>{% endif %}</td>
-            <td class="text-tiny">{{ row.activity_name or '-' | tc }}</td>
+            <td class="text-tiny">{{ (row.activity_name or '-') | tc }}</td>
             <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
             <td class="num"><strong>{{ row.total_quantity | qty }}</strong></td>
             <td>{{ row.unit or '-' }}</td>
-            <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
-            <td class="text-tiny">{{ row.source_reference or '-' | tc }}</td>
+            <td class="text-tiny">{{ row.source_document.label | tc if row.source_document else t('not linked') }}</td>
+            <td class="text-tiny">{{ (row.source_reference or '-') | tc }}</td>
             <td class="mono">{{ row.revision or '-' }}</td>
             <td><form method="post" action="{{ url_for('progress.delete_quantity', row_id=row.id) }}"
                       data-confirm="{{ t('Remove this quantity register entry?') }}">

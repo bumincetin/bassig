@@ -37,7 +37,7 @@
               {% if version.is_current_working %}<span class="badge bg-primary badge-sm">WORKING</span>{% endif %}
               {% if version.locked %}<span class="badge bg-secondary badge-sm">LOCKED</span>{% endif %}
             </td>
-            <td class="text-tiny">{{ version.source_document.label if version.source_document else 'not recorded' }}</td>
+            <td class="text-tiny">{{ version.source_document.label | tc if version.source_document else 'not recorded' }}</td>
             <td>{{ status_badge(version.status, 'sm') }}</td>
             <td class="nowrap">
               <div class="d-flex gap-1 flex-wrap">

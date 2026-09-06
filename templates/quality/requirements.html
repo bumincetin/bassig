@@ -35,16 +35,16 @@
         {% for row in rows %}
         <tr class="{{ 'text-muted' if not row.active }}">
           <td class="mono">{{ row.wbs_code or '-' }}</td>
-          <td class="text-tiny">{{ row.work_package or '-' | tc }}</td>
+          <td class="text-tiny">{{ (row.work_package or '-') | tc }}</td>
           <td class="mono">{{ row.itp_reference }}</td>
           <td>{{ tc(row.inspection_type or '-') }}</td>
           <td>
             <span class="badge {{ 'bg-danger' if row.point_type == 'HOLD' else ('bg-warning text-dark' if row.point_type == 'WITNESS' else 'bg-secondary') }} badge-sm">
               {{ t(row.point_type) }}</span></td>
-          <td class="mw-260 text-tiny">{{ row.required_evidence or '-' | tc }}</td>
-          <td class="mw-260 text-tiny">{{ row.acceptance_criterion or '-' | tc }}</td>
+          <td class="mw-260 text-tiny">{{ (row.required_evidence or '-') | tc }}</td>
+          <td class="mw-260 text-tiny">{{ (row.acceptance_criterion or '-') | tc }}</td>
           <td class="text-tiny">{{ row.applicable_specification or '-' }}</td>
-          <td class="text-tiny">{{ row.source_document.label if row.source_document else t('not linked') }}</td>
+          <td class="text-tiny">{{ row.source_document.label | tc if row.source_document else t('not linked') }}</td>
           <td>{{ t('Yes') if row.active else t('No') }}</td>
           <td class="nowrap">
             <form method="post" action="{{ url_for('quality.update_requirement', requirement_id=row.id) }}" class="d-inline">

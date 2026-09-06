@@ -49,9 +49,9 @@
         <tr>
           <td class="mw-260"><strong>{{ row.item_name | tc }}</strong>
             {% if row.blocker_impact %}<div class="text-tiny text-danger">{{ row.blocker_impact | tc }}</div>{% endif %}</td>
-          <td class="text-tiny">{{ row.authority or '-' | tc }}</td>
-          <td class="text-tiny">{{ row.responsibility or '-' | tc }}</td>
-          <td class="text-tiny">{{ row.required_for or '-' | tc }}</td>
+          <td class="text-tiny">{{ (row.authority or '-') | tc }}</td>
+          <td class="text-tiny">{{ (row.responsibility or '-') | tc }}</td>
+          <td class="text-tiny">{{ (row.required_for or '-') | tc }}</td>
           <td class="nowrap {{ 'text-danger fw-bold' if derived == 'OVERDUE' }}">{{ row.required_by_date | d }}</td>
           <td class="nowrap">{{ row.issued_date | d }}</td>
           <td class="nowrap {{ 'text-danger fw-bold' if derived == 'EXPIRED' }}">{{ row.expiry_date | d }}</td>

@@ -65,7 +65,7 @@
           <td>{{ status_badge(row.category, 'sm') }}</td>
           <td class="mono">{{ row.wbs_code or '-' }}</td>
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
-          <td class="mw-260">{{ row.description or '-' | tc }}</td>
+          <td class="mw-260">{{ (row.description or '-') | tc }}</td>
           <td class="num">{{ row.estimated_lost_hours | num(1) }}</td>
           <td class="num">{{ row.actual_lost_hours | num(1) if row.actual_lost_hours is not none else '-' }}</td>
           <td class="num">{{ row.workers_affected }}</td>

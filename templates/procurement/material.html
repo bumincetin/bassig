@@ -86,7 +86,7 @@
           <div><label class="form-label">{{ t("Low-stock threshold %") }}</label>
             <input name="low_stock_threshold_pct" value="{{ material.low_stock_threshold_pct or '' }}" class="form-control form-control-sm"></div>
           <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ material.comments or '' | tc }}</textarea></div>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ (material.comments or '') | tc }}</textarea></div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save material") }}</button></div>
         </form>
       </div>

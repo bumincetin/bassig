@@ -45,7 +45,7 @@
       <div class="full"><label class="form-label">{{ t("Document reference") }}</label>
         <input name="document_reference" value="{{ row.document_reference or '' }}" class="form-control form-control-sm"></div>
       <div class="full"><label class="form-label">{{ t("Blocker impact") }}</label>
-        <textarea name="blocker_impact" rows="2" class="form-control form-control-sm">{{ row.blocker_impact or '' | tc }}</textarea></div>
+        <textarea name="blocker_impact" rows="2" class="form-control form-control-sm">{{ (row.blocker_impact or '') | tc }}</textarea></div>
       <div class="full"><label class="form-label">{{ t("Source document") }}</label>
         <select name="source_document_id" class="form-select form-select-sm">
           <option value="">{{ t("Not linked") }}</option>
@@ -54,7 +54,7 @@
           {% endfor %}
         </select></div>
       <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-        <textarea name="comments" rows="3" class="form-control form-control-sm">{{ row.comments or '' | tc }}</textarea></div>
+        <textarea name="comments" rows="3" class="form-control form-control-sm">{{ (row.comments or '') | tc }}</textarea></div>
       <div class="full">
         <button class="btn btn-primary">{{ t("Save") }}</button>
         <button class="btn btn-outline-danger ms-2" name="action" value="delete"

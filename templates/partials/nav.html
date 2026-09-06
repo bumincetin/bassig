@@ -17,10 +17,10 @@
 <div class="nav-foot">
   <div class="nav-foot-row">
     <span>{{ t('Baseline') }}</span>
-    <strong>{{ BASELINE_VERSION.label if BASELINE_VERSION else t(C.DATA_REQUIRED) }}</strong>
+    <strong>{{ BASELINE_VERSION.label | tc if BASELINE_VERSION else t(C.DATA_REQUIRED) }}</strong>
   </div>
   <div class="nav-foot-row">
     <span>{{ t('Working plan') }}</span>
-    <strong>{{ CURRENT_VERSION.label if CURRENT_VERSION else t(C.DATA_REQUIRED) }}</strong>
+    <strong>{{ CURRENT_VERSION.label | tc if CURRENT_VERSION else t(C.DATA_REQUIRED) }}</strong>
   </div>
 </div>

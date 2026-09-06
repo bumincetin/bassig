@@ -141,7 +141,7 @@
           {% for entry in report.progress_entries %}
           <tr>
             <td class="mono">{{ entry.wbs_code }}</td>
-            <td class="mw-260">{{ entry.activity_name or '-' | tc }}
+            <td class="mw-260">{{ (entry.activity_name or '-') | tc }}
               {% if entry.comments %}<div class="text-tiny text-muted">{{ entry.comments | tc }}</div>{% endif %}</td>
             <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
             <td class="num">{{ entry.planned_quantity | qty }}</td>
@@ -179,7 +179,7 @@
         <form method="post" action="{{ url_for('daily.add_progress', report_id=report.id) }}"
               class="form-grid mt-2" data-achievement>
           <div class="full">
-            <label class="form-label">{{ t("WBS activity") }} ({{ version.label if version else t('no programme registered') }})</label>
+            <label class="form-label">{{ t("WBS activity") }} ({{ version.label | tc if version else t('no programme registered') }})</label>
             <select name="wbs_code" class="form-select form-select-lg" required data-activity-picker>
               <option value="">{{ t("Select the activity") }}</option>
               {% for activity in activities %}
@@ -537,8 +537,8 @@
             <td>{{ status_badge(entry.severity, 'sm') }}</td>
             <td class="text-tiny">{{ entry.area.area_code if entry.area else '-' }}</td>
             <td class="mw-260">{{ entry.observation | tc }}</td>
-            <td class="text-tiny">{{ entry.action_required or '-' | tc }}</td>
-            <td class="text-tiny">{{ entry.responsible_party or '-' | tc }}</td>
+            <td class="text-tiny">{{ (entry.action_required or '-') | tc }}</td>
+            <td class="text-tiny">{{ (entry.responsible_party or '-') | tc }}</td>
             <td class="nowrap">{{ entry.target_date | d }}</td>
             <td>{{ status_badge(entry.status, 'sm') }}</td>
             <td class="nowrap">
@@ -596,7 +596,7 @@
               <tr>
                 <td class="mono"><a href="{{ url_for('blockers.detail', blocker_id=blocker.id) }}">{{ blocker.blocker_number }}</a></td>
                 <td>{{ tc(blocker.category) }}</td>
-                <td class="mw-260 text-tiny">{{ blocker.description or '-' | tc }}</td>
+                <td class="mw-260 text-tiny">{{ (blocker.description or '-') | tc }}</td>
                 <td class="num">{{ blocker.effective_lost_hours | num(1) }}</td>
                 <td>{{ status_badge(blocker.status, 'sm') }}</td>
               </tr>

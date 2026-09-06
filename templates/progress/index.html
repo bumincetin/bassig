@@ -7,7 +7,7 @@
   <div>
     <h1>{{ t("Progress measurement") }}</h1>
     <div class="sub">
-      {{ version.label if version else t('no programme registered') }} {{ t("as at") }} {{ as_of | d }} &middot;
+      {{ version.label | tc if version else t('no programme registered') }} {{ t("as at") }} {{ as_of | d }} &middot;
       {{ t("weighting basis:") }} <strong>{{ t(basis_report.basis) }}</strong>
     </div>
   </div>

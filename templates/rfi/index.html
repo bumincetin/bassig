@@ -49,10 +49,10 @@
           <td class="mono">{{ row.rfi_number }}</td>
           <td class="nowrap">{{ row.date_raised | d }}</td>
           <td class="mw-260">{{ row.subject }}</td>
-          <td class="text-tiny">{{ row.discipline or '-' | tc }}</td>
+          <td class="text-tiny">{{ (row.discipline or '-') | tc }}</td>
           <td class="mono">{{ row.wbs_code or '-' }}</td>
           <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
-          <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
+          <td class="text-tiny">{{ (row.responsible_party or '-') | tc }}</td>
           <td class="nowrap {{ 'text-danger fw-bold' if derived[row.id] == 'OVERDUE' }}">{{ row.required_response_date | d }}</td>
           <td class="nowrap">{{ row.response_date | d }}</td>
           <td>{% if row.schedule_impact %}

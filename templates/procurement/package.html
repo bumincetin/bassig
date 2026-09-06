@@ -77,7 +77,7 @@
               {% endfor %}
             </select></div>
           <div class="full"><label class="form-label">{{ t("Comments") }}</label>
-            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ package.comments or '' | tc }}</textarea></div>
+            <textarea name="comments" rows="2" class="form-control form-control-sm">{{ (package.comments or '') | tc }}</textarea></div>
           <div class="full"><button class="btn btn-primary btn-sm">{{ t("Save package") }}</button></div>
         </form>
       </div>

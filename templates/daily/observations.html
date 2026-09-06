@@ -44,8 +44,8 @@
             <td>{{ status_badge(row.severity, 'sm') }}</td>
             <td class="text-tiny">{{ row.area.area_code if row.area else '-' }}</td>
             <td class="mw-260">{{ row.observation | tc }}</td>
-            <td class="text-tiny">{{ row.action_required or '-' | tc }}</td>
-            <td class="text-tiny">{{ row.responsible_party or '-' | tc }}</td>
+            <td class="text-tiny">{{ (row.action_required or '-') | tc }}</td>
+            <td class="text-tiny">{{ (row.responsible_party or '-') | tc }}</td>
             <td class="nowrap {{ 'text-danger fw-bold' if row.target_date and row.target_date < TODAY and row.status != 'CLOSED' }}">
               {{ row.target_date | d }}</td>
             <td>{{ status_badge(row.status, 'sm') }}</td>

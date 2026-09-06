@@ -162,7 +162,7 @@
                 <input type="date" name="paid_date" value="{{ row.paid_date | iso }}" class="form-control form-control-sm mb-1">
                 {{ select('status', statuses, row.status, none, 'form-select form-select-sm mb-1') }}
                 <input name="evidence_reference" value="{{ row.evidence_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Evidence') }}">
-                <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ row.comments or '' | tc }}</textarea>
+                <textarea name="comments" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Comments') }}">{{ (row.comments or '') | tc }}</textarea>
                 <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
               </form>
               <form method="post" action="{{ url_for('commercial.update', milestone_id=row.id) }}"

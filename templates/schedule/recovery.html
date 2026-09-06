@@ -7,7 +7,7 @@
   <div>
     <h1>{{ t("Programme comparison against the contractual baseline") }}</h1>
     <div class="sub">
-      {{ t("Baseline:") }} {{ baseline.label if baseline else t(C.DATA_REQUIRED) }} &middot;
+      {{ t("Baseline:") }} {{ baseline.label | tc if baseline else t(C.DATA_REQUIRED) }} &middot;
       {{ t("Slip is measured activity by activity, matching by name first because WBS codes were renumbered between the contractual and updated programmes.") }}
     </div>
   </div>

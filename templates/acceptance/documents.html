@@ -67,7 +67,7 @@
           <td class="mw-260">{{ row.title | tc }}
             {% if row.folder_path %}<div class="source-note">{{ row.folder_path | tc }}</div>{% endif %}</td>
           <td class="text-tiny">{{ tc(row.category or '-') }}</td>
-          <td class="text-tiny">{{ row.discipline or '-' | tc }}</td>
+          <td class="text-tiny">{{ (row.discipline or '-') | tc }}</td>
           <td class="mono">{{ row.revision or '-' }}</td>
           <td>{{ row.gate_code or '-' }}</td>
           <td>{{ t('Yes') if row.mandatory else t('No') }}</td>
@@ -93,7 +93,7 @@
                 <input name="source_path" value="{{ row.source_path or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Path') }}">
                 <div class="form-check mb-1"><input type="checkbox" class="form-check-input" name="mandatory"
                        value="1" {{ 'checked' if row.mandatory }}> <span class="text-tiny">{{ t("Mandatory") }}</span></div>
-                <textarea name="remarks" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Remarks') }}">{{ row.remarks or '' | tc }}</textarea>
+                <textarea name="remarks" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Remarks') }}">{{ (row.remarks or '') | tc }}</textarea>
                 <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
               </form>
               <form method="post" action="{{ url_for('acceptance.update_document', doc_id=row.id) }}"

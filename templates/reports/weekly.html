@@ -123,7 +123,7 @@
         <tbody>
           {% for row in lookahead %}
           <tr><td class="mono">{{ row.wbs_code }}</td><td>{{ row.name | tc }}</td>
-            <td>{{ row.work_package or '-' | tc }}</td><td>{{ row.plan_start | d }}</td>
+            <td>{{ (row.work_package or '-') | tc }}</td><td>{{ row.plan_start | d }}</td>
             <td>{{ row.plan_finish | d }}</td>
             <td class="num">{{ row.actual_pct | pc(0) if row.actual_pct is not none else '-' }}</td>
             <td>{{ t(row.classification) }}</td></tr>

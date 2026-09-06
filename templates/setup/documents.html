@@ -81,7 +81,7 @@
                 <div class="form-check mb-1"><input type="checkbox" class="form-check-input" name="contractual"
                        value="1" {{ 'checked' if row.contractual }}> <span class="text-tiny">{{ t("Contractual") }}</span></div>
                 <input name="source_reference" value="{{ row.source_reference or '' }}" class="form-control form-control-sm mb-1" placeholder="{{ t('Source reference') }}">
-                <textarea name="notes" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Notes') }}">{{ row.notes or '' | tc }}</textarea>
+                <textarea name="notes" rows="2" class="form-control form-control-sm mb-1" placeholder="{{ t('Notes') }}">{{ (row.notes or '') | tc }}</textarea>
                 <button class="btn btn-sm btn-primary">{{ t("Save") }}</button>
               </form>
               <form method="post" action="{{ url_for('setup.update_document', doc_id=row.id) }}" class="mt-1"
